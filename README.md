@@ -1,6 +1,6 @@
 # dsh-superpower
 
-[![Version](https://img.shields.io/badge/version-6.3.0-blue)](./package.json)
+[![Version](https://img.shields.io/badge/version-6.3.0--dsh.1-blue)](./package.json)
 [![npm](https://img.shields.io/npm/v/dsh-superpower?label=npm)](https://www.npmjs.com/package/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)

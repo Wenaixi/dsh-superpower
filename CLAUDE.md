@@ -5,7 +5,7 @@
 > **维护**：采用规范驱动开发，所有变更以本文为准绳。
 
 - **最后更新**：2026-08-22
-- **上游同步**：`obra/superpowers v6.3.0`
+- **上游同步**：`obra/superpowers v6.3.0`（基线）；本包 `package.json#version` 为 `6.3.0-dsh.1`
 
 ---
 
@@ -235,8 +235,8 @@ export const Config = Schema.object({
 
 ## 10. Git 与发布
 
-- **远程**：`github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0`
-- **版本原则（强制）**：`package.json#version` 与上游 `obra/superpowers` **严格同步**，上游未发新版时本仓库**不得**自行 bump 任何 `x.y.z`/`x.y.z+1` 补丁版；文档/脚本等非功能修正通过覆盖当前版本提交与 `git tag -f vX.Y.Z` + `npm publish` 同版本覆盖（或先 `npm unpublish` 再重发）解决，绝不产生与上游不一致的独立版本号
+- **远程**：`github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0-dsh.1`（基线 `v6.3.0` 同步上游）
+- **版本原则（强制）**：`package.json#version` 的主版本与上游 `obra/superpowers` **严格同步**（`6.3.0` 为基线）；上游未发新版时**不得**自行 bump `x.y.z`/`x.y.z+1` 正式补丁版；仅涉及本仓库文档/构建/发布链路的非功能修正，使用预发布后缀 `x.y.z-dsh.N`（如 `6.3.0-dsh.1`，`N` 单调递增），绝不产生与上游不一致的正式版本号；文档等小修不再通过 `npm unpublish` 覆盖已发布正式版
 - **`.gitignore`**：`lib/`、`node_modules/`、`*.tgz`、`.dsh/`、`.superpowers/`、`.worktrees/`、`.private-journal/`、`coverage/`、`tmp/`、`temp/`、`.cache/` 等（已对齐上游并扩展 DSH 本地状态）
 - **发布流程**：
   ```bash
