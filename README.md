@@ -16,16 +16,35 @@
 
 ---
 
+> **3 秒速览：一个人拿到怎么用？**
+>
+> 已装好 `dsh` 的话，只需一行（零构建、零配置）：
+> ```bash
+> dsh plugin --profile demo add github:Wenaixi/dsh-superpower#v6.3.0
+> dsh --profile demo --dump-config   # 看到 "# == dsh-superpower" 即成功
+> dsh --profile demo                 # 进会话，技能自动可用
+> ```
+> 还没发布到 npm 也完全可用，无需 `npm publish`。详见 [安装](#安装)。
+
+---
+
 ## 目录
 
 - [特性](#特性)
 - [包含技能](#包含技能)
 - [安装](#安装)
+  - [前置要求](#前置要求)
+  - [方式一：GitHub 一键安装（推荐）](#方式一github-一键安装推荐零配置无需-npm)
+  - [方式二：本地克隆（二次开发/联调）](#方式二本地克隆二次开发联调推荐)
+  - [方式三：npm / tarball（可选）](#方式三npm--tarball可选当前未发布到-npm)
+  - [验证安装成功](#验证安装成功)
+  - [更新与卸载](#更新与卸载)
 - [使用](#使用)
 - [与 DSH 原生能力的分工](#与-dsh-原生能力的分工)
 - [本地开发](#本地开发)
 - [目录结构](#目录结构)
 - [版本策略](#版本策略)
+- [常见问题](#常见问题)
 - [贡献](#贡献)
 - [更新日志](#更新日志)
 - [协议](#协议)
@@ -60,40 +79,133 @@
 
 ## 安装
 
-### 要求
+### 前置要求
 
-- Node.js `>=20`
-- `pnpm >=9`（DSH profile 管理依赖它）
-- 已安装 `dsh` CLI（`npm i -g @deepseek-ai/dsh`）
+- **Node.js** `>=20`（`node -v` 检查）
+- **pnpm** `>=9`（DSH 的 profile 安装依赖它，`pnpm -v` 检查）
+- **dsh CLI**（`dsh --version` 检查；未安装执行 `npm i -g @deepseek-ai/dsh`）
 
-### 方式一：本地联调（推荐）
+> 首次使用 `dsh plugin` 会自动以 `@deepseek-ai/dsh-base` 初始化对应 profile，无需手动创建。
+
+### 方式一：GitHub 一键安装（推荐，零配置，无需 npm）
+
+适合 **“路人同事刚拿到链接，3 分钟内可用”** 的场景。本方式直接从 GitHub 拉取源码，无需本机有本仓库的检出，也无需发布到 npm。
 
 ```bash
-pnpm install && pnpm build
-dsh plugin --profile demo add ./   # 首次会自动以 @deepseek-ai/dsh-base 初始化 profile
-dsh --profile demo --dump-config   # 应能看到 "# == dsh-superpower" 层
-dsh --profile demo                 # 启动后技能自动可用
+# 安装到名为 demo 的 profile（首次会自动初始化该 profile）
+dsh plugin --profile demo add github:Wenaixi/dsh-superpower#v6.3.0
+
+# 断言层已生效（应能看到 "# == dsh-superpower" 与 "id: superpowers"）
+dsh --profile demo --dump-config | grep -A2 "dsh-superpower"
+
+# 启动，技能自动可用
+dsh --profile demo
 ```
 
-### 方式二：从 GitHub 直接安装
+锁定到标签 `#v6.3.0` 可保证后续上游推送不会悄悄改变实际运行内容；想跟最新 `main` 可去掉 `#v6.3.0`。
 
-```bash
-dsh plugin --profile demo add github:Wenaixi/dsh-superpower
+**关于 `prepare` 构建**：本包 `package.json` 声明了 `prepare: npm run build`，`dsh plugin add github:...` 时会由 pnpm 在本地自动执行 `tsc` 编译出 `lib/`，无需你手动构建。产物自包含，不依赖仓库外的 monorepo 上下文。
+
+**首次安装可能遇到的 `allowBuilds` 授权**：pnpm `>=10` 默认拒绝执行来自 git 依赖的 `prepare` 脚本，首次 `add` 会失败并打印类似：
+
+```
+Ignored build scripts: dsh-superpower
+Run "pnpm approve-builds" or add to pnpm-workspace.yaml: allowBuilds: { dsh-superpower: true }
 ```
 
-### 方式三：从 npm / tarball
+按提示操作一次即可（这是 pnpm 的安全机制，授权仅表示允许该包在**安装时**执行其 `prepare`）：
 
 ```bash
+# 在报错的 profile 目录下（提示中会给出路径，如 C:\Users\你\.dsh\profiles\demo）
+# 编辑 pnpm-workspace.yaml，加入：
+# allowBuilds:
+#   dsh-superpower: true
+# 然后重新执行：
+dsh plugin --profile demo add github:Wenaixi/dsh-superpower#v6.3.0
+```
+
+或执行 `pnpm approve-builds` 按交互授权。只对源码可信的包授权即可。
+
+### 方式二：本地克隆（二次开发/联调，推荐）
+
+适合要改技能正文、调 `rank`、或对照上游做中文化的开发者。
+
+```bash
+git clone https://github.com/Wenaixi/dsh-superpower.git
+cd dsh-superpower
+pnpm install && pnpm build        # 产物输出到 lib/，lib/ 不提交
+node scripts/verify.mjs            # 冒烟：应输出 14/14 PASS
+
+# 以本地路径安装到 profile（pnpm 会以 link: 形式依赖，改动后重新 pnpm build 即可生效）
+dsh plugin --profile demo add ./
+dsh --profile demo --dump-config   # 断言 "# == dsh-superpower"
+dsh --profile demo
+```
+
+后续改动 `skills/` 或 `src/` 后，只需 `pnpm build`，重启对应 profile 即生效（`ctx.effect` 会自动清理旧 Provider）。
+
+### 方式三：npm / tarball（可选，当前未发布到 npm）
+
+> **需要发布 npm 吗？不需要。** 上述 GitHub 直装已完全可用。发布到 npm 只是为了让安装命令能简写为 `dsh plugin --profile demo add dsh-superpower`（省去 `github:` 前缀与 `#tag`），并让 `npm` 镜像（如 `npmmirror`）可检索到包。
+
+当前 `dsh-superpower` **尚未发布到 npm**，因此 `dsh plugin --profile demo add dsh-superpower` 会报 `404`。如需走 npm 渠道，有两种选择：
+
+**A. 发布者发布到 npm（一次性）**：
+
+```bash
+# 需先 npm login（registry 需切回 https://registry.npmjs.org，而非 npmmirror）
+npm login
+pnpm build
+npm publish --access public   # 首次发布
+# 之后他人即可：
 dsh plugin --profile demo add dsh-superpower
-# 或
-pnpm pack && dsh plugin --profile demo add ./dsh-superpower-6.3.0.tgz
 ```
 
-### 卸载
+**B. 不发布，用 tarball 分发（无需授权）**：
 
 ```bash
+pnpm build
+pnpm pack                      # 产出 dsh-superpower-6.3.0.tgz（已包含 lib/ + skills/）
+
+# 接收方（无需本仓库、无需构建）：
+dsh plugin --profile demo add ./dsh-superpower-6.3.0.tgz
+```
+
+tarball 已包含构建产物，接收方无需执行 `prepare`，也就无需 `allowBuilds` 授权。
+
+### 验证安装成功
+
+```bash
+# 1. 配置层可见
+dsh --profile demo --dump-config | grep -A2 "dsh-superpower"
+# 期望输出：
+# # == dsh-superpower
+# - id: superpowers
+#   name: dsh-superpower
+
+# 2. 冒烟（本地检出时）
+node scripts/verify.mjs
+# 期望：found 14 skill directories ... ALL PASS
+
+# 3. 会话内（模型侧，安装后重启 profile 再验证）
+# await ctx.skills.list({ cwd: "/path/to/project" }) // 14 条，provider: superpowers, source: bundled
+# await ctx.skills.get("brainstorming")               // 返回含中文正文的完整 SKILL.md
+```
+
+### 更新与卸载
+
+```bash
+# 更新到指定版本（GitHub 直装）
+dsh plugin --profile demo add github:Wenaixi/dsh-superpower#v6.3.1
+
+# 更新到最新 main（不推荐长期锁定场景）
+dsh plugin --profile demo add github:Wenaixi/dsh-superpower
+
+# 卸载
 dsh plugin --profile demo remove dsh-superpower
 ```
+
+> 每个 profile 独立：`demo`、`web`、`my-project` 等 profile 需分别安装。
 
 ## 使用
 
@@ -103,7 +215,7 @@ dsh plugin --profile demo remove dsh-superpower
 - “修一下这个缺陷” → 自动触发 `systematic-debugging`
 - “先出个计划” → 触发 `writing-plans`
 
-在任意项目目录验证：
+不走技能也能在模型侧直接验证：
 
 ```js
 // 在 DSH 会话中（模型侧）
@@ -132,7 +244,7 @@ node scripts/verify.mjs  # 冒烟：14 个技能可列举 + 可加载
 pnpm dsh web --patch ./cordis.patch.yml
 ```
 
-或在 `cordis.patch.yml` 中覆盖技能目录（指向本地上游检出）：
+或在 `cordis.patch.yml` 中覆盖技能目录（指向本地上游检出，便于对照）：
 
 ```yaml
 - insert:
@@ -170,6 +282,32 @@ dsh-superpower/
 - 本仓库 `version` 与上游 `obra/superpowers` 的 `package.json#version` **严格同步**（当前 `6.3.0`）
 - 上游发版后，本仓库同步 bump 版本、同步 `skills/` 内容（保留 DSH 映射与中文化），再发布
 - `CHANGELOG.md` 汇总上游 Release Notes 与本仓库 DSH 适配变更
+
+## 常见问题
+
+**Q：一个人拿到链接，怎么最快用上？**
+
+A：装好 `dsh` 后一行即可，无需克隆本仓库：`dsh plugin --profile demo add github:Wenaixi/dsh-superpower#v6.3.0`，然后 `dsh --profile demo`。这是推荐方式。
+
+**Q：必须发布到 npm 吗？**
+
+A：不必。GitHub 直装已完全可用。发到 npm 只是让命令可简写为 `dsh plugin --profile demo add dsh-superpower`，并让 `npm view` / 镜像可检索。当前本包尚未发布到 npm，走 GitHub 或 tarball 即可。
+
+**Q：`dsh plugin add dsh-superpower` 报 404？**
+
+A：因为尚未发布到 npm，请改用 `github:Wenaixi/dsh-superpower#v6.3.0` 或本地 `pnpm pack` 后的 `*.tgz`。发布到 npm 后该命令即生效。
+
+**Q：首次 `add github:...` 报 `Ignored build scripts` / `allowBuilds`？**
+
+A：pnpm `>=10` 的安全策略。按报错提示在对应 profile 的 `pnpm-workspace.yaml` 中加入 `allowBuilds: { dsh-superpower: true }` 后重试，或改用 `pnpm pack` 的 tarball（无需授权）。
+
+**Q：安装后如何确认生效？**
+
+A：`dsh --profile demo --dump-config | grep dsh-superpower` 应能看到 `# == dsh-superpower` 层；进会话后 `ctx.skills.list()` 应有 14 条 `superpowers`。
+
+**Q：`pnpm install` 时 registry 是 `npmmirror` 有影响吗？**
+
+A：对 GitHub 直装无影响（走 git）。仅在你执行 `npm publish` 或他人执行 `npm view dsh-superpower` 时才需切回 `https://registry.npmjs.org`。
 
 ## 贡献
 
