@@ -1,0 +1,33 @@
+# CI：push / PR 仅做测试与校验
+# 发布仅在打 tag（v*）时触发，权限最小化
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: node scripts/verify.mjs
+
+      # 打包自检：产物体积与内容
+      - run: pnpm pack --dry-run

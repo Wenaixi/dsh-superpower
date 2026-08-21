@@ -1,0 +1,55 @@
+# Release：仅在推送 tag（v*）时发布到 npm
+# - 不在 push 到 main 时发布
+# - 需在仓库 Settings > Secrets and variables > Actions 配置 NPM_TOKEN
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: node scripts/verify.mjs
+
+      - name: 校验 tag 与 package.json 版本一致
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          PKG_VER=$(node -p "require('./package.json').version")
+          # 去掉 tag 前缀 v 后应与 package.json 完全一致
+          EXPECT="${TAG#v}"
+          if [ "$PKG_VER" != "$EXPECT" ]; then
+            echo "::error::tag $TAG 与 package.json version $PKG_VER 不一致"
+            exit 1
+          fi
+          echo "版本一致: $TAG -> $PKG_VER"
+
+      - name: 发布到 npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
