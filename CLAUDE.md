@@ -236,7 +236,7 @@ export const Config = Schema.object({
 ## 10. Git 与发布
 
 - **远程**：`github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0`
-- **版本策略**：`package.json#version` 与上游 `obra/superpowers` 严格同步；上游发版后本仓库同步 bump 并同步 `skills/` 内容（保留 `dsh-tools.md` 等 DSH 专属文件），再发布
+- **版本原则（强制）**：`package.json#version` 与上游 `obra/superpowers` **严格同步**，上游未发新版时本仓库**不得**自行 bump 任何 `x.y.z`/`x.y.z+1` 补丁版；文档/脚本等非功能修正通过覆盖当前版本提交与 `git tag -f vX.Y.Z` + `npm publish` 同版本覆盖（或先 `npm unpublish` 再重发）解决，绝不产生与上游不一致的独立版本号
 - **`.gitignore`**：`lib/`、`node_modules/`、`*.tgz`、`.dsh/`、`.superpowers/`、`.worktrees/`、`.private-journal/`、`coverage/`、`tmp/`、`temp/`、`.cache/` 等（已对齐上游并扩展 DSH 本地状态）
 - **发布流程**：
   ```bash
