@@ -1,0 +1,313 @@
+/**
+ * dsh-superpower — DSH 移植版 Superpowers
+ *
+ * 将 obra/superpowers 的 14 个 skill 以 DSH 原生 SkillProvider 形式暴露，
+ * 通过 ctx.skills.registerProvider 注入全局层，rank 550 使 project 级 skill 可覆盖。
+ */
+
+import { readdir, readFile, stat } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { parse } from 'yaml'
+import type { Context } from '@deepseek-ai/cordis'
+import type {
+  SkillCandidate,
+  SkillDefinition,
+  SkillLookupOptions,
+  SkillProvider,
+  SkillProviderControl,
+} from '@deepseek-ai/dsh-skill'
+import Schema from '@deepseek-ai/schemastery'
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
+export const Config = Schema.object({
+  /** 注册到 ctx.skills 的 provider 名称，默认为 superpowers */
+  providerName: Schema.string().default('superpowers'),
+  /** skill 目录绝对路径，默认取包内 skills/；便于本地调试指向其他目录 */
+  skillDir: Schema.string(),
+})
+
+export interface Config {
+  providerName?: string
+  skillDir?: string
+}
+
+// ---------------------------------------------------------------------------
+// 插件元信息
+// ---------------------------------------------------------------------------
+
+export const name = 'superpowers'
+export const inject = ['skills'] as const
+
+// ---------------------------------------------------------------------------
+// 工具函数
+// ---------------------------------------------------------------------------
+
+const SKILL_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const SUPERPOWERS_RANK = 550
+
+function isSkillName(v: string): boolean {
+  return SKILL_NAME_RE.test(v)
+}
+
+function stringField(data: Record<string, unknown>, key: string): string | undefined {
+  const v = data[key]
+  return typeof v === 'string' && v.length > 0 ? v : undefined
+}
+
+function optionalString(data: Record<string, unknown>, key: string): Record<string, string> {
+  const v = data[key]
+  return typeof v === 'string' && v.length > 0 ? { [key]: v } : {}
+}
+
+function frontmatterBoolean(data: Record<string, unknown>, key: string): boolean | undefined {
+  if (!Object.hasOwn(data, key)) return undefined
+  const v = data[key]
+  if (typeof v === 'boolean') return v
+  if (v === 1 || v === '1') return true
+  if (v === 0 || v === '0') return false
+  if (typeof v === 'string') {
+    switch (v.toLowerCase()) {
+      case 'true':
+      case 'yes':
+      case 'on':
+        return true
+      case 'false':
+      case 'no':
+      case 'off':
+        return false
+    }
+  }
+  throw new TypeError(`frontmatter field "${key}" must be a boolean`)
+}
+
+function rejectLegacyKey(data: Record<string, unknown>, legacy: string, canonical: string): void {
+  if (Object.hasOwn(data, legacy)) {
+    throw new Error(`frontmatter field "${legacy}" is unsupported; use "${canonical}"`)
+  }
+}
+
+function parseInvocationPolicy(data: Record<string, unknown>) {
+  rejectLegacyKey(data, 'disableModelInvocation', 'disable-model-invocation')
+  rejectLegacyKey(data, 'modelInvocable', 'disable-model-invocation')
+  rejectLegacyKey(data, 'userInvocable', 'user-invocable')
+  const disableModelInvocation = frontmatterBoolean(data, 'disable-model-invocation')
+  const userInvocable = frontmatterBoolean(data, 'user-invocable')
+  return {
+    modelInvocable: disableModelInvocation !== true,
+    userInvocable: userInvocable !== false,
+  }
+}
+
+function optionalMetadata(data: Record<string, unknown>): Record<string, unknown> {
+  const v = data['metadata']
+  if (typeof v === 'object' && v !== null && !Array.isArray(v)) return { metadata: v as Record<string, unknown> }
+  return {}
+}
+
+function findClosingFrontmatter(raw: string, start: number): { start: number; bodyStart: number } | undefined {
+  let lineStart = start
+  while (lineStart <= raw.length) {
+    const nl = raw.indexOf('\n', lineStart)
+    const lineEnd = nl < 0 ? raw.length : nl
+    if (raw.slice(lineStart, lineEnd).replace(/\r$/, '') === '---') {
+      return { start: lineStart, bodyStart: nl < 0 ? raw.length : nl + 1 }
+    }
+    if (nl < 0) return undefined
+    lineStart = nl + 1
+  }
+  return undefined
+}
+
+function parseFrontmatter(raw: string):
+  | { data: Record<string, unknown>; body: string }
+  | undefined {
+  const firstNl = raw.indexOf('\n')
+  if (firstNl < 0) return undefined
+  if (raw.slice(0, firstNl).replace(/\r$/, '') !== '---') return undefined
+  const start = firstNl + 1
+  const closing = findClosingFrontmatter(raw, start)
+  if (!closing) return undefined
+  const parsed = parse(raw.slice(start, closing.start))
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return undefined
+  return { data: parsed as Record<string, unknown>, body: raw.slice(closing.bodyStart) }
+}
+
+function resolveDefaultSkillDir(configSkillDir?: string): string {
+  if (configSkillDir) return resolve(configSkillDir)
+  // 包内 skills/ 目录：相对于本文件 lib/superpowers.js -> ../skills
+  try {
+    // ESM 环境下通过 import.meta.url 解析
+    const here = fileURLToPath(import.meta.url)
+    return resolve(dirname(here), '..', 'skills')
+  } catch {
+    // 降级：相对 cwd
+    return resolve('skills')
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+class SuperpowersProvider implements SkillProvider {
+  readonly name: string
+  private readonly skillDir: string
+  private readonly ctx: Context
+
+  constructor(ctx: Context, _control: SkillProviderControl, config: Config) {
+    this.ctx = ctx
+    this.name = config.providerName ?? 'superpowers'
+    this.skillDir = resolveDefaultSkillDir((config as Record<string, unknown>)['skillDir'] as string | undefined)
+  }
+
+  async list(_options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
+    const candidates: SkillCandidate[] = []
+    let entries: import('node:fs').Dirent[]
+    try {
+      entries = await readdir(this.skillDir, { withFileTypes: true })
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code
+      if (code === 'ENOENT' || code === 'ENOTDIR') {
+        this.ctx.logger.warn(`[superpowers] skillDir not found: ${this.skillDir}`)
+        return []
+      }
+      throw err
+    }
+
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (!entry.isDirectory()) continue
+      if (entry.name.startsWith('.')) continue
+      const skillPath = join(this.skillDir, entry.name, 'SKILL.md')
+      try {
+        await stat(skillPath)
+      } catch {
+        continue
+      }
+      const parsed = await parseSkillFile(skillPath)
+      if (!parsed) {
+        this.ctx.logger.warn(`[superpowers] skip ${entry.name}: missing or invalid frontmatter`)
+        continue
+      }
+      const { data, body } = parsed
+      const skillName = stringField(data, 'name')
+      const description = stringField(data, 'description')
+      if (!skillName || !description) {
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: frontmatter requires name and description`)
+        continue
+      }
+      if (!isSkillName(skillName)) {
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: invalid skill name "${skillName}"`)
+        continue
+      }
+      // 目录名与 skill name 不一致时以 frontmatter 为准，但打印提示
+      if (skillName !== entry.name) {
+        this.ctx.logger.warn(`[superpowers] skill name "${skillName}" != directory "${entry.name}" (using frontmatter)`)
+      }
+      let invocation: { modelInvocable: boolean; userInvocable: boolean }
+      try {
+        invocation = parseInvocationPolicy(data)
+      } catch (e) {
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: ${String(e)}`)
+        continue
+      }
+
+      candidates.push({
+        name: skillName,
+        description,
+        ...optionalString(data, 'whenToUse'),
+        invocation,
+        source: 'bundled',
+        provider: this.name,
+        rank: SUPERPOWERS_RANK,
+        locator: { path: skillPath, directory: dirname(skillPath) },
+        resourceBase: { kind: 'directory', path: dirname(skillPath) },
+        path: skillPath,
+        ...optionalMetadata(data),
+      } as SkillCandidate)
+      // body 在 list 阶段不返回，仅用于校验可解析；真正内容由 get() 加载
+      void body
+    }
+
+    return candidates
+  }
+
+  async get(candidate: SkillCandidate, _options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
+    const locator = candidate.locator as { path: string; directory: string }
+    const raw = await readFile(locator.path, 'utf8').catch(() => undefined)
+    if (raw === undefined) return undefined
+    const parsed = parseFrontmatter(raw)
+    if (!parsed) return undefined
+    const data = parsed.data
+    const skillName = stringField(data, 'name')
+    const description = stringField(data, 'description')
+    if (!skillName || !description) return undefined
+    if (skillName !== candidate.name) {
+      // 名称漂移视为失效，触发上层 invalidate
+      return undefined
+    }
+    let invocation: { modelInvocable: boolean; userInvocable: boolean }
+    try {
+      invocation = parseInvocationPolicy(data)
+    } catch {
+      return undefined
+    }
+    return {
+      name: skillName,
+      description,
+      ...optionalString(data, 'whenToUse'),
+      invocation,
+      source: 'bundled',
+      provider: this.name,
+      resourceBase: { kind: 'directory', path: locator.directory },
+      path: locator.path,
+      ...optionalMetadata(data),
+      content: parsed.body.trim(),
+    }
+  }
+}
+
+async function parseSkillFile(path: string): Promise<{ data: Record<string, unknown>; body: string } | undefined> {
+  let raw: string
+  try {
+    raw = await readFile(path, 'utf8')
+  } catch {
+    return undefined
+  }
+  try {
+    const parsed = parseFrontmatter(raw)
+    if (!parsed) return undefined
+    return parsed
+  } catch {
+    return undefined
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 插件入口
+// ---------------------------------------------------------------------------
+
+export function apply(ctx: Context, config: Config = {} as Config): void {
+  // Schemastery 会在外层完成校验与默认值填充，这里做一次兜底
+  const resolved: Config = {
+    providerName: (config as Record<string, unknown>)['providerName'] as string | undefined ?? 'superpowers',
+    ...(config as Record<string, unknown>)['skillDir'] !== undefined
+      ? { skillDir: (config as Record<string, unknown>)['skillDir'] as string }
+      : {},
+  } as Config
+
+  ctx.logger.info(`[superpowers] registering provider "${resolved.providerName}"`)
+
+  ctx.skills.registerProvider((control) => {
+    return new SuperpowersProvider(ctx, control, resolved)
+  })
+
+  ctx.on('skills/change', () => {
+    ctx.logger.debug('[superpowers] skills catalog changed')
+  })
+}
+
+export default { name, inject, Config, apply }

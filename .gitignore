@@ -1,0 +1,43 @@
+# 依赖与构建产物
+node_modules/
+lib/
+dist/
+*.tgz
+*.tsbuildinfo
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 环境与机密
+.env
+.env.*
+!.env.example
+
+# 日志
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# DSH 本地状态（profile 污染勿提交）
+.dsh/
+.superpowers/
+.worktrees/
+.private-journal/
+
+# 测试与覆盖率
+coverage/
+.nyc_output/
+junit.xml
+
+# 临时
+tmp/
+temp/
+.cache/

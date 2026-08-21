@@ -1,0 +1,62 @@
+{
+  "name": "dsh-superpower",
+  "version": "6.3.0",
+  "description": "obra/superpowers 的 DSH 移植版 — 将完整的多智能体开发方法论以原生 DSH 技能开箱即用",
+  "type": "module",
+  "main": "lib/superpowers.js",
+  "types": "lib/superpowers.d.ts",
+  "files": [
+    "lib/",
+    "skills/",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts 2>&1 || echo \"(no eslint config — skipped)\"",
+    "prepare": "npm run build",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "yaml": "^2.4.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-skill": "^0.1.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-skill": "^0.1.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wenaixi/dsh-superpower"
+  },
+  "homepage": "https://github.com/Wenaixi/dsh-superpower",
+  "bugs": {
+    "url": "https://github.com/Wenaixi/dsh-superpower/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "superpowers",
+    "skills",
+    "agent",
+    "methodology"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}
