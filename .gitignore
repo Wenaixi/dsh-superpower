@@ -1,6 +1,5 @@
-# 依赖与构建产物
+# 依赖（构建产物 lib/ 已提交，确保 GitHub 直装无需现场构建）
 node_modules/
-lib/
 dist/
 *.tgz
 *.tsbuildinfo
