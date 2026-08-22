@@ -128,6 +128,8 @@ function findClosingFrontmatter(raw: string, start: number): { start: number; bo
 function parseFrontmatter(raw: string):
   | { data: Record<string, unknown>; body: string }
   | undefined {
+  // 去 BOM：Windows 编辑器易带 \uFEFF，导致首行非 --- 而被静默跳过
+  if (raw.charCodeAt(0) === 0xfeff) raw = raw.slice(1)
   const firstNl = raw.indexOf('\n')
   if (firstNl < 0) return undefined
   if (raw.slice(0, firstNl).replace(/\r$/, '') !== '---') return undefined
@@ -170,7 +172,10 @@ class SuperpowersProvider implements SkillProvider {
     const seen = new Set<string>()
     let entries: import('node:fs').Dirent[]
     try {
-      entries = await readdir(this.skillDir, { withFileTypes: true })
+      entries = await (readdir as unknown as (p: string, o: Record<string, unknown>) => Promise<import('node:fs').Dirent[]>)(
+        this.skillDir,
+        { withFileTypes: true, signal: options.signal } as unknown as Record<string, unknown>,
+      )
     } catch (err: unknown) {
       const code = (err as NodeJS.ErrnoException)?.code
       if (code === 'ENOENT' || code === 'ENOTDIR') {
@@ -251,24 +256,45 @@ class SuperpowersProvider implements SkillProvider {
 
   async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
     options.signal?.throwIfAborted()
-    const locator = candidate.locator as { path: string; directory: string }
-    const raw = await readFile(locator.path, 'utf8').catch(() => undefined)
+    const locator = candidate.locator as { path: string; directory: string } | undefined
+    if (!locator?.path || !locator?.directory) return undefined
+    let raw: string | undefined
+    try {
+      raw = await (readFile as unknown as (p: string, o: Record<string, unknown>) => Promise<string>)(locator.path, {
+        encoding: 'utf8',
+        signal: options.signal,
+      } as unknown as Record<string, unknown>)
+    } catch (err: unknown) {
+      if ((err as DOMException)?.name === 'AbortError') throw err
+      const code = (err as NodeJS.ErrnoException)?.code
+      if (code === 'ENOENT') return undefined
+      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: read failed (${code ?? String(err)})`)
+      return undefined
+    }
     if (raw === undefined) return undefined
     options.signal?.throwIfAborted()
     const parsed = parseFrontmatter(raw)
-    if (!parsed) return undefined
+    if (!parsed) {
+      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: missing or invalid frontmatter`)
+      return undefined
+    }
     const data = parsed.data
     const skillName = stringField(data, 'name')
     const description = stringField(data, 'description')
-    if (!skillName || !description) return undefined
+    if (!skillName || !description) {
+      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: frontmatter requires name and description`)
+      return undefined
+    }
     if (skillName !== candidate.name) {
       // 名称漂移视为失效，触发上层 invalidate
+      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: name drift "${skillName}" != "${candidate.name}"`)
       return undefined
     }
     let invocation: { modelInvocable: boolean; userInvocable: boolean }
     try {
       invocation = parseInvocationPolicy(data)
-    } catch {
+    } catch (e) {
+      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: ${String(e)}`)
       return undefined
     }
     return {
@@ -308,6 +334,7 @@ export function apply(ctx: Context, config: Config): void {
       return new SuperpowersProvider(ctx, control, config)
     })
 
+    // skills/change 为 emit 模式（见 @deepseek-ai/dsh-skill Events 定义：@mode emit），非 waterfall，无需 next()
     const disposeListener = ctx.on('skills/change', () => {
       ctx.logger.debug('[superpowers] skills catalog changed')
     })

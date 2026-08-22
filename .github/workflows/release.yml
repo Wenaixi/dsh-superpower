@@ -100,21 +100,26 @@ jobs:
           fi
           node <<'NODE'
           const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
           const tag = process.env.GITHUB_REF.replace('refs/tags/', '');
           const ver = tag.replace(/^v/, '');
           const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-          // 匹配 ## [ver] 开始，到下一个 ## [ 或文件末尾
+          // 稳健提取：定位标题行后手动切片到下一标题，避免 \z 等无效锚点在含 z 字符时截断
           const escVer = ver.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const re = new RegExp(`^## \\[${escVer}\\][\\s\\S]*?(?=^## \\[|\\z)`, 'm');
-          const m = changelog.match(re);
+          const headerRe = new RegExp(`^## \\[${escVer}\\].*`, 'm');
+          const headerMatch = changelog.match(headerRe);
           let body = '';
-          if (m) {
-            body = m[0].trim();
-            // 去掉第一行标题，Release 标题已单独展示
+          if (headerMatch && headerMatch.index !== undefined) {
+            const start = headerMatch.index;
+            const rest = changelog.slice(start);
+            const nextIdx = rest.slice(headerMatch[0].length).search(/^## \[/m);
+            const section = nextIdx === -1 ? rest : rest.slice(0, headerMatch[0].length + nextIdx);
+            body = section.trim();
             const lines = body.split('\n');
             lines.shift();
             body = lines.join('\n').trim();
-            if (!body) body = m[0].trim();
+            if (!body) body = section.trim();
           } else {
             body = `未在 CHANGELOG.md 中找到 ${tag} 的段落，请查看完整更新日志。`;
           }
@@ -122,12 +127,15 @@ jobs:
           const changelogUrl = `https://github.com/${repo}/blob/${tag}/CHANGELOG.md`;
           const header = `> 更新内容详见 [CHANGELOG.md](${changelogUrl})\n\n`;
           const full = header + body + `\n\n---\n\n**完整更新日志**: [CHANGELOG.md](${changelogUrl})`;
-          fs.writeFileSync('/tmp/release_body.md', full);
+          const outDir = process.env.RUNNER_TEMP || os.tmpdir();
+          const outPath = path.join(outDir, 'release_body.md');
+          fs.writeFileSync(outPath, full);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `body_path=${outPath}\n`);
           // 供后续 step 调试预览（脱敏）
           console.log('--- release body preview (first 500 chars) ---');
           console.log(full.slice(0, 500));
+          console.log(`body_path=${outPath}`);
           NODE
-          echo "body_path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
 
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
