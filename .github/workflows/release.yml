@@ -1,7 +1,8 @@
 # Release：仅在推送 tag（v*）时发布到 npm
 # - 不在 push 到 main 时发布
 # - 需在仓库 Settings > Secrets and variables > Actions 配置 NPM_TOKEN
-#   NPM_TOKEN 需为 npm Access Token（classic 且勾选 publish，或 granular 指向该包）
+#   创建位置：https://www.npmjs.com/settings/你的用户名/tokens/new
+#   选 Classic Token，勾选 Publish 权限（或 Granular 指向 dsh-superpower）
 
 name: Release
 
@@ -28,6 +29,27 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
+      # 必须在 setup-node 之后、publish 之前净化：setup-node 会写入
+      # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} 占位符，
+      # 真正的 token 通过环境变量 NODE_AUTH_TOKEN 注入，切勿手动覆写 ~/.npmrc
+      - name: 净化 NPM_TOKEN 并注入环境
+        env:
+          RAW_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$RAW_TOKEN" ]; then
+            echo "::error::NPM_TOKEN 未配置"
+            echo "::error::请到 https://www.npmjs.com/settings/__TOKEN__/tokens/new 创建 Classic Publish Token，"
+            echo "::error::然后在 GitHub 仓库 Settings > Secrets and variables > Actions 中添加 NPM_TOKEN"
+            exit 1
+          fi
+          CLEAN="$(printf '%s' "$RAW_TOKEN" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          if [ -z "$CLEAN" ]; then
+            echo "::error::NPM_TOKEN 净化后为空，请检查是否粘贴了换行/空白"
+            exit 1
+          fi
+          echo "NODE_AUTH_TOKEN=$CLEAN" >> "$GITHUB_ENV"
+          echo "NPM_TOKEN 已净化并注入 NODE_AUTH_TOKEN（长度 ${#CLEAN}）"
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm typecheck
@@ -37,7 +59,6 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           PKG_VER=$(node -p "require('./package.json').version")
-          # 去掉 tag 前缀 v 后应与 package.json 完全一致
           EXPECT="${TAG#v}"
           if [ "$PKG_VER" != "$EXPECT" ]; then
             echo "::error::tag $TAG 与 package.json version $PKG_VER 不一致"
@@ -45,19 +66,11 @@ jobs:
           fi
           echo "版本一致: $TAG -> $PKG_VER"
 
-      - name: 校验 NPM_TOKEN 已配置
-        run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "::error::NPM_TOKEN 未配置，请在仓库 Settings > Secrets and variables > Actions 中设置"
-            echo "::error::前往 https://www.npmjs.com/settings/__TOKEN__/tokens/new 创建 Classic Token（勾选 Publish 权限）或 Granular Token"
-            exit 1
-          fi
-          echo "NPM_TOKEN 已配置"
+      - name: 校验 npm 认证有效
+        run: npm whoami --registry https://registry.npmjs.org
 
       - name: 发布到 npm
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
