@@ -4,6 +4,9 @@ dist/
 *.tgz
 *.tsbuildinfo
 
+# 项目记忆库（本地宪法，不随版本发布）
+CLAUDE.md
+
 # 系统与编辑器
 .DS_Store
 Thumbs.db

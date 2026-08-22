@@ -5,7 +5,7 @@
 > **维护**：采用规范驱动开发，所有变更以本文为准绳。
 
 - **最后更新**：2026-08-22
-- **上游同步**：`obra/superpowers v6.3.0`（基线）；本包 `package.json#version` 为 `6.3.0-dsh.2`
+- **上游同步**：`obra/superpowers v6.3.0`（基线）；本包 `package.json#version` 为 `6.3.0-dsh.3`
 
 ---
 
@@ -16,10 +16,10 @@
 | **名称** | `dsh-superpower` |
 | **本质** | [obra/superpowers](https://github.com/obra/superpowers) 的 DSH 完整移植版 |
 | **形态** | DSH 组合包（bundle），通过 `dsh.bundle.patch: ./cordis.patch.yml` 对外发布 |
-| **上游版本** | `v6.3.0`（基线），本包 `v6.3.0-dsh.2` 以 `-dsh.N` 在基线上演进 |
+| **上游版本** | `v6.3.0`（基线），本包 `v6.3.0-dsh.3` 以 `-dsh.N` 在基线上演进 |
 | **协议** | MIT，与上游一致 |
 | **语言约定** | 技能正文与对外文档为简体中文；代码、命令、路径、变量名保持原文；不使用 emoji |
-| **远程** | `github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0-dsh.2` |
+| **远程** | `github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0-dsh.3` |
 
 **一句话定位**：把上游 14 个方法论技能以 DSH 原生 `SkillProvider` 注入 `ctx.skills`，`rank 550` 可被项目级覆盖，安装即生效，无需额外配置。
 
@@ -235,7 +235,7 @@ export const Config = Schema.object({
 
 ## 10. Git 与发布
 
-- **远程**：`github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0-dsh.2`（基线 `6.3.0` 同步上游）
+- **远程**：`github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0-dsh.3`（基线 `6.3.0` 同步上游）
 - **版本原则（强制）**：`package.json#version` 的基线 `6.3.0` 与上游 `obra/superpowers` **严格同步**；上游未发新版时**不得**自行 bump `x.y.z`/`x.y.z+1` 正式补丁；仅涉及本仓库文档/构建/发布链路的非功能修正，以预发布后缀 `-dsh.N` 演进（如 `6.3.0-dsh.2`，`N` 单调递增），基线不变，绝不产生与上游不一致的正式版本号
 - **`.gitignore`**：`lib/`、`node_modules/`、`*.tgz`、`.dsh/`、`.superpowers/`、`.worktrees/`、`.private-journal/`、`coverage/`、`tmp/`、`temp/`、`.cache/` 等（已对齐上游并扩展 DSH 本地状态）
 - **发布流程**：
