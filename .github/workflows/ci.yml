@@ -30,4 +30,4 @@ jobs:
       - run: node scripts/verify.mjs
 
       # 打包自检：产物体积与内容
-      - run: pnpm pack --dry-run
+      - run: npm pack --dry-run
