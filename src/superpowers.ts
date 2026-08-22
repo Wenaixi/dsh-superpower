@@ -17,21 +17,22 @@ import type {
   SkillProvider,
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
+import { isSkillName } from '@deepseek-ai/dsh-skill'
 import Schema from '@deepseek-ai/schemastery'
 
 // ---------------------------------------------------------------------------
-// Config
+// Config — 默认值写在 schema 里；可选字段用可选属性声明
 // ---------------------------------------------------------------------------
 
 export const Config = Schema.object({
-  /** 注册到 ctx.skills 的 provider 名称，默认为 superpowers */
+  /** 注册到 ctx.skills 的 provider 名称，默认为 superpowers；不可为保留名 runtime */
   providerName: Schema.string().default('superpowers'),
   /** skill 目录绝对路径，默认取包内 skills/；便于本地调试指向其他目录 */
   skillDir: Schema.string(),
-})
+}).description('dsh-superpower 插件配置')
 
 export interface Config {
-  providerName?: string
+  providerName: string
   skillDir?: string
 }
 
@@ -46,11 +47,13 @@ export const inject = ['skills'] as const
 // 工具函数
 // ---------------------------------------------------------------------------
 
-const SKILL_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const SUPERPOWERS_RANK = 550
+const RUNTIME_PROVIDER = 'runtime'
 
-function isSkillName(v: string): boolean {
-  return SKILL_NAME_RE.test(v)
+function assertNotRuntimeProvider(providerName: string): void {
+  if (providerName === RUNTIME_PROVIDER) {
+    throw new Error(`[superpowers] providerName "${RUNTIME_PROVIDER}" 为保留名，不可用`)
+  }
 }
 
 function stringField(data: Record<string, unknown>, key: string): string | undefined {
@@ -139,14 +142,9 @@ function parseFrontmatter(raw: string):
 function resolveDefaultSkillDir(configSkillDir?: string): string {
   if (configSkillDir) return resolve(configSkillDir)
   // 包内 skills/ 目录：相对于本文件 lib/superpowers.js -> ../skills
-  try {
-    // ESM 环境下通过 import.meta.url 解析
-    const here = fileURLToPath(import.meta.url)
-    return resolve(dirname(here), '..', 'skills')
-  } catch {
-    // 降级：相对 cwd
-    return resolve('skills')
-  }
+  // ESM 产物下 import.meta.url 始终可用，不做静默降级；解析失败则让调用方感知
+  const here = fileURLToPath(import.meta.url)
+  return resolve(dirname(here), '..', 'skills')
 }
 
 // ---------------------------------------------------------------------------
@@ -159,13 +157,17 @@ class SuperpowersProvider implements SkillProvider {
   private readonly ctx: Context
 
   constructor(ctx: Context, _control: SkillProviderControl, config: Config) {
+    assertNotRuntimeProvider(config.providerName)
     this.ctx = ctx
-    this.name = config.providerName ?? 'superpowers'
-    this.skillDir = resolveDefaultSkillDir((config as Record<string, unknown>)['skillDir'] as string | undefined)
+    this.name = config.providerName
+    this.skillDir = resolveDefaultSkillDir(config.skillDir)
   }
 
-  async list(_options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
+  async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
+    options.signal?.throwIfAborted()
+
     const candidates: SkillCandidate[] = []
+    const seen = new Set<string>()
     let entries: import('node:fs').Dirent[]
     try {
       entries = await readdir(this.skillDir, { withFileTypes: true })
@@ -179,20 +181,29 @@ class SuperpowersProvider implements SkillProvider {
     }
 
     for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      options.signal?.throwIfAborted()
       if (!entry.isDirectory()) continue
       if (entry.name.startsWith('.')) continue
       const skillPath = join(this.skillDir, entry.name, 'SKILL.md')
       try {
         await stat(skillPath)
-      } catch {
+      } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException)?.code
+        this.ctx.logger.debug(`[superpowers] skip ${entry.name}: no SKILL.md (${code ?? String(err)})`)
         continue
       }
-      const parsed = await parseSkillFile(skillPath)
+      let parsed: { data: Record<string, unknown>; body: string } | undefined
+      try {
+        parsed = await parseSkillFile(skillPath)
+      } catch (err: unknown) {
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: YAML 解析失败 — ${String(err)}`)
+        continue
+      }
       if (!parsed) {
         this.ctx.logger.warn(`[superpowers] skip ${entry.name}: missing or invalid frontmatter`)
         continue
       }
-      const { data, body } = parsed
+      const { data } = parsed
       const skillName = stringField(data, 'name')
       const description = stringField(data, 'description')
       if (!skillName || !description) {
@@ -201,6 +212,10 @@ class SuperpowersProvider implements SkillProvider {
       }
       if (!isSkillName(skillName)) {
         this.ctx.logger.warn(`[superpowers] skip ${skillPath}: invalid skill name "${skillName}"`)
+        continue
+      }
+      if (seen.has(skillName)) {
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: duplicate skill name "${skillName}"`)
         continue
       }
       // 目录名与 skill name 不一致时以 frontmatter 为准，但打印提示
@@ -215,6 +230,7 @@ class SuperpowersProvider implements SkillProvider {
         continue
       }
 
+      seen.add(skillName)
       candidates.push({
         name: skillName,
         description,
@@ -228,17 +244,17 @@ class SuperpowersProvider implements SkillProvider {
         path: skillPath,
         ...optionalMetadata(data),
       } as SkillCandidate)
-      // body 在 list 阶段不返回，仅用于校验可解析；真正内容由 get() 加载
-      void body
     }
 
     return candidates
   }
 
-  async get(candidate: SkillCandidate, _options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
+  async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
+    options.signal?.throwIfAborted()
     const locator = candidate.locator as { path: string; directory: string }
     const raw = await readFile(locator.path, 'utf8').catch(() => undefined)
     if (raw === undefined) return undefined
+    options.signal?.throwIfAborted()
     const parsed = parseFrontmatter(raw)
     if (!parsed) return undefined
     const data = parsed.data
@@ -271,42 +287,35 @@ class SuperpowersProvider implements SkillProvider {
 }
 
 async function parseSkillFile(path: string): Promise<{ data: Record<string, unknown>; body: string } | undefined> {
-  let raw: string
-  try {
-    raw = await readFile(path, 'utf8')
-  } catch {
-    return undefined
-  }
-  try {
-    const parsed = parseFrontmatter(raw)
-    if (!parsed) return undefined
-    return parsed
-  } catch {
-    return undefined
-  }
+  const raw = await readFile(path, 'utf8')
+  const parsed = parseFrontmatter(raw)
+  if (!parsed) return undefined
+  return parsed
 }
 
 // ---------------------------------------------------------------------------
-// 插件入口
+// 插件入口 — 所有副作用走 ctx 注册，随 fiber 卸载自动清理
 // ---------------------------------------------------------------------------
 
-export function apply(ctx: Context, config: Config = {} as Config): void {
-  // Schemastery 会在外层完成校验与默认值填充，这里做一次兜底
-  const resolved: Config = {
-    providerName: (config as Record<string, unknown>)['providerName'] as string | undefined ?? 'superpowers',
-    ...(config as Record<string, unknown>)['skillDir'] !== undefined
-      ? { skillDir: (config as Record<string, unknown>)['skillDir'] as string }
-      : {},
-  } as Config
+export function apply(ctx: Context, config: Config): void {
+  assertNotRuntimeProvider(config.providerName)
 
-  ctx.logger.info(`[superpowers] registering provider "${resolved.providerName}"`)
+  ctx.logger.info(`[superpowers] registering provider "${config.providerName}"`)
 
-  ctx.skills.registerProvider((control) => {
-    return new SuperpowersProvider(ctx, control, resolved)
-  })
+  // 将 provider 注册与事件监听放入同一个 effect，保证卸载时的清理顺序可控
+  ctx.effect(() => {
+    const disposeProvider = ctx.skills.registerProvider((control) => {
+      return new SuperpowersProvider(ctx, control, config)
+    })
 
-  ctx.on('skills/change', () => {
-    ctx.logger.debug('[superpowers] skills catalog changed')
+    const disposeListener = ctx.on('skills/change', () => {
+      ctx.logger.debug('[superpowers] skills catalog changed')
+    })
+
+    return () => {
+      disposeListener()
+      disposeProvider()
+    }
   })
 }
 
