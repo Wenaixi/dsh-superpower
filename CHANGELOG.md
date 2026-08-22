@@ -1,6 +1,6 @@
 # 更新日志
 
-本文件记录 `dsh-superpower` 的所有值得关注的变更。主版本与上游 [obra/superpowers](https://github.com/obra/superpowers) 严格同步，第四段 `.N` 为本仓库在基线上的演进位。
+本文件记录 `dsh-superpower` 的所有值得关注的变更。主版本与上游 [obra/superpowers](https://github.com/obra/superpowers) 严格同步，`-dsh.N` 为本仓库在基线 `6.3.0` 上的预发布演进位。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
@@ -14,11 +14,11 @@
 ### 修复
 
 - **npm 文档**：`README.md` 在 `6.3.0` 发布包中仍含“还没发布到 npm”等过时描述，本版已修正为 A(npm)/B(GitHub)/C(本地)/D(tarball) 四路径，并补充零白名单说明
-- **构建**：`6.3.0` 已发布到 npm 官方源；因 npm 不允许同版本覆盖，后续文档等非功能修正改用四段位 `6.3.0.N` 递增
+- **构建**：`6.3.0` 已发布到 npm 官方源；因 npm 不允许同版本覆盖，后续文档等非功能修正改用 `-dsh.N` 预发布后缀递增
 
-## [6.3.0] - 2026-08-12
+## [6.3.0-dsh.0] - 2026-08-12
 
-### 同步上游 v6.3.0
+### 同步上游 v6.3.0（初始移植版）
 
 上游发布说明见 [obra/superpowers RELEASE-NOTES.md](https://github.com/obra/superpowers/blob/main/RELEASE-NOTES.md#v630-2026-08-12)。
 
@@ -43,4 +43,6 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
-[6.3.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0
+[6.3.0-dsh.2]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.2
+[6.3.0-dsh.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.1
+[6.3.0-dsh.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.0

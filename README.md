@@ -1,4 +1,4 @@
-# dsh-superpower
+﻿# dsh-superpower
 
 [![Version](https://img.shields.io/badge/version-6.3.0--dsh.2-blue)](./package.json)
 [![npm](https://img.shields.io/npm/v/dsh-superpower?label=npm)](https://www.npmjs.com/package/dsh-superpower)
@@ -14,7 +14,7 @@
 
 - **上游**：https://github.com/obra/superpowers
 - **npm**：https://www.npmjs.com/package/dsh-superpower (`dsh-superpower@6.3.0-dsh.2`, `latest`)
-- **基线版本**：`6.3.0`（上游）；本包在该基线上以第四段 `.N` 演进，当前 `6.3.0-dsh.2`（基线不变，仅第四段递增）
+- **基线版本**：`6.3.0`（上游）；本包在该基线上以预发布后缀 `-dsh.N` 演进，当前 `6.3.0-dsh.2`（基线 `6.3.0` 不变，仅 `N` 递增）
 - **协议**：MIT
 
 ---
@@ -342,7 +342,7 @@ dsh-superpower/
 ## 版本策略
 
 - **基线**：`6.3.0`，与上游 `obra/superpowers` 严格同步。
-- **本包演进**：仅涉及本仓库文档/构建/CI 等非功能修正时，以第四段 `.N` 演进（如 `6.3.0-dsh.1` → `6.3.0-dsh.2`，基线 `6.3.0` 不变，仅 `N` 递增），绝不产生与上游不一致的正式版本号。
+- **本包演进**：仅涉及本仓库文档/构建/CI 等非功能修正时，以预发布后缀 `-dsh.N` 演进（如 `6.3.0-dsh.1` → `6.3.0-dsh.2`，基线 `6.3.0` 不变，仅 `N` 递增），绝不产生与上游不一致的正式版本号。
 - **上游发版后**：同步 `skills/` 内容（保留 `dsh-tools.md`）+ `package.json` 基线 bump，再发布正式版。
 - **发布**：`tag v*` 触发 `release.yml`（需 `NPM_TOKEN`），自动 `npm publish` 并创建 GitHub Release；`push` 到 `main` 仅跑 CI 校验。
 
