@@ -31,7 +31,7 @@
 - **依赖**：
   - 运行时：`yaml ^2.4.2`（frontmatter 解析）
   - 对等依赖：`@deepseek-ai/cordis ^4.0.1`、`@deepseek-ai/dsh-skill ^0.1.1-rc.2`、`@deepseek-ai/schemastery ^3.18.1`
-- **构建**：`tsc -p tsconfig.build.json -> lib/`，产物 `lib/` 不提交，`skills/` 为事实来源
+- **构建**：`tsc -p tsconfig.build.json -> lib/`，产物 `lib/` 已提交（确保 `github:Wenaixi/dsh-superpower` 直装零构建），`skills/` 为事实来源；`package.json` 的 `prepare` 与 `prepack` 均触发构建
 - **包管理**：`pnpm >=9`（DSH profile 管理依赖它）
 - **宿主**：`dsh` CLI（`npm i -g @deepseek-ai/dsh`）
 
@@ -48,7 +48,7 @@
   export const Config = Schema.object({ providerName: Schema.string().default('superpowers'), skillDir: Schema.string() })
   export function apply(ctx: Context, config: Config) { /* ... */ }
   ```
-- 通过 `ctx.skills.registerProvider()` 注册 `SuperpowersProvider`，走 `ctx.effect`/`ctx.on` 注册，卸载时自动清理，HMR 无残留。
+- 通过 `ctx.skills.registerProvider()` 注册 `SuperpowersProvider`，`apply` 内用单一 `ctx.effect` 包裹 `registerProvider` 与 `skills/change` 监听，卸载时按序清理，HMR 无残留；`list`/`get` 均尊重 `options.signal` 并及时 `throwIfAborted()`。
 - **失败要响亮**：`apply` 抛异常则进程终止；单个 `SKILL.md` 非法仅跳过该技能并 `warn`，不阻断整体；`Config` 校验失败在加载时明确报错。
 
 ### 3.2 SkillProvider 设计
@@ -143,7 +143,7 @@ dsh-superpower/
 ├── cordis.patch.yml            # bundle 层：insert: [{ id: superpowers, name: dsh-superpower }]
 ├── package.json                # dsh.bundle.patch + version + repository/homepage/bugs
 ├── tsconfig.json / tsconfig.build.json  # module: NodeNext, outDir: lib
-├── lib/                        # 构建产物（gitignore，不提交）
+├── lib/                        # 构建产物（已提交，确保 github: 直装零构建）
 ├── README.md                   # 中文对外文档（安装/使用/开发/分工）
 ├── CONTRIBUTING.md             # 贡献与上游同步流程
 ├── CHANGELOG.md                # 上游 Release Notes + DSH 移植变更
@@ -199,9 +199,9 @@ pnpm dsh web --patch ./cordis.patch.yml
 
 ```ts
 export const Config = Schema.object({
-  providerName: Schema.string().default('superpowers'),  // 注册到 ctx.skills 的 provider 名
+  providerName: Schema.string().default('superpowers'),  // 注册到 ctx.skills 的 provider 名，不可为保留名 runtime
   skillDir: Schema.string(),                              // 绝对路径，默认取包内 skills/
-})
+}).description('dsh-superpower 插件配置')
 ```
 
 - 无效配置在插件加载时响亮失败，不静默回退。
@@ -267,7 +267,7 @@ export const Config = Schema.object({
 - **Windows 环境**：`dsh` 默认 `pwsh`，`bash-sandbox` 被禁用；`skills` 中 `*.sh` 脚本保留，必要时补充 `*.ps1`，PowerShell 中用 `Get-ChildItem`/`Select-Object -First N` 替代 `ls -la`/`head`
 - **相对资源**：技能内相对资源（`references/*`、`scripts/*`）通过 `resourceBase` 解析，不要写绝对路径
 - **工具映射**：上游技能正文中的 Claude Code 专属工具名已在 `dsh-tools.md` 统一映射，新增技能需同步该表
-- **构建产物**：`lib/` 为 `tsc` 产物，不提交；`skills/` 为事实来源，修改后需重新 `pnpm build` 以更新 `lib/superpowers.js` 的路径解析
+- **构建产物**：`lib/` 为 `tsc` 产物，已提交（`github:` 直装零构建所需）；`skills/` 为事实来源，修改后需重新 `pnpm build` 以更新 `lib/superpowers.js` 的路径解析
 - **分支策略**：`main` 为发布分支，功能开发从 `main` 切 `feat/*`/`fix/*`/`chore/sync-upstream-v*`，经 `verify` 后 PR 回 `main`
 - **提交信息**：简体中文，动词开头，小步提交（一个技能或一个文档一 commit），示例：`feat: 新增 xxx 技能`、`fix: 修正 skillDir 解析在 ESM 下的边界`、`chore: 同步上游 v6.3.1`
 
@@ -283,6 +283,7 @@ export const Config = Schema.object({
 | 2026-08-22 | 新增 `dsh-tools.md` | 在 `using-superpowers` 的 Platform Adaptation 中置顶 DSH 条目，要求优先阅读 |
 | 2026-08-22 | 仓库初始化 | `v6.3.0` 同步上游，推送至 `Wenaixi/dsh-superpower`，标签 `v6.3.0`；`README.md`/`CONTRIBUTING.md`/`CHANGELOG.md` 齐全 |
 | 2026-08-22 | 完善 `CLAUDE.md` | 重构为 13 章完整记忆库，新增“技术栈/架构决策/验证清单/编码规范/Git 发布/常见任务”体系化章节 |
+| 2026-08-22 | 修复 `src/superpowers.ts` 规范与健壮性 | 复用 `dsh-skill/isSkillName`、拒绝保留名 `runtime`、尊重 `options.signal`、`list` 去重、`ctx.effect` 统一清理、移除静默降级、新增 `prepare` 脚本 |
 
 ---
 
