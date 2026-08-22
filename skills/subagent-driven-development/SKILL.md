@@ -1,5 +1,5 @@
 ---
-name: subagent-driven-development
+name: superpower-subagent-driven-development
 description: "在当前会话内执行包含独立任务的实现计划时使用，基于子代理分发与逐任务评审保障质量"
 ---
 
@@ -77,7 +77,7 @@ digraph process {
     "分发最终代码评审者 (../requesting-code-review/code-reviewer.md)" [shape=box];
     "有最终发现项？一次修复分发、一次范围化复审、裁决残留项" [shape=box];
     "最终评审通过：删除本计划的工作区" [shape=box];
-    "使用 superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "使用 superpower-finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "准备：工作区、台账检查、读取计划、飞行前检查" -> "分发实现子代理 (./implementer-prompt.md)";
     "分发实现子代理 (./implementer-prompt.md)" -> "实现者是否提问？";
@@ -106,13 +106,13 @@ digraph process {
     "是否还有剩余任务？" -> "分发最终代码评审者 (../requesting-code-review/code-reviewer.md)" [label="否"];
     "分发最终代码评审者 (../requesting-code-review/code-reviewer.md)" -> "有最终发现项？一次修复分发、一次范围化复审、裁决残留项";
     "有最终发现项？一次修复分发、一次范围化复审、裁决残留项" -> "最终评审通过：删除本计划的工作区";
-    "最终评审通过：删除本计划的工作区" -> "使用 superpowers:finishing-a-development-branch";
+    "最终评审通过：删除本计划的工作区" -> "使用 superpower-finishing-a-development-branch";
 }
 ```
 
 ## 准备工作
 
-确保工作在隔离的工作区中进行：使用 superpowers:using-git-worktrees 创建或校验现有工作区。未经人类伙伴明确同意，绝不在 main/master 分支上开始实现。
+确保工作在隔离的工作区中进行：使用 superpower-using-git-worktrees 创建或校验现有工作区。未经人类伙伴明确同意，绝不在 main/master 分支上开始实现。
 
 对话记忆在压缩后不会保留。在真实会话中，丢失进度的控制器曾重新分发整串已完成任务——这是目前观察到代价最高的失败。请在台账文件中跟踪进度，而不仅依赖 todos。
 
@@ -253,7 +253,7 @@ digraph process {
 
 ## 最终评审
 
-最终全分支评审同样获得产物包：运行 `scripts/review-package PLAN_FILE MERGE_BASE HEAD`（MERGE_BASE = 分支起点提交，例如 `git merge-base main HEAD`）并在最终评审分发中包含打印出的路径，使最终评审者只需读取一个文件，而无需用 git 命令重新推导分支差异。请在当前可用最强模型上分发（见模型选择），使用 superpowers:requesting-code-review 的 [code-reviewer.md](../requesting-code-review/code-reviewer.md)。将台账中延期 minor 与暂存行指向评审者，以便其分拣哪些必须在合并前修复。
+最终全分支评审同样获得产物包：运行 `scripts/review-package PLAN_FILE MERGE_BASE HEAD`（MERGE_BASE = 分支起点提交，例如 `git merge-base main HEAD`）并在最终评审分发中包含打印出的路径，使最终评审者只需读取一个文件，而无需用 git 命令重新推导分支差异。请在当前可用最强模型上分发（见模型选择），使用 superpower-requesting-code-review 的 [code-reviewer.md](../requesting-code-review/code-reviewer.md)。将台账中延期 minor 与暂存行指向评审者，以便其分拣哪些必须在合并前修复。
 
 若最终全分支评审返回发现项，仅分发一个携带完整发现项列表的修复子代理——而非每项发现项各派一个修复者。按发现项分派的修复者各自重建上下文并重跑套件；真实会话中最终评审修复波的成本曾超过所有任务之和。然后对修复波做一次范围化复审（在修复区间上执行 `scripts/review-package PLAN_FILE FIX_BASE HEAD`，使用 [re-review-prompt.md](re-review-prompt.md)）。对残留发现项按任务循环熔断方式裁决：附裁决暂存，或对承重项进行裁决并记入台账。只有上述四类情况能在此让你停下。不存在第二波修复——残留承重发现项将在 finishing-a-development-branch 呈现选项时上抛给人类伙伴。
 
@@ -263,7 +263,7 @@ digraph process {
 
 当最终全分支评审通过且其修复已合并后，删除本计划的工作区（`rm -rf <workspace>`）——记录现已留存于 git 历史。同级目录属于其他计划；保持不动。
 
-使用 superpowers:finishing-a-development-branch。
+使用 superpower-finishing-a-development-branch。
 
 ## 常见托辞
 
@@ -343,5 +343,5 @@ Implementer: 已添加进度报告，提取 PROGRESS_INTERVAL 常量。
 
 [删除本计划的工作区——记录现已留存于 git]
 
-完成！使用 superpowers:finishing-a-development-branch。
+完成！使用 superpower-finishing-a-development-branch。
 ```

@@ -1,5 +1,5 @@
 ---
-name: writing-plans
+name: superpower-writing-plans
 description: "当已具备清晰的需求规格或多步骤任务说明且尚未开始编码时使用，用于把需求拆解为结构清晰、粒度可控、可直接执行、可测试与可验证的完整实施计划"
 ---
 
@@ -13,7 +13,7 @@ description: "当已具备清晰的需求规格或多步骤任务说明且尚未
 
 **开始时声明：** “我将使用 writing-plans 技能来创建实施计划。”
 
-**上下文：** 如在隔离的 worktree 中工作，该 worktree 应在执行时通过 `superpowers:using-git-worktrees` 技能创建。
+**上下文：** 如在隔离的 worktree 中工作，该 worktree 应在执行时通过 `superpower-using-git-worktrees` 技能创建。
 
 **计划保存路径：** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
 - （如用户已指定计划存放位置，则以用户偏好为准）
@@ -53,7 +53,7 @@ description: "当已具备清晰的需求规格或多步骤任务说明且尚未
 ```markdown
 # [功能名称] 实施计划
 
-> **面向 Agent 执行者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 按任务逐项执行本计划。步骤使用复选框（`- [ ]`）语法进行跟踪。
+> **面向 Agent 执行者：** 必需子技能：使用 superpower-subagent-driven-development（推荐）或 superpower-executing-plans 按任务逐项执行本计划。步骤使用复选框（`- [ ]`）语法进行跟踪。
 
 **目标：** [一句话描述本计划构建的内容]
 
@@ -152,9 +152,9 @@ git commit -m "feat: add specific feature"
 **请选择哪种方式？”**
 
 **若选择子代理驱动：**
-- **必需子技能：** 使用 superpowers:subagent-driven-development
+- **必需子技能：** 使用 superpower-subagent-driven-development
 - 每个任务一个全新子代理 + 两阶段评审
 
 **若选择内联执行：**
-- **必需子技能：** 使用 superpowers:executing-plans
+- **必需子技能：** 使用 superpower-executing-plans
 - 批量执行并在检查点进行评审

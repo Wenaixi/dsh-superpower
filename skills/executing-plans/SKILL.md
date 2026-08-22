@@ -1,5 +1,5 @@
 ---
-name: executing-plans
+name: superpower-executing-plans
 description: "适用于已有详细实现计划的场景，在隔离会话中逐项执行、严格校验并在关键节点复核的执行流程"
 ---
 
@@ -11,12 +11,12 @@ description: "适用于已有详细实现计划的场景，在隔离会话中逐
 
 **开始时声明：** "I'm using the executing-plans skill to implement this plan."
 
-**提示：** 告知你的协作伙伴，Superpowers 在可使用 subagent 时效果更好（Claude Code、Codex CLI、Codex App、Copilot CLI 和 Gemini CLI 均符合条件；各平台工具说明见 `../using-superpowers/references/`）。如可使用 subagent，请使用 superpowers:subagent-driven-development 替代本 skill。
+**提示：** 告知你的协作伙伴，Superpowers 在可使用 subagent 时效果更好（Claude Code、Codex CLI、Codex App、Copilot CLI 和 Gemini CLI 均符合条件；各平台工具说明见 `../using-superpowers/references/`）。如可使用 subagent，请使用 superpower-subagent-driven-development 替代本 skill。
 
 ## 执行流程
 
 ### 步骤 1：加载并复审计划
-1. 确保工作区已隔离：使用 superpowers:using-git-worktrees 创建新工作区或校验现有工作区
+1. 确保工作区已隔离：使用 superpower-using-git-worktrees 创建新工作区或校验现有工作区
 2. 读取计划文件
 3. 批判性复审——识别计划中的疑问或风险点
 4. 如有疑问：开始前向协作伙伴提出
@@ -34,7 +34,7 @@ description: "适用于已有详细实现计划的场景，在隔离会话中逐
 
 所有任务完成并校验通过后：
 - 声明："I'm using the finishing-a-development-branch skill to complete this work."
-- **必选子 skill：** 使用 superpowers:finishing-a-development-branch
+- **必选子 skill：** 使用 superpower-finishing-a-development-branch
 - 按该 skill 流程校验测试、提供选项并执行所选方案
 
 ## 何时停止并寻求帮助

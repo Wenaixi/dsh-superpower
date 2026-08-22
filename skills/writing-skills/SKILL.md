@@ -1,5 +1,5 @@
 ---
-name: writing-skills
+name: superpower-writing-skills
 description: "在创建新技能、编辑或重构现有技能，以及在部署前验证技能可用性、合规性与实际生效情况时使用"
 ---
 
@@ -15,7 +15,7 @@ description: "在创建新技能、编辑或重构现有技能，以及在部署
 
 **核心原则：** 如果你没有亲眼看到智能体在没有技能的情况下失败，你就无法判断技能是否真正教会了正确的内容。
 
-**必备前置知识：** 使用本技能前，你必须理解 superpowers:test-driven-development。该技能定义了基本的 红-绿-重构 循环，本技能则是将 TDD 适配到文档编写上。
+**必备前置知识：** 使用本技能前，你必须理解 superpower-test-driven-development。该技能定义了基本的 红-绿-重构 循环，本技能则是将 TDD 适配到文档编写上。
 
 **官方指引：** 关于 Anthropic 官方的技能编写最佳实践，请参见 anthropic-best-practices.md。本文档在以 TDD 为核心的方法之外，提供了额外的模式与指南作为补充。
 
@@ -280,8 +280,8 @@ wc -w skills/path/SKILL.md
 **在编写引用其他技能的文档时：**
 
 仅使用技能名称，并加上明确的必要性标记：
-- ✅ 正确：`**REQUIRED SUB-SKILL:** Use superpowers:test-driven-development`
-- ✅ 正确：`**REQUIRED BACKGROUND:** You MUST understand superpowers:systematic-debugging`
+- ✅ 正确：`**REQUIRED SUB-SKILL:** Use superpower-test-driven-development`
+- ✅ 正确：`**REQUIRED BACKGROUND:** You MUST understand superpower-systematic-debugging`
 - ❌ 错误：`See skills/testing/test-driven-development`（是否必需不明确）
 - ❌ 错误：`@skills/testing/test-driven-development/SKILL.md`（会强制加载，浪费上下文）
 
@@ -390,7 +390,7 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 - 测试运行时不要"边测边改"
 - 删除就是删除
 
-**必备前置知识：** superpowers:test-driven-development 技能解释了为何这很重要，同样的原则也适用于文档。
+**必备前置知识：** superpower-test-driven-development 技能解释了为何这很重要，同样的原则也适用于文档。
 
 ## 测试所有技能类型
 

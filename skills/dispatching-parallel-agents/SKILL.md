@@ -1,5 +1,5 @@
 ---
-name: dispatching-parallel-agents
+name: superpower-dispatching-parallel-agents
 description: "面向 2 个以上无共享状态、无前后依赖的独立任务，并行委派多个子智能体协同处理的高效分发模式"
 ---
 

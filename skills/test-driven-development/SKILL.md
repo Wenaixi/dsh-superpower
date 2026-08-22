@@ -1,5 +1,5 @@
 ---
-name: test-driven-development
+name: superpower-test-driven-development
 description: "实现新功能或修复缺陷时，编写实现代码前先写测试的测试驱动开发完整指南与流程约束规范"
 ---
 

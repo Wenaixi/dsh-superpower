@@ -1,5 +1,5 @@
 ---
-name: brainstorming
+name: superpower-brainstorming
 description: "创意工作前必用：创建功能、构建组件、新增能力或变更行为前，先澄清用户意图、需求与设计，再进入实现。"
 ---
 

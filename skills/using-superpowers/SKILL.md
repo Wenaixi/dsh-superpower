@@ -1,5 +1,5 @@
 ---
-name: using-superpowers
+name: superpower-using-superpowers
 description: "适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题"
 ---
 
@@ -27,8 +27,8 @@ description: "适用于任何对话开始前，建立技能查找与调用规范
 
 当多个技能同时适用时，流程类技能优先——它们决定方法论，然后由实现类技能（如 frontend-design 等）负责落地。头脑风暴与系统化调试是 Superpowers 中最常见的流程技能，但该规则适用于所有技能。
 
-- "Let's build X" → 优先使用 superpowers:brainstorming，再使用实现类技能。
-- "Fix this bug" → 优先使用 superpowers:systematic-debugging，再使用领域技能。
+- "Let's build X" → 优先使用 superpower-brainstorming，再使用实现类技能。
+- "Fix this bug" → 优先使用 superpower-systematic-debugging，再使用领域技能。
 
 ## 警示信号
 

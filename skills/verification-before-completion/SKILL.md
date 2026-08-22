@@ -1,5 +1,5 @@
 ---
-name: verification-before-completion
+name: superpower-verification-before-completion
 description: "在声称完成、修复或通过前强制执行校验，用于提交或创建PR前必须运行验证命令并确认输出，始终以证据为准而非断言"
 ---
 

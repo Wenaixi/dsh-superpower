@@ -1,5 +1,5 @@
 ---
-name: systematic-debugging
+name: superpower-systematic-debugging
 description: "遇到缺陷、测试失败或异常行为时使用，要求先完成根因分析再提出修复，确保系统化调试"
 ---
 
@@ -174,7 +174,7 @@ description: "遇到缺陷、测试失败或异常行为时使用，要求先完
     - 如有测试框架则编写自动化测试
     - 若无框架则编写一次性复现脚本
     - 修复前必须具备该用例
-    - 编写规范的失败测试请使用 `superpowers:test-driven-development` 技能
+    - 编写规范的失败测试请使用 `superpower-test-driven-development` 技能
 
 2. **实施单一修复**
     - 针对已确认的根因
@@ -186,7 +186,7 @@ description: "遇到缺陷、测试失败或异常行为时使用，要求先完
     - 用例现在通过了吗？
     - 是否破坏了其他测试？
     - 问题是否真正解决？
-    - 在宣称成功前，请使用 `superpowers:verification-before-completion` 技能进行校验
+    - 在宣称成功前，请使用 `superpower-verification-before-completion` 技能进行校验
 
 4. **若修复未生效**
     - 停下来

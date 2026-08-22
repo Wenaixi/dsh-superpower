@@ -1,5 +1,5 @@
 ---
-name: using-git-worktrees
+name: superpower-using-git-worktrees
 description: "适用于需与当前工作区隔离的功能开发或执行实现计划前，通过原生工具优先、git worktree 兜底的方式确保独立工作区就绪"
 ---
 

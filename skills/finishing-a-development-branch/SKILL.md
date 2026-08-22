@@ -1,5 +1,5 @@
 ---
-name: finishing-a-development-branch
+name: superpower-finishing-a-development-branch
 description: "实现完成且全部测试通过后，用于决定分支集成方式，支持本地合并、创建 PR 或保留分支等完整收尾流程。"
 ---
 
