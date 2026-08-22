@@ -1,198 +1,290 @@
-﻿# dsh-superpower
+# dsh-superpower
 
 [![Version](https://img.shields.io/badge/version-6.3.0--dsh.2-blue)](./package.json)
 [![npm](https://img.shields.io/npm/v/dsh-superpower?label=npm)](https://www.npmjs.com/package/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933)](./package.json)
-[![Skills](https://img.shields.io/badge/skills-14-ff6b6b)](#鍖呭惈鎶€鑳?
+[![Skills](https://img.shields.io/badge/skills-14-ff6b6b)](#包含技能)
+[![CI](https://github.com/Wenaixi/dsh-superpower/actions/workflows/ci.yml/badge.svg)](https://github.com/Wenaixi/dsh-superpower/actions)
 
-[obra/superpowers](https://github.com/obra/superpowers) 鐨?**DSH 绉绘鐗?* 鈥?灏嗗畬鏁寸殑澶氭櫤鑳戒綋杞欢寮€鍙戞柟娉曡浠ュ師鐢?DSH 鎶€鑳界殑褰㈠紡寮€绠卞嵆鐢ㄣ€?
-> 涓婃父 `obra/superpowers v6.3.0` 鐨勫畬鏁寸Щ妞嶏細14 涓柟娉曡鎶€鑳戒互 DSH 鍘熺敓 `SkillProvider` 娉ㄥ叆 `ctx.skills`锛宍rank 550` 鍙椤圭洰绾ц鐩栵紝瀹夎鍗崇敓鏁堛€傛墍鏈夋妧鑳芥鏂囧凡涓枃鍖栥€?
-- **涓婃父**锛歨ttps://github.com/obra/superpowers
-- **npm**锛歨ttps://www.npmjs.com/package/dsh-superpower
-- **鐗堟湰鍚屾**锛氭湰浠撳簱鐗堟湰鍙蜂笌涓婃父 `package.json` 淇濇寔涓€鑷达紙褰撳墠 `6.3.0`锛?- **鍗忚**锛歁IT
+[obra/superpowers](https://github.com/obra/superpowers) 的 **DSH 完整移植版** — 将久经验证的多智能体软件开发方法论，以 DSH 原生技能的形式开箱即用。
+
+> 上游 `obra/superpowers v6.3.0` 的完整移植：14 个方法论技能以 DSH 原生 `SkillProvider` 注入 `ctx.skills`，`rank 550` 可被项目级覆盖，安装即生效。所有技能正文已中文化，零构建、零白名单、热更新友好。
+
+- **上游**：https://github.com/obra/superpowers
+- **npm**：https://www.npmjs.com/package/dsh-superpower (`dsh-superpower@6.3.0-dsh.2`, `latest`)
+- **基线版本**：`6.3.0`（上游）；本包采用预发布后缀 `-dsh.N` 演进，当前 `6.3.0-dsh.2`
+- **协议**：MIT
 
 ---
 
-> **3 绉掗€熻锛氫竴涓汉鎷垮埌鎬庝箞鐢紵**
+> ### 3 秒速览：一个人拿到怎么用？
 >
-> 宸茶濂?`dsh` 鐨勮瘽锛岄€変换鎰忎竴琛岋紙闆舵瀯寤恒€侀浂閰嶇疆銆侀浂鐧藉悕鍗曪級锛岃鍒颁富宸ヤ綔鍙?`web`锛?> ```bash
-> # 鏂瑰紡 A 鈥?npm锛堟渶绠€锛屽凡鍙戝竷鍒板畼鏂规簮锛?> dsh plugin --profile web add dsh-superpower
+> 已装好 `dsh` 的话，任选一行（零构建、零配置、零白名单），装到**主工作台 `web`**：
 >
-> # 鏂瑰紡 B 鈥?GitHub 鐩磋锛堟棤闇€ npm 璐﹀彿/鐧诲綍锛?> dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.1
+> ```bash
+> # 方式 A — npm（最简，已发布到官方源）
+> dsh plugin --profile web add dsh-superpower
 >
-> dsh --profile web --dump-config   # 鐪嬪埌 "# == dsh-superpower" 鍗虫垚鍔?> dsh --profile web                 # 杩涗細璇濓紝鎶€鑳借嚜鍔ㄥ彲鐢?> ```
-> > `web` 鏄?DSH 榛樿鐨勪富宸ヤ綔鍙帮紱涔熷彲鎹㈡垚浠绘剰 profile 鍚嶏紙濡?`demo`銆乣my-project`锛夛紝涓嬫枃鍧囦互 `web` 涓轰緥銆?> 涓ょ鏂瑰紡鍧囧凡鎻愪氦 `lib/` 浜х墿锛屽紑绠卞嵆鐢紝鏃犻渶 `onlyBuiltDependencies` 鐧藉悕鍗曘€?
+> # 方式 B — GitHub 直装（无需 npm 账号/登录）
+> dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2
+>
+> dsh --profile web --dump-config   # 看到 "# == dsh-superpower" 即成功
+> dsh --profile web                 # 进会话，技能自动可用
+> ```
+>
+> `web` 是 DSH 默认的主工作台（`dsh`/`dsh web` 不带 `--profile` 时即它）；装到其它 profile 只需改 `--profile` 后的名字。下文均以 `web` 为例。两种方式均已提交 `lib/` 产物，开箱即用，无需 `onlyBuiltDependencies` 白名单。
+
 ---
 
-## 鐩綍
+## 目录
 
-- [鐗规€(#鐗规€?
-- [鍖呭惈鎶€鑳絔(#鍖呭惈鎶€鑳?
-- [瀹夎](#瀹夎)
-  - [鍓嶇疆瑕佹眰](#鍓嶇疆瑕佹眰)
-  - [鏂瑰紡 A锛歯pm 涓€閿畨瑁咃紙鎺ㄨ崘锛塢(#鏂瑰紡-a-npm-涓€閿畨瑁呮帹鑽?
-  - [鏂瑰紡 B锛欸itHub 鐩磋锛堝閫夛級](#鏂瑰紡-b-github-鐩磋澶囬€夐浂閰嶇疆)
-  - [鏂瑰紡 C锛氭湰鍦板厠闅嗭紙浜屾寮€鍙戯級](#鏂瑰紡-c鏈湴鍏嬮殕浜屾寮€鍙戣仈璋?
-  - [鏂瑰紡 D锛歵arball 绂荤嚎鍒嗗彂](#鏂瑰紡-d-tarball-绂荤嚎鍒嗗彂)
-  - [楠岃瘉瀹夎鎴愬姛](#楠岃瘉瀹夎鎴愬姛)
-  - [鏇存柊涓庡嵏杞絔(#鏇存柊涓庡嵏杞?
-- [浣跨敤](#浣跨敤)
-- [涓?DSH 鍘熺敓鑳藉姏鐨勫垎宸(#涓?dsh-鍘熺敓鑳藉姏鐨勫垎宸?
-- [鏈湴寮€鍙慮(#鏈湴寮€鍙?
-- [鐩綍缁撴瀯](#鐩綍缁撴瀯)
-- [鐗堟湰绛栫暐](#鐗堟湰绛栫暐)
-- [甯歌闂](#甯歌闂)
-- [璐＄尞](#璐＄尞)
-- [鏇存柊鏃ュ織](#鏇存柊鏃ュ織)
-- [鍗忚](#鍗忚)
-- [鑷磋阿](#鑷磋阿)
+- [为什么需要它](#为什么需要它)
+- [特性](#特性)
+- [包含技能](#包含技能)
+- [工作原理](#工作原理)
+- [安装](#安装)
+- [使用](#使用)
+- [与 DSH 原生能力的分工](#与-dsh-原生能力的分工)
+- [工具映射](#工具映射)
+- [本地开发](#本地开发)
+- [目录结构](#目录结构)
+- [版本策略](#版本策略)
+- [常见问题](#常见问题)
+- [贡献](#贡献)
+- [更新日志](#更新日志)
+- [协议](#协议)
+- [致谢](#致谢)
 
-## 鐗规€?
-- **闆朵镜鍏?*锛氫互 DSH 鏍囧噯 `SkillProvider` 娉ㄥ唽锛屼笉鏂板 `ctx` 閿紝涓嶆薄鏌撳涓讳簨浠?- **鍙鐩?*锛歚rank 550` 浠嬩簬 `user-agents (500)` 涓?`bundled (600)` 涔嬮棿锛宍.dsh/skills` 涓?`~/.dsh/skills` 鍙寜鍚嶈鐩?- **鍏ㄤ腑鏂囧寲**锛?4 涓?`SKILL.md` 鍙?20+ 杈呭姪鏂囨。鍧囧凡璇戜负绠€浣撲腑鏂囷紝浠ｇ爜/鍛戒护/璺緞淇濇寔鍘熸枃
-- **闆舵瀯寤哄畨瑁?*锛氫粨搴撳唴宸叉彁浜?`lib/` 浜х墿锛宍prepack` 浠呭湪鎵撳寘鏃惰Е鍙戯紝`dsh plugin add` 鏃犻渶 `onlyBuiltDependencies` 鐧藉悕鍗?- **DSH 宸ュ叿鏄犲皠**锛歚Bash鈫抪wsh/bash`銆乣Read/Write/Edit鈫抐s`銆乣Glob/Grep鈫抐s-search`銆乣Task/Subagent鈫抯ubagent/workflow` 绛夎瑙?[`skills/using-superpowers/references/dsh-tools.md`](./skills/using-superpowers/references/dsh-tools.md)
-- **鐑洿鏂板弸濂?*锛歚ctx.skills.registerProvider` 璧?`ctx.effect`锛孒MR 鏃惰嚜鍔ㄦ竻鐞嗛噸寤?
-## 鍖呭惈鎶€鑳?
-| 鎶€鑳?| 瑙﹀彂鏃舵満 | 璇存槑 |
-|---|---|---|
-| `using-superpowers` | 浠绘剰浼氳瘽璧风偣锛?% 鍘熷垯锛?| 寮哄埗鍏堝仛鎶€鑳芥鏌ワ紝绂佹鏃犵害鏉熺洿鎺ョ紪鐮?|
-| `brainstorming` | 浠讳綍鍒涙剰/鏂板姛鑳藉伐浣滃墠 | 涓夎矾寰勫垎绫伙紙Spike / Bounded / Architectural锛? 鑻忔牸鎷夊簳寮忚璁＄粏鍖?|
-| `writing-plans` | 璁捐鑾锋壒鍚?| 鍒囩墖涓?2鈥? 鍒嗛挓鍙墽琛岀殑缁嗙矑搴︿换鍔?|
-| `using-git-worktrees` | 璁捐鑾锋壒鍚庛€佺紪鐮佸墠 | 闅旂鍒嗘敮 + 骞插噣鍩虹嚎楠岃瘉 |
-| `executing-plans` | 宸叉湁璁″垝鏃?| 鍒嗘壒鎵ц + 浜哄伐妫€鏌ョ偣 |
-| `subagent-driven-development` | 宸叉湁璁″垝鏃讹紙鎺ㄨ崘锛?| 姣忎换鍔′竴瀛愭櫤鑳戒綋 + 涓ら樁娈佃瘎瀹?|
-| `dispatching-parallel-agents` | 闇€瑕佸苟琛屾椂 | 骞跺彂瀛愭櫤鑳戒綋缂栨帓 |
-| `test-driven-development` | 浠讳綍鍔熻兘/缂洪櫡淇鏃?| RED-GREEN-REFACTOR 閾佸緥 |
-| `systematic-debugging` | 淇缂洪櫡鏃?| 4 闃舵鏍瑰洜杩借釜 + 绾垫繁闃插尽 + 鏉′欢绛夊緟 |
-| `verification-before-completion` | 澹扮О瀹屾垚鍓?| 蹇呴』杩愯楠岃瘉鍛戒护骞剁敤璇佹嵁璇磋瘽 |
-| `requesting-code-review` | 浠诲姟闂?| 鎸変弗閲嶅害鎶ュ憡闂锛孋ritical 绾у埆闃诲 |
-| `receiving-code-review` | 鏀跺埌璇勫鍚?| 鍥炲簲鍙嶉 |
-| `finishing-a-development-branch` | 鍏ㄩ儴浠诲姟瀹屾垚鍚?| 楠岃瘉娴嬭瘯 + 鍚堝苟/PR/淇濈暀/涓㈠純鍐崇瓥 |
-| `writing-skills` | 鍒涘缓鏂版妧鑳芥椂 | 鎶€鑳界紪鍐欐渶浣冲疄璺?|
+## 为什么需要它
 
-## 瀹夎
+直接让模型写代码，往往一步到位、跳过设计，导致返工与技术债。`superpowers` 是一套**强制性方法论**而非可选建议：
 
-### 鍓嶇疆瑕佹眰
+1. **先设计再编码** — 任何创意工作前必须经过 `brainstorming`，把意图收敛为可评审的规格。
+2. **计划可执行** — `writing-plans` 把规格切片为 2–5 分钟粒度的任务，`executing-plans`/`subagent-driven-development` 按计划推进，不偏离。
+3. **测试先行** — `test-driven-development` 的 RED-GREEN-REFACTOR 铁律贯穿所有实现。
+4. **调试有章法** — `systematic-debugging` → `verification-before-completion` 形成闭环，杜绝“看起来修好了”。
+5. **协作可审计** — `requesting/receiving-code-review` 与 `finishing-a-development-branch` 覆盖评审与集成全流程。
 
-- **Node.js** `>=20`锛坄node -v` 妫€鏌ワ級
-- **pnpm** `>=9`锛圖SH 鐨?profile 瀹夎渚濊禆瀹冿紝`pnpm -v` 妫€鏌ワ級
-- **dsh CLI**锛坄dsh --version` 妫€鏌ワ紱鏈畨瑁呮墽琛?`npm i -g @deepseek-ai/dsh`锛?
-> 棣栨浣跨敤 `dsh plugin` 浼氳嚜鍔ㄤ互 `@deepseek-ai/dsh-base` 鍒濆鍖栧搴?profile锛屾棤闇€鎵嬪姩鍒涘缓銆?
-### 鏂瑰紡 A锛歯pm 涓€閿畨瑁咃紙鎺ㄨ崘锛?
-> 宸插彂甯冨埌 [npm 瀹樻柟婧怾(https://www.npmjs.com/package/dsh-superpower)锛屽浗鍐呴暅鍍忥紙`npmmirror`锛夊悓姝ュ彲鑳芥湁鍑犲垎閽熷欢杩熴€?> 涓嬫枃浠ヤ富宸ヤ綔鍙?`web` 涓轰緥锛岃鍒板叾瀹?profile 鍙渶鏀?`--profile` 鍚庣殑鍚嶅瓧銆傚畨瑁呮椂鑷姩璧?`dsh.bundle`锛屾棤闇€鎵嬪姩閰嶇疆 `cordis.patch.yml`銆?
-```bash
-# 瀹夎鍒颁富宸ヤ綔鍙?web锛堣嚜鍔ㄨ蛋 dsh.bundle锛岄娆′細鑷姩鍒濆鍖栬 profile锛?dsh plugin --profile web add dsh-superpower
+本移植版把上述约束完整搬到 DSH：技能即 `SkillProvider`，随 `dsh.bundle` 安装与卸载，不污染用户目录，HMR 时自动重建。
 
-# 閿佸畾鍒扮簿纭増鏈紙鍙€夛紝鎺ㄨ崘鍥㈤槦鍗忎綔鏃堕攣瀹氾級
-dsh plugin --profile web add dsh-superpower@6.3.0-dsh.1
+## 特性
 
-# 鏂█灞傚凡鐢熸晥锛堝簲鑳界湅鍒?"# == dsh-superpower" 涓?"id: superpowers"锛?dsh --profile web --dump-config | grep -A2 "dsh-superpower"
+- **零侵入**：以 DSH 标准 `SkillProvider` 注册，不新增 `ctx` 键，不污染宿主事件。
+- **可覆盖**：`rank 550` 介于 `user-agents (500)` 与 `bundled (600)` 之间，`.dsh/skills` / `~/.dsh/skills` 可按名覆盖本包，本包可覆盖内置 `bundled`。
+- **全中文化**：14 个 `SKILL.md` 及 20+ 辅助文档均已译为简体中文，代码/命令/路径保持原文。
+- **零构建安装**：仓库内已提交 `lib/` 产物，`prepack` 仅在 `npm pack`/`npm publish` 时触发，`dsh plugin add` 无需 `onlyBuiltDependencies` 白名单。
+- **DSH 工具映射**：`Bash→pwsh/bash`、`Read/Write/Edit→fs`、`Glob/Grep→fs-search`、`Task/Subagent→subagent/workflow` 等，详见 [`skills/using-superpowers/references/dsh-tools.md`](./skills/using-superpowers/references/dsh-tools.md)。
+- **热更新友好**：`ctx.skills.registerProvider` 走 `ctx.effect`，HMR 时自动清理重建。
+- **CI 保障**：`push`/`PR` 仅跑校验（`build`/`typecheck`/`verify`/`pack`），`tag v*` 才发布到 npm，需 `NPM_TOKEN`（Bypass 2FA 的 Granular Token）。
 
-# 鍚姩锛屾妧鑳借嚜鍔ㄥ彲鐢?dsh --profile web
+## 包含技能
+
+| 技能 | 触发时机 | 说明 | 辅助 |
+|---|---:|---|---|
+| `using-superpowers` | 任意会话起点（1% 原则） | 强制先做技能检查，禁止无约束直接编码 | `references/dsh-tools.md`（DSH 专属） |
+| `brainstorming` | 任何创意/新功能工作前 | 三路径分类（Spike / Bounded / Architectural）+ 苏格拉底式设计细化 | `spec-document-reviewer-prompt.md`、`visual-companion.md`、`scripts/*` |
+| `writing-plans` | 设计获批后 | 切片为 2–5 分钟可执行的细粒度任务 | `plan-document-reviewer-prompt.md` |
+| `using-git-worktrees` | 设计获批后、编码前 | 隔离分支 + 干净基线验证 | — |
+| `executing-plans` | 已有计划时 | 分批执行 + 人工检查点 | — |
+| `subagent-driven-development` | 已有计划时（推荐） | 每任务一子智能体 + 两阶段评审 | `implementer/reviewer/re-review` 提示词 + `scripts/{review-package,sdd-workspace,task-brief}` |
+| `dispatching-parallel-agents` | 需要并行时 | 并发子智能体编排 | — |
+| `test-driven-development` | 任何功能/缺陷修复时 | RED-GREEN-REFACTOR 铁律 | `writing-good-tests.md` |
+| `systematic-debugging` | 修复缺陷时 | 4 阶段根因追踪 + 纵深防御 + 条件等待 | `root-cause-tracing.md` 等 + 示例/脚本 |
+| `verification-before-completion` | 声称完成前 | 必须运行验证命令并用证据说话 | — |
+| `requesting-code-review` | 任务间 | 按严重度报告问题，Critical 级别阻塞 | `code-reviewer.md` |
+| `receiving-code-review` | 收到评审后 | 回应反馈 | — |
+| `finishing-a-development-branch` | 全部任务完成后 | 验证测试 + 合并/PR/保留/丢弃决策 | — |
+| `writing-skills` | 创建新技能时 | 技能编写最佳实践 | `testing-skills-with-subagents.md` 等 |
+
+> 技能的 `frontmatter.name` 保持英文 kebab-case，`description` 为 40–80 字简体中文；正文自然语言为中文，代码/命令/路径不译。
+
+## 工作原理
+
+```
+用户意图
+  → using-superpowers（1% 原则：先查技能）
+  → brainstorming（Spike / Bounded / Architectural 分级，产出规格）
+  → writing-plans（切片为可验证任务）
+  → using-git-worktrees（隔离分支，可选）
+  → executing-plans / subagent-driven-development（按计划执行，TDD 全程）
+  → systematic-debugging / verification-before-completion（缺陷闭环）
+  → requesting/receiving-code-review（评审）
+  → finishing-a-development-branch（集成）
 ```
 
-### 鏂瑰紡 B锛欸itHub 鐩磋锛堝閫夛紝闆堕厤缃級
+- **计划与执行的分离**：`writing-plans` 只产出计划，不写实现代码；`executing-plans`/`subagent-driven-development` 只按计划执行。
+- **两阶段评审**：`subagent-driven-development` 每个子智能体产出后，先合规评审再质量评审，未通过则 `re-review` 闭环。
+- **工具无关**：技能正文不硬编码工具名，具体映射由 `dsh-tools.md` 统一承载（见下）。
 
-閫傚悎 **鈥滀笉鎯宠蛋 npm銆佹垨 npm 闀滃儚灏氭湭鍚屾鈥?* 鐨勫満鏅€傜洿鎺ヤ粠 GitHub 鎷夊彇锛屾棤闇€鏈満鏈夋湰浠撳簱鐨勬鍑恒€傚悓鏍疯嚜鍔ㄨ蛋 `dsh.bundle`銆?
+## 安装
+
+### 前置要求
+
+- **Node.js** `>=20`（`node -v`）
+- **pnpm** `>=9`（`pnpm -v`，DSH 的 profile 安装依赖它）
+- **dsh CLI**（`dsh --version`；未安装执行 `npm i -g @deepseek-ai/dsh`）
+
+> 首次 `dsh plugin --profile <name> add ...` 会自动以 `@deepseek-ai/dsh-base` 初始化该 profile，无需手动创建。下文以主工作台 `web` 为例。
+
+### 方式 A：npm 一键安装（推荐）
+
+> 已发布到 [npm 官方源](https://www.npmjs.com/package/dsh-superpower)，当前 `latest` 为 `6.3.0-dsh.2`。国内镜像 `npmmirror` 同步有数分钟延迟。
+
 ```bash
-# 閿佸畾鍒版爣绛撅紙鎺ㄨ崘锛岄伩鍏嶅悗缁帹閫佹倓鎮勬敼鍙樿繍琛屽唴瀹癸級
-dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.1
+# 安装到主工作台 web（自动走 dsh.bundle，无需手动改 cordis.patch.yml）
+dsh plugin --profile web add dsh-superpower
 
-# 鎯宠窡鏈€鏂?main 鍙幓鎺夊悗缂€
-dsh plugin --profile web add github:Wenaixi/dsh-superpower
-```
+# 锁定到精确版本（推荐团队协作）
+dsh plugin --profile web add dsh-superpower@6.3.0-dsh.2
 
-> **鏃犻渶鐧藉悕鍗?*锛氳嚜 `v6.3.0 (596b979)` 璧凤紝浠撳簱宸叉彁浜?`lib/` 浜х墿锛岃剼鏈敱 `prepare` 鏀逛负 `prepack`锛堜粎 `npm pack`/`npm publish` 鏃惰Е鍙戯級锛屽洜姝?`dsh plugin add github:...` 涓嶅啀瑙﹀彂 pnpm 鐨?`onlyBuiltDependencies` 鎷︽埅锛屽紑绠卞嵆鐢ㄣ€?
-### 鏂瑰紡 C锛氭湰鍦板厠闅嗭紙浜屾寮€鍙?鑱旇皟锛?
-閫傚悎瑕佹敼鎶€鑳芥鏂囥€佽皟 `rank`銆佹垨瀵圭収涓婃父鍋氫腑鏂囧寲鐨勫紑鍙戣€呫€傜ず渚嬭鍒颁富宸ヤ綔鍙?`web`锛屽叾瀹?profile 鍚岀悊銆?
-```bash
-git clone https://github.com/Wenaixi/dsh-superpower.git
-cd dsh-superpower
-pnpm install && pnpm build        # 浜х墿杈撳嚭鍒?lib/锛宭ib/ 宸叉彁浜や絾鏈湴鏀瑰姩鍚庨渶閲嶅缓
-node scripts/verify.mjs            # 鍐掔儫锛氬簲杈撳嚭 14/14 PASS
+# 断言层已生效（应看到 "# == dsh-superpower" 与 "id: superpowers"）
+dsh --profile web --dump-config | grep -A2 "dsh-superpower"
 
-# 浠ユ湰鍦拌矾寰勫畨瑁呭埌涓诲伐浣滃彴锛坧npm 浼氫互 link: 褰㈠紡渚濊禆锛屾敼鍔ㄥ悗閲嶆柊 pnpm build 鍗冲彲鐢熸晥锛?dsh plugin --profile web add ./
-dsh --profile web --dump-config   # 鏂█ "# == dsh-superpower"
+# 启动，技能自动可用
 dsh --profile web
 ```
 
-鍚庣画鏀瑰姩 `skills/` 鎴?`src/` 鍚庯紝鍙渶 `pnpm build`锛岄噸鍚搴?profile 鍗崇敓鏁堬紙`ctx.effect` 浼氳嚜鍔ㄦ竻鐞嗘棫 Provider锛夈€?
-### 鏂瑰紡 D锛歵arball 绂荤嚎鍒嗗彂
+### 方式 B：GitHub 直装（备选，零配置）
+
+适合 **“不想走 npm、或镜像尚未同步”** 的场景。同样自动走 `dsh.bundle`。
+
+```bash
+# 锁定到标签（推荐）
+dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2
+
+# 跟最新 main（不推荐长期锁定）
+dsh plugin --profile web add github:Wenaixi/dsh-superpower
+```
+
+> **无需白名单**：自 `v6.3.0` 起仓库已提交 `lib/` 产物，`package.json` 脚本由 `prepare` 改为 `prepack`（仅 `npm pack`/`publish` 时触发），因此 `dsh plugin add github:...` 不再触发 pnpm 的 `onlyBuiltDependencies` 拦截。
+
+### 方式 C：本地克隆（二次开发/联调）
+
+```bash
+git clone https://github.com/Wenaixi/dsh-superpower.git
+cd dsh-superpower
+pnpm install && pnpm build        # 产物输出到 lib/，本地改动后需重建
+node scripts/verify.mjs            # 冒烟：应输出 14/14 PASS
+
+# 以本地路径安装到主工作台（link: 形式，改动后 pnpm build + 重启 profile 即生效）
+dsh plugin --profile web add ./
+dsh --profile web --dump-config   # 断言 "# == dsh-superpower"
+dsh --profile web
+```
+
+### 方式 D：tarball 离线分发
 
 ```bash
 pnpm build
-pnpm pack                      # 浜у嚭 dsh-superpower-6.3.0-dsh.1.tgz锛堝凡鍖呭惈 lib/ + skills/锛?
-# 鎺ユ敹鏂癸紙鏃犻渶鏈粨搴撱€佹棤闇€鏋勫缓锛夛紝绀轰緥瑁呭埌涓诲伐浣滃彴 web锛?dsh plugin --profile web add ./dsh-superpower-6.3.0-dsh.1.tgz
+pnpm pack                      # 产出 dsh-superpower-6.3.0-dsh.2.tgz（含 lib/ + skills/）
+
+# 接收方无需本仓库、无需构建：
+dsh plugin --profile web add ./dsh-superpower-6.3.0-dsh.2.tgz
 ```
 
-tarball 宸插寘鍚瀯寤轰骇鐗╋紝鍚屾牱鏃犻渶鐧藉悕鍗曘€?
-### 楠岃瘉瀹夎鎴愬姛
+### 验证安装成功
 
 ```bash
-# 1. 閰嶇疆灞傚彲瑙侊紙浠ヤ富宸ヤ綔鍙?web 涓轰緥锛?dsh --profile web --dump-config | grep -A2 "dsh-superpower"
-# 鏈熸湜杈撳嚭锛?# # == dsh-superpower
+# 1. 配置层可见
+dsh --profile web --dump-config | grep -A2 "dsh-superpower"
+# # == dsh-superpower
 # - id: superpowers
 #   name: dsh-superpower
 
-# 2. 鍐掔儫锛堟湰鍦版鍑烘椂锛?node scripts/verify.mjs
-# 鏈熸湜锛歠ound 14 skill directories ... ALL PASS
+# 2. 冒烟（本地检出时）
+node scripts/verify.mjs
+# found 14 skill directories ... ALL PASS
 
-# 3. 浼氳瘽鍐咃紙妯″瀷渚э紝瀹夎鍚庨噸鍚?profile 鍐嶉獙璇侊級
-# await ctx.skills.list({ cwd: "/path/to/project" }) // 14 鏉★紝provider: superpowers, source: bundled
-# await ctx.skills.get("brainstorming")               // 杩斿洖鍚腑鏂囨鏂囩殑瀹屾暣 SKILL.md
+# 3. 会话内（模型侧，需重启 profile 后）
+# await ctx.skills.list({ cwd: "/path/to/project" }) // 14 条，provider: superpowers
+# await ctx.skills.get("brainstorming")               // 含中文正文的完整 SKILL.md
 
-# 4. npm 鍙鎬?npm view dsh-superpower version --registry https://registry.npmjs.org
-# 6.3.0-dsh.1
+# 4. npm 可见性
+npm view dsh-superpower version --registry https://registry.npmjs.org
+# 6.3.0-dsh.2
 ```
 
-### 鏇存柊涓庡嵏杞?
-涓诲伐浣滃彴涓?`web`锛屽叾瀹?profile 鍙渶鏇挎崲 `--profile` 鍚庡悕瀛椼€?
+### 更新与卸载
+
 ```bash
-# 鏇存柊鍒版寚瀹氱増鏈紙npm锛?dsh plugin --profile web add dsh-superpower@6.3.0-dsh.1
+# 更新（npm，示例为主工作台 web）
+dsh plugin --profile web add dsh-superpower@6.3.0-dsh.2
 
-# 鏇存柊鍒版寚瀹氱増鏈紙GitHub锛?dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.1
+# 更新（GitHub）
+dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2
 
-# 鏇存柊鍒版渶鏂?main锛堜笉鎺ㄨ崘闀挎湡閿佸畾鍦烘櫙锛?dsh plugin --profile web add github:Wenaixi/dsh-superpower
-
-# 鍗歌浇
+# 卸载
 dsh plugin --profile web remove dsh-superpower
 ```
 
-> 姣忎釜 profile 鐙珛锛歚demo`銆乣web`銆乣my-project` 绛?profile 闇€鍒嗗埆瀹夎銆?
-## 浣跨敤
+> 每个 profile 独立：`web`、`demo`、`my-project` 等需分别安装。
 
-瀹夎鍚庢棤闇€棰濆閰嶇疆銆傛ā鍨嬩晶閫氳繃 `skill` 宸ュ叿鎴栫敤鎴锋樉寮忔寚浠?`/skill superpowers:<鍚嶇О>` 鍔犺浇锛?
-- 鈥滃府鎴戝仛涓€涓?XXX 鍔熻兘鈥?鈫?鑷姩瑙﹀彂 `brainstorming`
-- 鈥滀慨涓€涓嬭繖涓己闄封€?鈫?鑷姩瑙﹀彂 `systematic-debugging`
-- 鈥滃厛鍑轰釜璁″垝鈥?鈫?瑙﹀彂 `writing-plans`
+## 使用
 
-涓嶈蛋鎶€鑳戒篃鑳藉湪妯″瀷渚х洿鎺ラ獙璇侊細
+安装后无需额外配置。模型侧通过 `skill` 工具或用户显式指令 `/skill superpowers:<名称>` 触发：
+
+| 你说 | 触发技能 |
+|---|---|
+| “帮我做一个 XXX 功能” | `brainstorming` → `writing-plans` → `subagent-driven-development` |
+| “修一下这个缺陷” | `systematic-debugging` → `verification-before-completion` |
+| “先出个计划” | `writing-plans` |
+| “帮我评审一下” | `requesting-code-review` |
+| “怎么收尾这个分支” | `finishing-a-development-branch` |
+
+也可在模型侧直接验证：
 
 ```js
-// 鍦?DSH 浼氳瘽涓紙妯″瀷渚э級
-await ctx.skills.list({ cwd: "/path/to/project" }) // 14 鏉?superpowers/bundled
-await ctx.skills.get("brainstorming")               // 瀹屾暣 SKILL.md 姝ｆ枃
+await ctx.skills.list({ cwd: "/path/to/project" }) // 14 条，provider: superpowers, source: bundled
+await ctx.skills.get("brainstorming")               // 完整中文 SKILL.md
 ```
 
-## 涓?DSH 鍘熺敓鑳藉姏鐨勫垎宸?
-- `dsh-plan-mode`锛堝彧璇昏鍒掗攣瀹氾級璐熻矗璁″垝妯″紡鐨勫紑鍏充笌杞杈圭晫锛涙湰鎻掍欢鐨?`writing-plans` 璐熻矗鎶婂凡鎵瑰噯璁捐鍒囩墖涓哄彲鎵ц浠诲姟
-- `dsh-skill-filesystem` 鐨?`~/.dsh/skills` 涓?`.dsh/skills` 浼樺厛绾ч珮浜庢湰鎻掍欢锛坄rank 550`锛夛紝鍙湪椤圭洰绾ц鐩栧悓鍚?superpowers 鎶€鑳?- `subagent` / `workflow` / `todo` / `goal` / `ask-user` 绛?DSH 宸ュ叿涓庢妧鑳芥鏂囦腑鐨勬槧灏勮 `dsh-tools.md`
+## 与 DSH 原生能力的分工
 
-## 鏈湴寮€鍙?
+| 能力 | 归属 | 说明 |
+|---|---|---|
+| 只读规划锁定 | `dsh-plan-mode` | 负责 `plan` 模式的开关与轮次边界 |
+| 细粒度任务切片 | 本包 `writing-plans` | 把已批准设计切片为可执行、可验证的任务 |
+| 技能文件发现 | `dsh-skill-filesystem` | 扫描 `~/.dsh/skills` / `.dsh/skills`，`rank` 高于本包（可覆盖同名技能） |
+| 子智能体编排 | `subagent` / `workflow` / `goal` / `todo` / `ask-user` | 与技能正文中的映射见 `dsh-tools.md` |
+
+> `rank 550` 的设计意图：让项目级/用户级技能可覆盖本包，本包可覆盖 DSH 内置 `bundled`（600）。如需让本包强于项目级，可改 `SUPERPOWERS_RANK` 为 `90`，但会违背 DSH 约定，不推荐。
+
+## 工具映射
+
+| 上游提及 | DSH 等价 | 备注 |
+|---|---:|---|
+| `Bash` | `pwsh`（首选，Windows 友好）或 `bash` | 长耗时用 `run_in_background: true`，`job_output`/`job_list` 收敛 |
+| `Read` / `Write` / `Edit` | `fs` 的 `read` / `write` / `edit` | `write`/`edit` 触发 `fs/observed` 失效 |
+| `Glob` / `Grep` | `fs-search` 的 `glob` / `grep` | 大仓用 `include` 过滤 |
+| `Task` / `Subagent` | `subagent` / `subagent_fork` / `workflow` | 单任务 `subagent`，多阶段 `workflow` |
+| `AskUserQuestion` | `ask-user` | 阻塞式提问 |
+| `TodoWrite` | `todo` | 全量列表，至少一项 `in_progress` |
+| `Skill` | `skill` | `skill(name)` 与 `ctx.skills.get()` 同源 |
+| `WebSearch` / `WebFetch` | `web` | 统一为 `web` 工具 |
+| `git worktree` | `bash`/`pwsh` 直调 | DSH 无 worktree 专属封装 |
+
+完整对照见 [`skills/using-superpowers/references/dsh-tools.md`](./skills/using-superpowers/references/dsh-tools.md)，`using-superpowers` 的 Platform Adaptation 中已置顶 DSH 条目，要求优先阅读。
+
+**Windows 约束**：PowerShell 中 `ls -la`/`head` 等 Unix 别名不可用，用 `Get-ChildItem`/`Select-Object -First N`；所有 `waterfall` 监听必须调用 `next()`。
+
+## 本地开发
+
 ```bash
 pnpm install
 pnpm build        # tsc -p tsconfig.build.json -> lib/
 pnpm typecheck    # tsc --noEmit
-node scripts/verify.mjs  # 鍐掔儫锛?4 涓妧鑳藉彲鍒椾妇 + 鍙姞杞?```
+node scripts/verify.mjs  # 14/14 PASS 且关键文件齐全
+```
 
-涓嶈蛋 profile 瀹夎鏃讹紝鍙敤琛ヤ竵鍙犲姞灞傛湰鍦拌皟璇曪細
+不走 profile 调试：
 
 ```bash
 pnpm dsh web --patch ./cordis.patch.yml
 ```
 
-鎴栧湪 `cordis.patch.yml` 涓鐩栨妧鑳界洰褰曪紙鎸囧悜鏈湴涓婃父妫€鍑猴紝渚夸簬瀵圭収锛夛細
+覆盖技能目录（指向本地上游检出，便于对照）：
 
 ```yaml
 - insert:
@@ -202,65 +294,111 @@ pnpm dsh web --patch ./cordis.patch.yml
         skillDir: E:/tmp/superpowers/skills
 ```
 
-### 浠ｇ爜瑙勮寖
+### 插件入口
 
-- 鎻掍欢鍏ュ彛 `src/superpowers.ts`锛氬嚱鏁板舰鎬?`export function apply(ctx, config)`锛宍inject = ['skills']`锛岄厤缃蛋 Schemastery
-- 澶辫触瑕佸搷浜細闈炴硶 frontmatter 浠呰烦杩囪鎶€鑳藉苟 `warn`锛屼笉鍚炴暣浣?- 娉ㄩ噴涓庢彁浜や俊鎭娇鐢ㄧ畝浣撲腑鏂囷紝浠ｇ爜娉ㄩ噴鍚?
-## 鐩綍缁撴瀯
+`src/superpowers.ts` — 函数形态，`inject = ['skills']`，配置走 Schemastery：
+
+```ts
+export const Config = Schema.object({
+  providerName: Schema.string().default('superpowers'),
+  skillDir: Schema.string(), // 默认 resolve(lib/.. / "skills")
+})
+export const name = 'superpowers'
+export const inject = ['skills'] as const
+export function apply(ctx: Context, config: Config) { /* registerProvider */ }
+```
+
+### 验证清单（完成前必检）
+
+- [ ] `pnpm build` / `pnpm typecheck` 零错误
+- [ ] `node scripts/verify.mjs` 输出 `14/14 PASS`
+- [ ] `dsh --profile web --dump-config` 包含 `# == dsh-superpower`
+- [ ] `ctx.skills.list()` 14 条 `provider: superpowers`，`get("brainstorming")` 含中文正文
+- [ ] `SKILL.md` 的 frontmatter 为合法 YAML，`name` 为 kebab-case
+- [ ] 文档与注释为简体中文，无 emoji
+
+## 目录结构
 
 ```
 dsh-superpower/
-鈹溾攢鈹€ src/superpowers.ts          # 鎻掍欢鍏ュ彛 + SuperpowersProvider (rank 550)
-鈹溾攢鈹€ skills/                     # 14 涓妧鑳斤紙宸蹭腑鏂囧寲锛屽惈 references/scripts锛?鈹?  鈹溾攢鈹€ using-superpowers/references/dsh-tools.md
-鈹?  鈹溾攢鈹€ brainstorming/
-鈹?  鈹溾攢鈹€ writing-plans/
-鈹?  鈹斺攢鈹€ ...
-鈹溾攢鈹€ scripts/verify.mjs          # 鍐掔儫锛氭牎楠?14 鎶€鑳?+ 鍏抽敭鏂囦欢
-鈹溾攢鈹€ cordis.patch.yml            # bundle 灞傦細insert superpowers
-鈹溾攢鈹€ package.json                # dsh.bundle.patch 鎸囧悜 cordis.patch.yml
-鈹溾攢鈹€ tsconfig.json
-鈹斺攢鈹€ lib/                        # 鏋勫缓浜х墿锛堝凡鎻愪氦锛岀‘淇?GitHub 鐩磋闆舵瀯寤猴級
+├── src/superpowers.ts          # 插件入口 + SuperpowersProvider (rank 550)
+├── skills/                     # 14 技能（含 references/scripts/*.md），事实来源
+│   └── using-superpowers/references/dsh-tools.md  # DSH 专属映射（勿删）
+├── scripts/verify.mjs          # 冒烟：校验 14 技能 + 关键文件
+├── cordis.patch.yml            # bundle 层：insert: [{ id: superpowers, name: dsh-superpower }]
+├── package.json                # dsh.bundle.patch + version + repository/homepage/bugs
+├── tsconfig.json / tsconfig.build.json
+├── lib/                        # 构建产物（已提交，确保 GitHub 直装零构建）
+├── .github/workflows/
+│   ├── ci.yml                  # push/PR 仅跑校验
+│   └── release.yml             # tag v* 才发布到 npm + 创建 Release
+├── README.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── CLAUDE.md                   # 项目记忆库（开发宪法）
+└── LICENSE
 ```
 
-## 鐗堟湰绛栫暐
+## 版本策略
 
-- 鏈粨搴?`version` 涓庝笂娓?`obra/superpowers` 鐨?`package.json#version` **涓ユ牸鍚屾**锛堝綋鍓?`6.3.0`锛?- 涓婃父鍙戠増鍚庯紝鏈粨搴撳悓姝?bump 鐗堟湰銆佸悓姝?`skills/` 鍐呭锛堜繚鐣?DSH 鏄犲皠涓庝腑鏂囧寲锛夛紝鍐嶅彂甯?- `CHANGELOG.md` 姹囨€讳笂娓?Release Notes 涓庢湰浠撳簱 DSH 閫傞厤鍙樻洿
+- **基线**：`6.3.0`，与上游 `obra/superpowers` 严格同步。
+- **本包演进**：仅涉及本仓库文档/构建/CI 等非功能修正时，使用预发布后缀 `-dsh.N`（如 `6.3.0-dsh.1` → `6.3.0-dsh.2`，`N` 单调递增），绝不产生与上游不一致的正式版本号。
+- **上游发版后**：同步 `skills/` 内容（保留 `dsh-tools.md`）+ `package.json` 基线 bump，再发布正式版。
+- **发布**：`tag v*` 触发 `release.yml`（需 `NPM_TOKEN`），自动 `npm publish` 并创建 GitHub Release；`push` 到 `main` 仅跑 CI 校验。
 
-## 甯歌闂
+见 [`CHANGELOG.md`](./CHANGELOG.md)。
 
-**Q锛氫竴涓汉鎷垮埌閾炬帴锛屾€庝箞鏈€蹇敤涓婏紵**
+## 常见问题
 
-A锛氳濂?`dsh` 鍚庝竴琛屽嵆鍙細`dsh plugin --profile demo add dsh-superpower`锛坣pm 瀹樻柟婧愶級锛屾垨 `dsh plugin --profile demo add github:Wenaixi/dsh-superpower#v6.3.0`锛堟棤闇€ npm锛夈€傜劧鍚?`dsh --profile demo`銆?
-**Q锛氬繀椤诲彂甯冨埌 npm 鍚楋紵宸茬粡鍙戝竷浜嗗悧锛?*
+**Q：一个人拿到链接，怎么最快用上？**
 
-A锛氬凡鍙戝竷鍒?[npm 瀹樻柟婧怾(https://www.npmjs.com/package/dsh-superpower)锛坄dsh-superpower@6.3.0`锛夈€備袱绉嶆柟寮忓潎鍙敤锛歚npm` 鏈€绠€锛坄add dsh-superpower`锛夛紝`GitHub` 閫傚悎涓嶆兂璧?npm 鏃躲€?
-**Q锛歚dsh plugin add dsh-superpower` 鎶?404锛?*
+A：装好 `dsh` 后一行即可（主工作台 `web` 为例）：`dsh plugin --profile web add dsh-superpower`（npm）或 `dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2`（GitHub），然后 `dsh --profile web`。
 
-A锛氳嫢浣犵敤鐨勬槸鍥藉唴闀滃儚 `npmmirror`锛屽悓姝ュ埌鏂扮増鏈湁鍑犲垎閽熷欢杩燂紝鍙厛鐢?`github:Wenaixi/dsh-superpower#v6.3.0`锛屾垨鍒囧畼鏂规簮 `npm config set registry https://registry.npmjs.org` 鍚庨噸璇曘€俙npm view dsh-superpower --registry https://registry.npmjs.org` 鍙洿杩為獙璇併€?
-**Q锛氶渶瑕侀厤缃?`onlyBuiltDependencies` / `allowBuilds` 鐧藉悕鍗曞悧锛?*
+**Q：必须发布到 npm 吗？**
 
-A锛氫笉闇€瑕併€傝嚜 `596b979` 璧?`lib/` 宸叉彁浜や笖鑴氭湰鏀逛负 `prepack`锛孏itHub 涓?npm锛堝惈 tarball锛夊潎闆剁櫧鍚嶅崟銆侀浂鐜板満鏋勫缓銆傚浠嶈 `Ignored build scripts` 鎻愮ず锛岃鏄庝綘鎷夊埌鐨勬槸鏃ф爣绛撅紝璇风敤 `#v6.3.0`锛堟柊锛夐噸瑁呫€?
-**Q锛氬畨瑁呭悗濡備綍纭鐢熸晥锛?*
+A：已发布到 [npm 官方源](https://www.npmjs.com/package/dsh-superpower)（`latest` 为 `6.3.0-dsh.2`）。GitHub 直装同样可用，适合不想走 npm 时。
 
-A锛歚dsh --profile demo --dump-config | grep dsh-superpower` 搴旇兘鐪嬪埌 `# == dsh-superpower` 灞傦紱杩涗細璇濆悗 `ctx.skills.list()` 搴旀湁 14 鏉?`superpowers`銆?
-**Q锛歚pnpm install` 鏃?registry 鏄?`npmmirror` 鏈夊奖鍝嶅悧锛?*
+**Q：`dsh plugin add dsh-superpower` 报 404？**
 
-A锛氬 GitHub 鐩磋鏃犲奖鍝嶏紙璧?git锛夈€備粎 `npm publish` 涓?`npm view --registry https://registry.npmjs.org` 闇€鐩磋繛瀹樻柟婧愩€?
-## 璐＄尞
+A：若用国内镜像 `npmmirror`，同步有数分钟延迟，可先用 `github:...#v6.3.0-dsh.2`，或切官方源后重试：`npm view dsh-superpower --registry https://registry.npmjs.org`。
 
-娆㈣繋鎻愪氦 Issue / PR锛?
-1. Fork 鏈粨搴擄紝鍩轰簬 `main` 鏂板缓鍒嗘敮
-2. 閬靛惊 `writing-skills` 鎶€鑳界殑缂栧啓涓庢祴璇曡鑼?3. `pnpm build && pnpm typecheck && node scripts/verify.mjs` 鍏ㄧ豢鍚庡啀鎻愪氦
-4. 鎻愪氦 PR 鏃惰璇存槑鍏宠仈鐨勪笂娓哥増鏈笌鏀瑰姩鑼冨洿
+**Q：需要配置 `onlyBuiltDependencies` 白名单吗？**
 
-璇﹁ [`CONTRIBUTING.md`](./CONTRIBUTING.md)銆?
-## 鏇存柊鏃ュ織
+A：不需要。自 `6.3.0` 起 `lib/` 已提交且脚本改为 `prepack`，GitHub 与 npm（含 tarball）均零白名单。
 
-瑙?[`CHANGELOG.md`](./CHANGELOG.md)锛堜笂娓?`v6.3.0` 鍙婁箣鍓嶇増鏈眹鎬?+ DSH 绉绘鍙樻洿锛夈€?
-## 鍗忚
+**Q：安装后如何确认生效？**
 
-MIT锛屼笌涓婃父 [obra/superpowers](https://github.com/obra/superpowers) 淇濇寔涓€鑷淬€傝 [`LICENSE`](./LICENSE)銆?
-## 鑷磋阿
+A：`dsh --profile web --dump-config | grep dsh-superpower` 应看到 `# == dsh-superpower`；进会话后 `ctx.skills.list()` 应有 14 条 `superpowers`。
 
-- 涓婃父浣滆€?[Jesse Vincent](https://blog.fsck.com) 涓?[Prime Radiant](https://primeradiant.com)
-- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 鐨?`dsh-skill` 涓夎鑹叉灦鏋?
+**Q：`pnpm install` 时 registry 是 `npmmirror` 有影响吗？**
+
+A：对 GitHub 直装无影响（走 git）。仅 `npm publish` / `npm view --registry https://registry.npmjs.org` 需直连官方源。
+
+**Q：如何更新/卸载？**
+
+A：`dsh plugin --profile web add dsh-superpower@6.3.0-dsh.2`（更新）/ `dsh plugin --profile web remove dsh-superpower`（卸载）。每个 profile 独立。
+
+## 贡献
+
+欢迎提交 Issue / PR：
+
+1. Fork 本仓库，基于 `main` 新建分支（`feat/*` / `fix/*` / `chore/sync-upstream-v*`）
+2. 遵循 `writing-skills` 的编写与测试规范
+3. `pnpm build && pnpm typecheck && node scripts/verify.mjs` 全绿后再提交
+4. 说明关联的上游版本与改动范围
+
+详见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。
+
+## 更新日志
+
+见 [`CHANGELOG.md`](./CHANGELOG.md)（含上游 `v6.3.0` 汇总与本包 `dsh.N` 演进）。
+
+## 协议
+
+MIT，与上游 [obra/superpowers](https://github.com/obra/superpowers) 保持一致。见 [`LICENSE`](./LICENSE)。
+
+## 致谢
+
+- 上游作者 [Jesse Vincent](https://blog.fsck.com) 与 [Prime Radiant](https://primeradiant.com)
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 `dsh-skill` 三角色架构
+- 所有提交 Issue / PR 与提供反馈的贡献者
