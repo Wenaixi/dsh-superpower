@@ -1,4 +1,4 @@
-﻿# CLAUDE.md — dsh-superpower 项目记忆库
+# CLAUDE.md — dsh-superpower 项目记忆库
 
 > **角色**：本文件是 `dsh-superpower` 的核心记忆库与开发宪法。
 > **使用**：每次对话开始前读取以同步上下文，工作完成后更新以记录关键决策。保持专业、简洁、准确，及时删除过时内容。
@@ -16,10 +16,10 @@
 | **名称** | `dsh-superpower` |
 | **本质** | [obra/superpowers](https://github.com/obra/superpowers) 的 DSH 完整移植版 |
 | **形态** | DSH 组合包（bundle），通过 `dsh.bundle.patch: ./cordis.patch.yml` 对外发布 |
-| **上游版本** | `v6.3.0`，与 `package.json#version` 严格同步 |
+| **上游版本** | `v6.3.0`（基线），本包 `v6.3.0-dsh.2` 以 `-dsh.N` 在基线上演进 |
 | **协议** | MIT，与上游一致 |
 | **语言约定** | 技能正文与对外文档为简体中文；代码、命令、路径、变量名保持原文；不使用 emoji |
-| **远程** | `github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0` |
+| **远程** | `github:Wenaixi/dsh-superpower`，主分支 `main`，当前标签 `v6.3.0-dsh.2` |
 
 **一句话定位**：把上游 14 个方法论技能以 DSH 原生 `SkillProvider` 注入 `ctx.skills`，`rank 550` 可被项目级覆盖，安装即生效，无需额外配置。
 
