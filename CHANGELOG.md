@@ -4,7 +4,16 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [未发布]
+## [6.3.0-dsh.5] - 2026-08-22
+
+> ⚠️ **BREAKING CHANGE**：本次发版将 14 个技能的 `frontmatter.name` 统一加上 `superpower-` 前缀。
+> 从 `-dsh.4` 升级后，所有调用方式都必须更新：
+>
+> - 旧：`skill("brainstorming")` / `/skill brainstorming`
+> - 新：`skill("superpower-brainstorming")` / `/skill superpower-brainstorming`
+>
+> 旧名不再注册，`ctx.skills.get("brainstorming")` 将返回 `undefined`。
+> 详见本节下方"变更"条目与 `CONTRIBUTING.md`"上游同步策略"。
 
 ### 变更
 
@@ -84,6 +93,7 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
+[6.3.0-dsh.5]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.5
 [6.3.0-dsh.4]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.4
 [6.3.0-dsh.3]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.3
 [6.3.0-dsh.2]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.2
