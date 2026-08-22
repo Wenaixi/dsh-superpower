@@ -1,11 +1,11 @@
-# CLAUDE.md — dsh-superpower 项目记忆库
+﻿# CLAUDE.md — dsh-superpower 项目记忆库
 
 > **角色**：本文件是 `dsh-superpower` 的核心记忆库与开发宪法。
 > **使用**：每次对话开始前读取以同步上下文，工作完成后更新以记录关键决策。保持专业、简洁、准确，及时删除过时内容。
 > **维护**：采用规范驱动开发，所有变更以本文为准绳。
 
 - **最后更新**：2026-08-22
-- **上游同步**：`obra/superpowers v6.3.0`（基线）；本包 `package.json#version` 为 `6.3.0-dsh.1`
+- **上游同步**：`obra/superpowers v6.3.0`（基线）；本包 `package.json#version` 为 `6.3.0-dsh.2`
 
 ---
 

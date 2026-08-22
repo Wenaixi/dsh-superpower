@@ -1,9 +1,14 @@
-# 更新日志
+﻿# 更新日志
 
 本文件记录 `dsh-superpower` 的所有值得关注的变更。主版本与上游 [obra/superpowers](https://github.com/obra/superpowers) 严格同步，`-dsh.N` 为本仓库预发布后缀。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [6.3.0-dsh.2] - 2026-08-22
+
+### 修复
+
+- **README**：所有安装示例默认主工作台由 demo 改为 web（dsh plugin --profile web add ...），并注明自动走 dsh.bundle 无需手动配置 cordis.patch.yml`n
 ## [6.3.0-dsh.1] - 2026-08-22
 
 ### 修复
