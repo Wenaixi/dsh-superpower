@@ -19,7 +19,13 @@ for (const dir of skillDirs) {
   const descMatch = raw.match(/description:\s*["']?(.+)["']?/)
   if (!hasFrontmatter) { console.error(`[verify] ${dir}: missing frontmatter`); ok = false }
   else if (!nameMatch) { console.error(`[verify] ${dir}: missing name`); ok = false }
-  else console.log(`[verify] ✓ ${dir} -> ${nameMatch[1]} ${descMatch ? `(${descMatch[1].slice(0,60)})` : ''}`)
+  else {
+    // 目录名与 frontmatter.name 可偏离：以 frontmatter 为准并打标记提示（Provider 在加载时也会 warn）
+    const drifted = nameMatch[1] !== dir
+    const mark = drifted ? '~' : '✓'
+    const note = drifted ? ' (frontmatter.name 偏离目录名)' : ''
+    console.log(`[verify] ${mark} ${dir} -> ${nameMatch[1]}${note} ${descMatch ? `(${descMatch[1].slice(0,60)})` : ''}`)
+  }
 }
 
 // 额外检查 Provider 能否 list（不依赖完整 DSH boot，仅测试文件解析）

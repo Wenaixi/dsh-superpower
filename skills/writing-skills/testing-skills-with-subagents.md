@@ -10,7 +10,7 @@
 
 **核心原则：** 如果没有亲眼看到智能体在无技能状态下的失败，就无法判断技能是否防住了真正该防的问题。
 
-**前置要求：** 使用本技能前，必须先掌握 superpowers:test-driven-development。该技能定义了 RED-GREEN-REFACTOR 基础循环，本技能则提供面向技能测试的专用格式（压力场景、合理化对照表）。
+**前置要求：** 使用本技能前，必须先掌握 superpower-test-driven-development。该技能定义了 RED-GREEN-REFACTOR 基础循环，本技能则提供面向技能测试的专用格式（压力场景、合理化对照表）。
 
 **完整实战示例：** 参见 examples/CLAUDE_MD_TESTING.md，其中包含针对 CLAUDE.md 文档变体的完整测试过程。
 

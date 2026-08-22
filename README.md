@@ -49,26 +49,26 @@ dsh plugin --profile web remove dsh-superpower
 
 | 技能 | 触发时机 |
 |---|---|
-| `using-superpowers` | 任意会话起点（1% 原则） |
-| `brainstorming` | 新功能前，Spike / Bounded / Architectural 分级 |
-| `writing-plans` | 设计获批后，切 2–5 分钟任务 |
-| `using-git-worktrees` | 隔离分支 |
-| `executing-plans` / `subagent-driven-development` | 按计划执行，后者每任务一子智能体 + 两阶段评审 |
-| `dispatching-parallel-agents` | 并行分发 |
-| `test-driven-development` | RED-GREEN-REFACTOR |
-| `systematic-debugging` / `verification-before-completion` | 调试闭环 |
-| `requesting` / `receiving-code-review` | 评审 |
-| `finishing-a-development-branch` | 集成 |
-| `writing-skills` | 写新技能 |
+| `superpower-using-superpowers` | 任意会话起点（1% 原则） |
+| `superpower-brainstorming` | 新功能前，Spike / Bounded / Architectural 分级 |
+| `superpower-writing-plans` | 设计获批后，切 2–5 分钟任务 |
+| `superpower-using-git-worktrees` | 隔离分支 |
+| `superpower-executing-plans` / `superpower-subagent-driven-development` | 按计划执行，后者每任务一子智能体 + 两阶段评审 |
+| `superpower-dispatching-parallel-agents` | 并行分发 |
+| `superpower-test-driven-development` | RED-GREEN-REFACTOR |
+| `superpower-systematic-debugging` / `superpower-verification-before-completion` | 调试闭环 |
+| `superpower-requesting` / `superpower-receiving-code-review` | 评审 |
+| `superpower-finishing-a-development-branch` | 集成 |
+| `superpower-writing-skills` | 写新技能 |
 
 映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/using-superpowers/references/dsh-tools.md`。
 
 ## 使用
 
 ```
-“帮我做 XXX”  → brainstorming → writing-plans → subagent-driven-development
-“修这个缺陷”  → systematic-debugging
-“帮我评审”    → requesting-code-review
+“帮我做 XXX”  → superpower-brainstorming → superpower-writing-plans → superpower-subagent-driven-development
+“修这个缺陷”  → superpower-systematic-debugging
+“帮我评审”    → superpower-requesting-code-review
 ```
 
 校验：`await ctx.skills.list({cwd})` 应有 14 条 `provider: superpowers`。

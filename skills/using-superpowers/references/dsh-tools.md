@@ -15,7 +15,7 @@
 | `TodoWrite` | `todo` | 每次提供全量列表，`in_progress` 至少一项 |
 | `Skill` | `skill` | `skill(name)` 加载 `<skill_content>`，与 `ctx.skills.get()` 同源 |
 | `WebSearch` / `WebFetch` | `web` 工具 | `web_search` + `web_fetch_exa` 已封装为统一 `web` |
-| `/skill superpowers:<name>` | `skill` 工具或用户显式 `/skill` 命令 | 两种路径渲染一致的 `<skill_content>` |
+| `/skill superpower-<name>` | `skill` 工具或用户显式 `/skill` 命令 | 两种路径渲染一致的 `<skill_content>` |
 | `git worktree` | `bash` / `pwsh` 中直接执行 `git worktree` | DSH 无 worktree 专属封装，按原命令执行 |
 
 ## DSH 专属能力（原版无直接对应）
@@ -39,9 +39,9 @@
 
 ```text
 用户：帮我加一个重试工具
-模型：Using superpowers:brainstorming to clarify requirements
-      -> 调用 skill(name="brainstorming")
+模型：Using superpower-brainstorming to clarify requirements
+      -> 调用 skill(name="superpower-brainstorming")
       -> 按 skill 流程提问、分类 Spike/Bounded/Architectural
-      -> 设计获批后调用 skill(name="writing-plans") 切片
+      -> 设计获批后调用 skill(name="superpower-writing-plans") 切片
       -> 每切片派发 subagent(prompt="实现 task-03...") 并用 todo 跟踪
 ```
