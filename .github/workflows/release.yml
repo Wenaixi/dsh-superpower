@@ -92,8 +92,11 @@ jobs:
           VER="${TAG#v}"
           echo "version=$VER" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          # 是否预发布（semver 含 - 即为 prerelease）
-          if echo "$VER" | grep -q "-"; then
+          # 本项目 -dsh.N 为基线上的正式演进线，不应标为 GitHub pre-release；
+          # 仅当后缀不是 -dsh.N 时才按 semver 视为预发布
+          if echo "$VER" | grep -Eq -- "-dsh\.[0-9]+$"; then
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          elif echo "$VER" | grep -q "-"; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
