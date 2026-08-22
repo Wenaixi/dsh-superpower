@@ -1,6 +1,6 @@
 # dsh-superpower
 
-[![Version](https://img.shields.io/badge/version-6.3.0--dsh.2-blue)](./package.json)
+[![Version](https://img.shields.io/badge/version-6.3.0.2-blue)](./package.json)
 [![npm](https://img.shields.io/npm/v/dsh-superpower?label=npm)](https://www.npmjs.com/package/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
@@ -13,8 +13,8 @@
 > 上游 `obra/superpowers v6.3.0` 的完整移植：14 个方法论技能以 DSH 原生 `SkillProvider` 注入 `ctx.skills`，`rank 550` 可被项目级覆盖，安装即生效。所有技能正文已中文化，零构建、零白名单、热更新友好。
 
 - **上游**：https://github.com/obra/superpowers
-- **npm**：https://www.npmjs.com/package/dsh-superpower (`dsh-superpower@6.3.0-dsh.2`, `latest`)
-- **基线版本**：`6.3.0`（上游）；本包采用预发布后缀 `-dsh.N` 演进，当前 `6.3.0-dsh.2`
+- **npm**：https://www.npmjs.com/package/dsh-superpower (`dsh-superpower@6.3.0.2`, `latest`)
+- **基线版本**：`6.3.0`（上游）；本包在该基线上以第四段 `.N` 演进，当前 `6.3.0.2`（基线不变，仅第四段递增）
 - **协议**：MIT
 
 ---
@@ -28,7 +28,7 @@
 > dsh plugin --profile web add dsh-superpower
 >
 > # 方式 B — GitHub 直装（无需 npm 账号/登录）
-> dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2
+> dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0.2
 >
 > dsh --profile web --dump-config   # 看到 "# == dsh-superpower" 即成功
 > dsh --profile web                 # 进会话，技能自动可用
@@ -130,14 +130,14 @@
 
 ### 方式 A：npm 一键安装（推荐）
 
-> 已发布到 [npm 官方源](https://www.npmjs.com/package/dsh-superpower)，当前 `latest` 为 `6.3.0-dsh.2`。国内镜像 `npmmirror` 同步有数分钟延迟。
+> 已发布到 [npm 官方源](https://www.npmjs.com/package/dsh-superpower)，当前 `latest` 为 `6.3.0.2`。国内镜像 `npmmirror` 同步有数分钟延迟。
 
 ```bash
 # 安装到主工作台 web（自动走 dsh.bundle，无需手动改 cordis.patch.yml）
 dsh plugin --profile web add dsh-superpower
 
 # 锁定到精确版本（推荐团队协作）
-dsh plugin --profile web add dsh-superpower@6.3.0-dsh.2
+dsh plugin --profile web add dsh-superpower@6.3.0.2
 
 # 断言层已生效（应看到 "# == dsh-superpower" 与 "id: superpowers"）
 dsh --profile web --dump-config | grep -A2 "dsh-superpower"
@@ -152,7 +152,7 @@ dsh --profile web
 
 ```bash
 # 锁定到标签（推荐）
-dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2
+dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0.2
 
 # 跟最新 main（不推荐长期锁定）
 dsh plugin --profile web add github:Wenaixi/dsh-superpower
@@ -178,10 +178,10 @@ dsh --profile web
 
 ```bash
 pnpm build
-pnpm pack                      # 产出 dsh-superpower-6.3.0-dsh.2.tgz（含 lib/ + skills/）
+pnpm pack                      # 产出 dsh-superpower-6.3.0.2.tgz（含 lib/ + skills/）
 
 # 接收方无需本仓库、无需构建：
-dsh plugin --profile web add ./dsh-superpower-6.3.0-dsh.2.tgz
+dsh plugin --profile web add ./dsh-superpower-6.3.0.2.tgz
 ```
 
 ### 验证安装成功
@@ -203,17 +203,17 @@ node scripts/verify.mjs
 
 # 4. npm 可见性
 npm view dsh-superpower version --registry https://registry.npmjs.org
-# 6.3.0-dsh.2
+# 6.3.0.2
 ```
 
 ### 更新与卸载
 
 ```bash
 # 更新（npm，示例为主工作台 web）
-dsh plugin --profile web add dsh-superpower@6.3.0-dsh.2
+dsh plugin --profile web add dsh-superpower@6.3.0.2
 
 # 更新（GitHub）
-dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2
+dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0.2
 
 # 卸载
 dsh plugin --profile web remove dsh-superpower
@@ -342,7 +342,7 @@ dsh-superpower/
 ## 版本策略
 
 - **基线**：`6.3.0`，与上游 `obra/superpowers` 严格同步。
-- **本包演进**：仅涉及本仓库文档/构建/CI 等非功能修正时，使用预发布后缀 `-dsh.N`（如 `6.3.0-dsh.1` → `6.3.0-dsh.2`，`N` 单调递增），绝不产生与上游不一致的正式版本号。
+- **本包演进**：仅涉及本仓库文档/构建/CI 等非功能修正时，以第四段 `.N` 演进（如 `6.3.0.1` → `6.3.0.2`，基线 `6.3.0` 不变，仅 `N` 递增），绝不产生与上游不一致的正式版本号。
 - **上游发版后**：同步 `skills/` 内容（保留 `dsh-tools.md`）+ `package.json` 基线 bump，再发布正式版。
 - **发布**：`tag v*` 触发 `release.yml`（需 `NPM_TOKEN`），自动 `npm publish` 并创建 GitHub Release；`push` 到 `main` 仅跑 CI 校验。
 
@@ -352,15 +352,15 @@ dsh-superpower/
 
 **Q：一个人拿到链接，怎么最快用上？**
 
-A：装好 `dsh` 后一行即可（主工作台 `web` 为例）：`dsh plugin --profile web add dsh-superpower`（npm）或 `dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0-dsh.2`（GitHub），然后 `dsh --profile web`。
+A：装好 `dsh` 后一行即可（主工作台 `web` 为例）：`dsh plugin --profile web add dsh-superpower`（npm）或 `dsh plugin --profile web add github:Wenaixi/dsh-superpower#v6.3.0.2`（GitHub），然后 `dsh --profile web`。
 
 **Q：必须发布到 npm 吗？**
 
-A：已发布到 [npm 官方源](https://www.npmjs.com/package/dsh-superpower)（`latest` 为 `6.3.0-dsh.2`）。GitHub 直装同样可用，适合不想走 npm 时。
+A：已发布到 [npm 官方源](https://www.npmjs.com/package/dsh-superpower)（`latest` 为 `6.3.0.2`）。GitHub 直装同样可用，适合不想走 npm 时。
 
 **Q：`dsh plugin add dsh-superpower` 报 404？**
 
-A：若用国内镜像 `npmmirror`，同步有数分钟延迟，可先用 `github:...#v6.3.0-dsh.2`，或切官方源后重试：`npm view dsh-superpower --registry https://registry.npmjs.org`。
+A：若用国内镜像 `npmmirror`，同步有数分钟延迟，可先用 `github:...#v6.3.0.2`，或切官方源后重试：`npm view dsh-superpower --registry https://registry.npmjs.org`。
 
 **Q：需要配置 `onlyBuiltDependencies` 白名单吗？**
 
@@ -376,7 +376,7 @@ A：对 GitHub 直装无影响（走 git）。仅 `npm publish` / `npm view --re
 
 **Q：如何更新/卸载？**
 
-A：`dsh plugin --profile web add dsh-superpower@6.3.0-dsh.2`（更新）/ `dsh plugin --profile web remove dsh-superpower`（卸载）。每个 profile 独立。
+A：`dsh plugin --profile web add dsh-superpower@6.3.0.2`（更新）/ `dsh plugin --profile web remove dsh-superpower`（卸载）。每个 profile 独立。
 
 ## 贡献
 
