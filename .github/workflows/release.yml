@@ -1,6 +1,7 @@
 # Release：仅在推送 tag（v*）时发布到 npm
 # - 不在 push 到 main 时发布
 # - 需在仓库 Settings > Secrets and variables > Actions 配置 NPM_TOKEN
+#   NPM_TOKEN 为 npm Access Token（classic 或 granular，勾选 publish 权限）
 
 name: Release
 
@@ -10,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   publish:
@@ -44,10 +46,35 @@ jobs:
           fi
           echo "版本一致: $TAG -> $PKG_VER"
 
-      - name: 发布到 npm
-        run: npm publish --access public
+      - name: 校验 NPM_TOKEN 已配置
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::NPM_TOKEN 未配置，请在仓库 Settings > Secrets and variables > Actions 中设置 npm Access Token（classic 或 granular，需 publish 权限）"
+            exit 1
+          fi
+          TRIMMED="$(echo -n "$NPM_TOKEN" | tr -d '\r\n' | xargs)"
+          LEN=${#TRIMMED}
+          if [ "$LEN" -lt 10 ]; then
+            echo "::error::NPM_TOKEN 长度异常（${LEN}），请检查是否粘贴完整"
+            exit 1
+          fi
+          echo "NPM_TOKEN 已配置，长度 ${LEN} 字符"
+
+      - name: 配置 npm 认证（消毒 header 非法字符）
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          TOKEN="$(echo -n "$NPM_TOKEN" | tr -d '\r\n' | xargs)"
+          # 覆盖 setup-node 生成的占位符，显式写入 sanitized token，避免 header 非法字符
+          echo "//registry.npmjs.org/:_authToken=${TOKEN}" > ~/.npmrc
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+          echo "已写入 ~/.npmrc"
+          cat ~/.npmrc | sed 's/:_authToken=.*/:_authToken=***/'
+
+      - name: 发布到 npm
+        run: npm publish --access public --provenance false
 
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
