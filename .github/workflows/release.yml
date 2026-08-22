@@ -1,8 +1,7 @@
-# Release：仅在推送 tag（v*）时发布到 npm
+# Release：仅在推送 tag（v*）时发布到 npm 并自动创建 GitHub Release
+# 正文自动从 CHANGELOG.md 提取对应版本段落，并附带指向 CHANGELOG 的链接
 # - 不在 push 到 main 时发布
 # - 需在仓库 Settings > Secrets and variables > Actions 配置 NPM_TOKEN
-#   创建位置：https://www.npmjs.com/settings/你的用户名/tokens/new
-#   选 Classic Token，勾选 Publish 权限（或 Granular 指向 dsh-superpower）
 
 name: Release
 
@@ -31,7 +30,6 @@ jobs:
 
       # setup-node 会写入占位符 //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
       # 此步骤在 setup-node 之后净化 NPM_TOKEN，写入 NODE_AUTH_TOKEN 与 ~/.npmrc
-      # 需兼容：BOM、CR/LF、首尾空白、首尾引号/反引号、控制字符、内部空白
       - name: 净化 NPM_TOKEN 并注入认证
         env:
           RAW_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -47,10 +45,8 @@ jobs:
           const os = require('os');
           const path = require('path');
           let raw = process.env.RAW_TOKEN || '';
-          // 去 BOM、去 CR/LF、trim、去首尾引号/反引号
           let clean = raw.replace(/^\uFEFF/, '').replace(/[\r\n]/g, '').trim();
           clean = clean.replace(/^["'`]+|["'`]+$/g, '').trim();
-          // 去控制字符与内部空白（HTTP header 非法字符的常见来源）
           clean = clean.replace(/[\x00-\x1F\x7F]/g, '').replace(/\s+/g, '');
           if (!clean) {
             console.error('::error::NPM_TOKEN 净化后为空，请检查 Secrets 是否粘贴了换行/空白');
@@ -89,7 +85,56 @@ jobs:
       - name: 发布到 npm
         run: npm publish --access public
 
+      - name: 解析 CHANGELOG 段落
+        id: changelog
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          # 是否预发布（semver 含 - 即为 prerelease）
+          if echo "$VER" | grep -q "-"; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          node <<'NODE'
+          const fs = require('fs');
+          const tag = process.env.GITHUB_REF.replace('refs/tags/', '');
+          const ver = tag.replace(/^v/, '');
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          // 匹配 ## [ver] 开始，到下一个 ## [ 或文件末尾
+          const escVer = ver.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const re = new RegExp(`^## \\[${escVer}\\][\\s\\S]*?(?=^## \\[|\\z)`, 'm');
+          const m = changelog.match(re);
+          let body = '';
+          if (m) {
+            body = m[0].trim();
+            // 去掉第一行标题，Release 标题已单独展示
+            const lines = body.split('\n');
+            lines.shift();
+            body = lines.join('\n').trim();
+            if (!body) body = m[0].trim();
+          } else {
+            body = `未在 CHANGELOG.md 中找到 ${tag} 的段落，请查看完整更新日志。`;
+          }
+          const repo = process.env.GITHUB_REPOSITORY || 'Wenaixi/dsh-superpower';
+          const changelogUrl = `https://github.com/${repo}/blob/${tag}/CHANGELOG.md`;
+          const header = `> 更新内容详见 [CHANGELOG.md](${changelogUrl})\n\n`;
+          const full = header + body + `\n\n---\n\n**完整更新日志**: [CHANGELOG.md](${changelogUrl})`;
+          fs.writeFileSync('/tmp/release_body.md', full);
+          // 供后续 step 调试预览（脱敏）
+          console.log('--- release body preview (first 500 chars) ---');
+          console.log(full.slice(0, 500));
+          NODE
+          echo "body_path=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          name: ${{ steps.changelog.outputs.tag }}
+          body_path: ${{ steps.changelog.outputs.body_path }}
+          prerelease: ${{ steps.changelog.outputs.prerelease == 'true' }}
+          draft: false
+          generate_release_notes: false
