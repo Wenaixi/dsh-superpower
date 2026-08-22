@@ -85,6 +85,20 @@ jobs:
       - name: 发布到 npm
         run: npm publish --access public
 
+      # 为 -dsh.N 系列显式打 dsh dist-tag，避免被默认的 latest 抢占。
+      # 见 CLAUDE.md 第 10 章 "dist-tag 策略"。
+      - name: 为 -dsh.N 系列打 dsh dist-tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          if echo "$VER" | grep -Eq -- "6\.3\.0-dsh\.[0-9]+$"; then
+            echo "为 $VER 显式打 dsh dist-tag"
+            npm dist-tag add "dsh-superpower@$VER" dsh
+          else
+            echo "$VER 不是 -dsh.N 形态，跳过 dsh dist-tag"
+          fi
+
       - name: 解析 CHANGELOG 段落
         id: changelog
         run: |

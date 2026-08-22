@@ -4,6 +4,20 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [6.3.0-dsh.6] - 2026-08-22
+
+### 修复
+
+- **npm `latest` dist-tag 站位问题**：当仓库历史 `6.3.0` 基础版被 unpublish 后，npm 的"没有 latest 时回退到最高 semver 版本"默认行为会让最新发的 `-dsh.N` 抢占 `latest`。本次发版在 `release.yml` 的"发布到 npm"之后新增"为 `-dsh.N` 系列打 `dsh` dist-tag"步骤，把 dsh 系列从 latest 抽离；本地同步把 `6.3.0-dsh.5` 显式补 `latest` tag（仓库策略上 dsh.N 为事实稳定演进线，详见 `CLAUDE.md` 第 10 章）。今后发版路径固定为：`npm publish` → 命中 `-dsh.N` → `npm dist-tag add <pkg>@<ver> dsh`，CI 自动完成。
+
+### 文档
+
+- `CLAUDE.md` 第 10 章新增"dist-tag 策略"段，明示：
+  - 仓库策略上 `-dsh.N` 系列为事实稳定演进线
+  - 显式打 `dsh` dist-tag 与 npm 默认 latest 抢占的应对
+  - `release.yml` 对应变更说明
+- `release.yml` 在"发布到 npm"后加"为 `-dsh.N` 系列打 dsh dist-tag"步骤
+
 ## [6.3.0-dsh.5] - 2026-08-22
 
 > ⚠️ **BREAKING CHANGE**：本次发版将 14 个技能的 `frontmatter.name` 统一加上 `superpower-` 前缀。
@@ -93,6 +107,7 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
+[6.3.0-dsh.6]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.6
 [6.3.0-dsh.5]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.5
 [6.3.0-dsh.4]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.4
 [6.3.0-dsh.3]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.3
