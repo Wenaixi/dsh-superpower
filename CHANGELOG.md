@@ -4,6 +4,12 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [6.3.0-dsh.8] - 2026-08-23
+
+### 修复
+
+- **`cordis.patch.yml` 加引号**：`name: @wenaixi/dsh-superpower` 未加引号导致 `dsh --dump-config` 报 `YAMLException: bad indentation of a mapping entry`（`@` 开头在 YAML plain scalar 中不合法）。改为 `name: "@wenaixi/dsh-superpower"`，与 `@wenaixi/dsh-ponytail` 保持一致。
+
 ## [6.3.0-dsh.7] - 2026-08-23
 
 ### 变更
@@ -117,6 +123,7 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
+[6.3.0-dsh.8]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.8
 [6.3.0-dsh.7]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.7
 [6.3.0-dsh.6]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.6
 [6.3.0-dsh.5]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.5
