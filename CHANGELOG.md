@@ -4,6 +4,12 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [6.3.0-dsh.9] - 2026-08-23
+
+### 修复
+
+- **硬把 `skills/` 目录重命名为 `superpower-` 前缀**：前几版仅改了 `SKILL.md#frontmatter.name` 为 `superpower-<kebab>`，目录仍为原 `<kebab>`（依赖 Provider 的“frontmatter 优先于目录名并 warn”逻辑）。本次把 14 个目录从 `skills/<kebab>` 硬重命名为 `skills/superpower-<kebab>`，使 `entry.name === frontmatter.name` 完全一致，消除 `list()` 的 warn 与 `get()` 的 name drift 校验风险，确保 `skill("superpower-writing-plans")` 等调用在 DSH 启动快照与 HMR 缓存下均可稳定命中。同步更新 `README.md` / `scripts/verify.mjs` / `CLAUDE.md` 中残留的旧路径引用与校验逻辑，`pnpm pack` 产物同步改为 `skills/superpower-*`，`verify` 14/14 PASS。
+
 ## [6.3.0-dsh.8] - 2026-08-23
 
 ### 修复
