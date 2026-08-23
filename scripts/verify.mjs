@@ -34,10 +34,10 @@ if (skillDirs.length !== 14) ok = false
 
 // 检查关键文件
 const checks = [
-  'skills/using-superpowers/references/dsh-tools.md',
-  'skills/brainstorming/SKILL.md',
-  'skills/test-driven-development/SKILL.md',
-  'skills/subagent-driven-development/SKILL.md',
+  'skills/superpower-using-superpowers/references/dsh-tools.md',
+  'skills/superpower-brainstorming/SKILL.md',
+  'skills/superpower-test-driven-development/SKILL.md',
+  'skills/superpower-subagent-driven-development/SKILL.md',
   'lib/superpowers.js',
   'cordis.patch.yml',
   'package.json',

@@ -204,4 +204,4 @@ digraph brainstorming {
 涉及 UI 话题的问题不一定是视觉问题。“在此上下文中 personality 指什么？”是概念问题——使用终端。“哪种向导布局更合适？”是视觉问题——使用浏览器。
 
 若用户同意使用协作，请在继续前阅读详细指南：
-`skills/brainstorming/visual-companion.md`
+`skills/superpower-brainstorming/visual-companion.md`

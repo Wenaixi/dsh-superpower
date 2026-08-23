@@ -63,7 +63,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 | `superpower-finishing-a-development-branch` | 集成 |
 | `superpower-writing-skills` | 写新技能 |
 
-映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/using-superpowers/references/dsh-tools.md`。
+映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/superpower-using-superpowers/references/dsh-tools.md`。
 
 ## 使用
 
