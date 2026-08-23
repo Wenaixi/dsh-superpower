@@ -94,7 +94,7 @@ jobs:
           VER="${TAG#v}"
           if echo "$VER" | grep -Eq -- "6\.3\.0-dsh\.[0-9]+$"; then
             echo "为 $VER 显式打 dsh dist-tag"
-            npm dist-tag add "dsh-superpower@$VER" dsh
+            npm dist-tag add "@wenaixi/dsh-superpower@$VER" dsh
           else
             echo "$VER 不是 -dsh.N 形态，跳过 dsh dist-tag"
           fi

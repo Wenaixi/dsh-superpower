@@ -4,6 +4,16 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [6.3.0-dsh.7] - 2026-08-23
+
+### 变更
+
+- **npm 包名统一到 `@wenaixi/dsh-superpower`**：与 `@wenaixi/dsh-ponytail` / `@wenaixi/cfbridge` 保持一致的 `@wenaixi` scope。变更内容：`package.json#name` 由 `dsh-superpower` 改为 `@wenaixi/dsh-superpower` 并新增 `publishConfig: { access: "public" }`；`cordis.patch.yml` 的 `name` 同步改为 `@wenaixi/dsh-superpower`；`README.md` 安装/卸载/验证/常见问题、`release.yml` 的 `npm dist-tag add`、`src/superpowers.ts` 注释、`CONTRIBUTING.md` / `CLAUDE.md` 全量替换为 scoped 名；`pnpm pack` 产物由 `dsh-superpower-*.tgz` 改为 `wenaixi-dsh-superpower-*.tgz`。GitHub 仓库名 `Wenaixi/dsh-superpower` 不变（仅 npm 名变更）。
+
+### 废弃
+
+- 旧名 `dsh-superpower`（无 scope）已废弃：发版后执行 `npm deprecate dsh-superpower@"*" "已迁移至 @wenaixi/dsh-superpower，请改用 \"dsh plugin --profile web add @wenaixi/dsh-superpower\""`，后续不再向该名发布新版本。
+
 ## [6.3.0-dsh.6] - 2026-08-22
 
 ### 修复
@@ -107,6 +117,7 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
+[6.3.0-dsh.7]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.7
 [6.3.0-dsh.6]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.6
 [6.3.0-dsh.5]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.5
 [6.3.0-dsh.4]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.4

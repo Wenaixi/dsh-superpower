@@ -1,6 +1,6 @@
 # dsh-superpower
 
-[![npm](https://img.shields.io/npm/v/dsh-superpower?label=npm)](https://www.npmjs.com/package/dsh-superpower)
+[![npm](https://img.shields.io/npm/v/@wenaixi%2Fdsh-superpower?label=npm)](https://www.npmjs.com/package/@wenaixi/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 
@@ -14,19 +14,21 @@
 
 ```bash
 # A — npm（推荐，自动安装最新）
-dsh plugin --profile web add dsh-superpower
+dsh plugin --profile web add @wenaixi/dsh-superpower
 
 # B — GitHub 直装（无视镜像延迟）
 dsh plugin --profile web add github:Wenaixi/dsh-superpower
 
 # 验证
-dsh --profile web --dump-config | grep -A2 "dsh-superpower"
-# # == dsh-superpower / - id: superpowers
+dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
+# # == @wenaixi/dsh-superpower / - id: superpowers
 
 dsh --profile web  # 进会话，技能自动可用
 ```
 
-> 如需锁定版本，在包名后追加 `@<version>`（如 `dsh-superpower@<version>`）或 `#v<version>`（GitHub 形式）。
+> 如需锁定版本，在包名后追加 `@<version>`（如 `@wenaixi/dsh-superpower@<version>`）或 `#v<version>`（GitHub 形式）。
+>
+> > ⚠️ 旧名 `dsh-superpower`（无 scope）已废弃并 `npm deprecate`，请改用 `@wenaixi/dsh-superpower`。
 
 其它：
 
@@ -34,11 +36,11 @@ dsh --profile web  # 进会话，技能自动可用
 git clone https://github.com/Wenaixi/dsh-superpower.git && cd dsh-superpower
 pnpm install && pnpm build && node scripts/verify.mjs   # 14/14 PASS
 dsh plugin --profile web add ./                           # 本地路径安装
-pnpm pack && dsh plugin --profile web add ./dsh-superpower-*.tgz  # 离线 tarball
+pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz  # 离线 tarball
 
 # 更新 / 卸载（同样自动取最新）
-dsh plugin --profile web add dsh-superpower
-dsh plugin --profile web remove dsh-superpower
+dsh plugin --profile web add @wenaixi/dsh-superpower
+dsh plugin --profile web remove @wenaixi/dsh-superpower
 ```
 
 ## 是什么
@@ -77,7 +79,7 @@ dsh plugin --profile web remove dsh-superpower
 
 ```bash
 pnpm install && pnpm build && pnpm typecheck && node scripts/verify.mjs
-dsh --profile web --dump-config  # 断言 "# == dsh-superpower"
+dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
 
 ## 目录
@@ -92,7 +94,7 @@ lib/                # 已提交，GitHub 直装零构建
 
 ## 常见问题
 
-404/镜像延迟请改用 GitHub 形式；白名单不需要；`latest` 可用 `npm view dsh-superpower --registry https://registry.npmjs.org` 查看。
+404/镜像延迟请改用 GitHub 形式；白名单不需要；`latest` 可用 `npm view @wenaixi/dsh-superpower --registry https://registry.npmjs.org` 查看。
 
 ## 协议
 

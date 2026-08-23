@@ -16,7 +16,7 @@ pnpm install
 pnpm build        # tsc -p tsconfig.build.json -> lib/
 pnpm typecheck    # tsc --noEmit
 node scripts/verify.mjs
-dsh --profile demo --dump-config   # 应看到 "# == dsh-superpower"
+dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 ```
 
 ## 提交 PR
