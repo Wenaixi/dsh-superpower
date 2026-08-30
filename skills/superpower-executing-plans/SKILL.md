@@ -9,7 +9,7 @@ description: "适用于已有详细实现计划的场景，在隔离会话中逐
 
 加载计划、批判性复审、执行全部任务、完成后汇报。
 
-**开始时声明：** "I'm using the executing-plans skill to implement this plan."
+**开始时声明：** "我将使用 executing-plans 技能来执行本计划。"
 
 **提示：** 告知你的协作伙伴，Superpowers 在可使用 subagent 时效果更好（Claude Code、Codex CLI、Codex App、Copilot CLI 和 Gemini CLI 均符合条件；各平台工具说明见 `../using-superpowers/references/`）。如可使用 subagent，请使用 superpower-subagent-driven-development 替代本 skill。
 
@@ -33,7 +33,7 @@ description: "适用于已有详细实现计划的场景，在隔离会话中逐
 ### 步骤 3：完成开发
 
 所有任务完成并校验通过后：
-- 声明："I'm using the finishing-a-development-branch skill to complete this work."
+- 声明："我将使用 finishing-a-development-branch 技能来完成收尾工作。"
 - **必选子 skill：** 使用 superpower-finishing-a-development-branch
 - 按该 skill 流程校验测试、提供选项并执行所选方案
 

@@ -7,8 +7,7 @@
 ```
 Subagent (general-purpose):
   description: "Re-review Task N fix round R"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
+  model: [MODEL — 必填：按 SKILL.md 的模型选择规则选择；若省略则静默继承会话中最昂贵的模型]
   prompt: |
     你正在复审单个任务的某一轮修复。上一轮评审已产生若干问题，执行人已尝试修复。你的职责仅是对每一条问题给出裁决，并检查修复 diff——除此之外不做其他事。
 

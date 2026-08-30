@@ -92,7 +92,7 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           VER="${TAG#v}"
-          if echo "$VER" | grep -Eq -- "6\.3\.0-dsh\.[0-9]+$"; then
+          if echo "$VER" | grep -Eq -- "-dsh\.[0-9]+$"; then
             echo "为 $VER 显式打 dsh dist-tag"
             npm dist-tag add "@wenaixi/dsh-superpower@$VER" dsh
           else

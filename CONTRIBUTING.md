@@ -55,8 +55,8 @@ git clone --depth 1 https://github.com/obra/superpowers.git /tmp/superpowers
 5. 跑 `pnpm build && pnpm typecheck && node scripts/verify.mjs` 全绿
 6. **不** bump `package.json#version` 的基线（如 `6.3.0` 改为 `6.4.0` 应等上游正式发版，本仓跟随），仅以 `-dsh.N` 演进
 
-**目录名同步策略：** 目录名保持原 `<kebab>` 不变（避免 git diff 中的重命名噪音）。Provider 已有 `frontmatter.name 偏离目录名时以 frontmatter 为准并 warn` 的逻辑（见 `src/superpowers.ts`），不影响加载。
+**目录名同步策略：** 目录名与 `frontmatter.name` 必须一致，统一为 `superpower-<kebab>`（`v6.3.0-dsh.9` 起硬重命名）。同步上游新增技能时，目录与 frontmatter 同步使用 `superpower-` 前缀，避免触发 Provider 的 name drift 警告。
 
 ---
 
-有疑问请提 Issue，欢迎喵～
+有疑问请提 Issue，欢迎参与贡献。

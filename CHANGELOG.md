@@ -135,6 +135,8 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
+[6.3.0-dsh.10]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.10
+[6.3.0-dsh.9]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.9
 [6.3.0-dsh.8]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.8
 [6.3.0-dsh.7]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.7
 [6.3.0-dsh.6]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.6

@@ -20,7 +20,7 @@ for (const dir of skillDirs) {
   if (!hasFrontmatter) { console.error(`[verify] ${dir}: missing frontmatter`); ok = false }
   else if (!nameMatch) { console.error(`[verify] ${dir}: missing name`); ok = false }
   else {
-    // 目录名与 frontmatter.name 可偏离：以 frontmatter 为准并打标记提示（Provider 在加载时也会 warn）
+    // 目录名与 frontmatter.name 应一致（dsh.9 起硬重命名）；若偏离则标记提示（同步上游新增技能时可能短暂出现）
     const drifted = nameMatch[1] !== dir
     const mark = drifted ? '~' : '✓'
     const note = drifted ? ' (frontmatter.name 偏离目录名)' : ''

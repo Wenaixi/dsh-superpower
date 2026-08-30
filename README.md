@@ -59,7 +59,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 | `superpower-dispatching-parallel-agents` | 并行分发 |
 | `superpower-test-driven-development` | RED-GREEN-REFACTOR |
 | `superpower-systematic-debugging` / `superpower-verification-before-completion` | 调试闭环 |
-| `superpower-requesting` / `superpower-receiving-code-review` | 评审 |
+| `superpower-requesting-code-review` / `superpower-receiving-code-review` | 评审 |
 | `superpower-finishing-a-development-branch` | 集成 |
 | `superpower-writing-skills` | 写新技能 |
 

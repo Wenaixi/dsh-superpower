@@ -151,9 +151,9 @@ description: Use when [具体的触发条件与症状]
 
 description 应仅描述触发条件，不要概括技能的流程或工作流。
 
-**为什么这很重要：** 测试发现，当 description 概括了技能的工作流时，智能体可能会直接沿用 description 的描述，而不再阅读完整的技能内容。一个写着 "code review between tasks" 的 description 曾导致智能体只做了一次审查，尽管技能中的流程图明确展示了两次审查（先合规性审查，再代码质量审查）。
+**为什么这很重要：** 测试发现，当 description 概括了技能的工作流时，智能体可能会直接沿用 description 的描述，而不再阅读完整的技能内容。一个写着「code review between tasks」的 description 曾导致智能体只做了一次审查，尽管技能中的流程图明确展示了两次审查（先合规性审查，再代码质量审查）。
 
-当 description 被改为仅保留 "Use when executing implementation plans with independent tasks"（不含工作流概括）后，智能体才正确读取了流程图，并执行了两阶段审查流程。
+当 description 被改为仅保留「Use when executing implementation plans with independent tasks」（不含工作流概括）后，智能体才正确读取了流程图，并执行了两阶段审查流程。
 
 **陷阱：** 概括工作流的 description 会成为智能体走捷径的入口，技能正文反而被跳过。
 

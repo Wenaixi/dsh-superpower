@@ -7,8 +7,7 @@
 ```
 Subagent (general-purpose):
   description: "Review Task N (spec + quality)"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
+  model: [MODEL — 必填：按 SKILL.md 的模型选择规则选择；若省略则静默继承会话中最昂贵的模型]
   prompt: |
     你正在评审单个任务的实现：先判断是否符合需求，再判断是否构建良好。这是一个任务级别的门禁，而非合并评审——所有任务完成后的全分支广度评审会另行进行。
 

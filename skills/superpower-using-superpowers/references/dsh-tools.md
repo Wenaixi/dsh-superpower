@@ -25,7 +25,7 @@
 | `goal` / `ralph` | 长周期目标的创建、续跑、阻塞判定 |
 | `workflow` 脚本 | 需要编排数十个 subagent 的审计/迁移/批量改写 |
 | `jobs` | 托管后台任务的查询与终止 |
-| `plan-mode` | 只读规划锁定，与 `writing-plans` 的细粒度切片互补 |
+| `plan-mode` | 只读规划锁定，与 `superpower-writing-plans` 的细粒度切片互补 |
 | `cordis` 动态插件 | 会话内临时扩展能力（非本移植包范畴） |
 
 ## 约束与习惯

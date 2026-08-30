@@ -27,7 +27,7 @@ digraph when_to_use {
     "任务是否大多相互独立？" [shape=diamond];
     "是否留在当前会话？" [shape=diamond];
     "subagent-driven-development" [shape=box];
-    "executing-plans" [shape=box];
+    "superpower-executing-plans" [shape=box];
     "手动执行或先行头脑风暴" [shape=box];
 
     "是否有实现计划？" -> "任务是否大多相互独立？" [label="是"];
@@ -35,7 +35,7 @@ digraph when_to_use {
     "任务是否大多相互独立？" -> "是否留在当前会话？" [label="是"];
     "任务是否大多相互独立？" -> "手动执行或先行头脑风暴" [label="否 - 高度耦合"];
     "是否留在当前会话？" -> "subagent-driven-development" [label="是"];
-    "是否留在当前会话？" -> "executing-plans" [label="否 - 并行会话"];
+    "是否留在当前会话？" -> "superpower-executing-plans" [label="否 - 并行会话"];
 }
 ```
 

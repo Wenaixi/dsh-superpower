@@ -19,7 +19,7 @@ description: "创意工作前必用：创建功能、构建组件、新增能力
 
 - **Spike 探索** — 可行性问题（“能否……”“是否可能……”“快速粗糙实现即可”），产出是答案，而非可保留的代码。用 2-3 句话说明问题及验证方式，获得认可后，以满足正确性前提下的最低成本去验证。无需设计文档与规格文件。以建议形式汇报发现，任何为验证而构建的代码均标注为“一次性/可丢弃”。
 - **Bounded 受限** — 对本仓库已有代码的明确范围变更：新增开关、小型接口、单文件修复。仅了解应用类型是不够的——“受限”意味着你要改的流程已在仓库中可查可读。若没有可改的既有流程，则不属于受限任务。提出关键的澄清问题，在对话中直接呈现简短设计（几句话到几段短文），然后停止。仅在协作方对该设计明确说“同意”后方可开始实现——受限任务的审批与架构级任务一样严格。无需规格文件与实现计划文档。
-- **Architectural 架构** — 新项目、新子系统，或会重塑组件间协作方式、改变他人依赖接口的变更。遵循完整流程：提问、提供方案、分节设计、编写规格文档，然后进入 writing-plans skill。
+- **Architectural 架构** — 新项目、新子系统，或会重塑组件间协作方式、改变他人依赖接口的变更。遵循完整流程：提问、提供方案、分节设计、编写规格文档，然后进入 superpower-writing-plans 技能。
 
 当在两条路径间犹豫时，选择更重的那一条。棘轮单向生效：任务中途发现隐藏复杂度即升级路径——立即停下、说明情况、提升等级。任务中途不允许降级。
 
@@ -66,7 +66,7 @@ description: "创意工作前必用：创建功能、构建组件、新增能力
 6. **编写设计文档** — 保存至 `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` 并提交
 7. **规格自检** — 快速行内检查占位符、矛盾、歧义与范围（见下文）
 8. **用户复核书面规格** — 请用户在继续前复核规格文件
-9. **转入实现** — 调用 writing-plans skill 创建实现计划
+9. **转入实现** — 调用 superpower-writing-plans 技能创建实现计划
 
 ## 流程图
 
@@ -87,7 +87,7 @@ digraph brainstorming {
     "编写设计文档" [shape=box];
     "规格自检\n（行内修复）" [shape=box];
     "用户是否复核规格？" [shape=diamond];
-    "调用 writing-plans skill" [shape=doublecircle];
+    "调用 superpower-writing-plans 技能" [shape=doublecircle];
     "发现隐藏复杂度？升级路径" [shape=box];
 
     "分类：spike 探索 / bounded 受限 / architectural 架构" -> "呈现问题与验证计划（2-3 句话）" [label="spike 探索"];
@@ -108,7 +108,7 @@ digraph brainstorming {
     "编写设计文档" -> "规格自检\n（行内修复）";
     "规格自检\n（行内修复）" -> "用户是否复核规格？";
     "用户是否复核规格？" -> "编写设计文档" [label="需修改"];
-    "用户是否复核规格？" -> "调用 writing-plans skill" [label="已批准"];
+    "用户是否复核规格？" -> "调用 superpower-writing-plans 技能" [label="已批准"];
 }
 ```
 
@@ -184,7 +184,7 @@ digraph brainstorming {
 
 **实现：**
 
-- 调用 writing-plans skill 创建详细的实现计划
+- 调用 superpower-writing-plans 技能创建详细的实现计划
 - 不要调用任何其他 skill。下一步仅为 writing-plans。
 
 ## 可视化协作
