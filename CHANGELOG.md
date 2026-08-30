@@ -4,6 +4,12 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [6.3.0-dsh.10] - 2026-08-23
+
+### 修复
+
+- **`@deepseek-ai/dsh-skill` peer 范围改为显式预发布分支**：原 `^0.1.1-rc.2` 按 node-semver 规则只会放行 `0.1.1-rc.2` 一个版本，`0.1.0-rc.x` 等既有 harness 预发布构建会被静默排除，用户安装时触发 `ERESOLVE`。按 awesome-dsh-plugin 投稿规范推荐写法改为 `>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`，覆盖 `0.0.1-rc.x` 与 `0.1.x` 全系列预发布与正式版，消除误伤。
+
 ## [6.3.0-dsh.9] - 2026-08-23
 
 ### 修复
