@@ -1,8 +1,27 @@
 # 更新日志
 
-本文件记录 `dsh-superpower` 的所有值得关注的变更。主版本与上游 [obra/superpowers](https://github.com/obra/superpowers) 严格同步，`-dsh.N` 为本仓库在基线 `6.3.0` 上的预发布演进位。
+本文件记录 `dsh-superpower` 的所有值得关注的变更。**v6.3.1 起本仓库脱离上游 [obra/superpowers](https://github.com/obra/superpowers) 独立演进**：上游基准锁定 `v6.3.0`（2026-08-12），此后本仓库自行维护技能与修复，不再逐版跟随上游版本号；同步上游新特性时按需 cherry-pick 并记录于此。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [6.3.1] - 2026-08-23
+
+### 变更
+
+- **脱离上游独立演进**：本仓库从 `-dsh.N` 预发布线转为正式版本线，首个正式版 `v6.3.1`。上游基准锁定 `v6.3.0`，后续同步上游变更时以 cherry-pick 方式合入并记录。
+
+### 修复
+
+- **审查修正技能名引用与文档一致性**（commit `770f7aa`）：
+  - `README.md` 技能表 `superpower-requesting` 补全为 `superpower-requesting-code-review`
+  - `hermes-tools.md` / `codex-tools.md` / `dsh-tools.md` 技能名统一加 `superpower-` 前缀（`skill_view("superpower-...")`）
+  - `brainstorming` / `subagent-driven-development` 正文与流程图技能名引用带前缀
+  - `executing-plans` 声明台词中文化
+  - `task-reviewer-prompt.md` / `re-review-prompt.md` 的 model 注释中文化（与 `implementer-prompt.md` 一致）
+  - `CONTRIBUTING.md` 目录名同步策略更新为 dsh.9 后口径，移除 AI 味尾句
+  - `CHANGELOG.md` 补 `dsh.9` / `dsh.10` release 链接
+  - `release.yml` dist-tag 正则去基线硬编码（`-dsh\.[0-9]+$`）
+  - `verify.mjs` 注释同步现状
 
 ## [6.3.0-dsh.10] - 2026-08-23
 
@@ -135,6 +154,7 @@
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
+[6.3.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.1
 [6.3.0-dsh.10]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.10
 [6.3.0-dsh.9]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.9
 [6.3.0-dsh.8]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.8

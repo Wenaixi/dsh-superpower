@@ -1,6 +1,6 @@
 {
   "name": "@wenaixi/dsh-superpower",
-  "version": "6.3.0-dsh.10",
+  "version": "6.3.1",
   "description": "obra/superpowers 的 DSH 移植版 — 将完整的多智能体开发方法论以原生 DSH 技能开箱即用",
   "type": "module",
   "main": "lib/superpowers.js",

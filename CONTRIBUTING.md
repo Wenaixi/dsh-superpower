@@ -4,7 +4,7 @@
 
 ## 基本原则
 
-- **版本号与上游同步**：`package.json#version` 严格跟随上游 `obra/superpowers`，不要自行 bump 大版本
+- **独立演进（v6.3.1 起）**：`package.json#version` 不再跟随上游 `obra/superpowers`；上游基准锁定 `v6.3.0`，上游新特性按需 cherry-pick 合入并记录于 `CHANGELOG.md`
 - **中文化**：`skills/**/SKILL.md` 及辅助文档保持简体中文，代码/命令/路径/变量名不译
 - **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 技能的硬规则（`inject`、`Schemastery Config`、`ctx.effect` 清理、`waterfall next()` 等）
 - **失败要响亮**：非法 frontmatter 仅跳过单技能并 `warn`，不静默吞错
@@ -53,7 +53,7 @@ git clone --depth 1 https://github.com/obra/superpowers.git /tmp/superpowers
 3. 同步中文化正文与新增的辅助文档
 4. 同步更新所有文档里引用的旧名（`superpowers:<x>` → `superpower-<x>`）
 5. 跑 `pnpm build && pnpm typecheck && node scripts/verify.mjs` 全绿
-6. **不** bump `package.json#version` 的基线（如 `6.3.0` 改为 `6.4.0` 应等上游正式发版，本仓跟随），仅以 `-dsh.N` 演进
+6. 同步完成后按本仓独立版本线发布（当前 `v6.3.1` 起），并在 `CHANGELOG.md` 记录所同步的上游提交/版本
 
 **目录名同步策略：** 目录名与 `frontmatter.name` 必须一致，统一为 `superpower-<kebab>`（`v6.3.0-dsh.9` 起硬重命名）。同步上游新增技能时，目录与 frontmatter 同步使用 `superpower-` 前缀，避免触发 Provider 的 name drift 警告。
 
