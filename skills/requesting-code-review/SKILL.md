@@ -1,11 +1,11 @@
 ---
-name: superpower-requesting-code-review
+name: requesting-code-review
 description: "在任务完成、重大功能实现或准备合并到主分支时发起，用于校验实现是否符合需求与质量标准，建议定期执行"
 ---
 
 # 请求代码评审
 
-派发代码评审子代理，提前发现问题，避免问题级联扩散。评审者仅获得为评估而精确构造的上下文——而非你的完整会话历史。
+派发一个代码评审子代理，在问题级联扩散前发现它们。评审者获得为评估而精确构造的上下文——绝不使用你的会话历史。
 
 **核心原则：** 尽早评审，频繁评审。
 
@@ -25,7 +25,7 @@ description: "在任务完成、重大功能实现或准备合并到主分支时
 
 **1. 获取 git SHA：**
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # 或 origin/main
+BASE_SHA=$(git merge-base origin/main HEAD)  # 以 origin/main 为评审基线
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 

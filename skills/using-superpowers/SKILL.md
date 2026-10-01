@@ -1,5 +1,5 @@
 ---
-name: superpower-using-superpowers
+name: using-superpowers
 description: "适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题"
 ---
 
@@ -27,8 +27,8 @@ description: "适用于任何对话开始前，建立技能查找与调用规范
 
 当多个技能同时适用时，流程类技能优先——它们决定方法论，然后由实现类技能（如 frontend-design 等）负责落地。头脑风暴与系统化调试是 Superpowers 中最常见的流程技能，但该规则适用于所有技能。
 
-- "Let's build X" → 优先使用 superpower-brainstorming，再使用实现类技能。
-- "Fix this bug" → 优先使用 superpower-systematic-debugging，再使用领域技能。
+- "Let's build X" → 优先使用 brainstorming，再使用实现类技能。
+- "Fix this bug" → 优先使用 systematic-debugging，再使用领域技能。
 
 ## 警示信号
 
@@ -54,10 +54,12 @@ description: "适用于任何对话开始前，建立技能查找与调用规范
 如果你的执行环境出现在此列表中，请先阅读对应的参考文件获取专项说明：
 
 - DSH (DeepSeek Harness): `references/dsh-tools.md` — **请优先阅读。** 将 Bash→pwsh/bash、Read/Write/Edit→fs、Glob/Grep→fs-search、Task/Subagent→subagent/workflow、TodoWrite→todo、AskUserQuestion→ask-user、Skill→skill 进行映射。本套件中的所有技能均假定使用 DSH 工具。
+- Claude Code: `references/claude-code-tools.md`
 - Codex: `references/codex-tools.md`
 - Pi: `references/pi-tools.md`
 - Antigravity: `references/antigravity-tools.md`
 - Hermes Agent: `references/hermes-tools.md`
+- Muse: `references/muse-tools.md`
 
 ## 用户指令
 
