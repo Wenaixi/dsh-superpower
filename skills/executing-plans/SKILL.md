@@ -79,7 +79,7 @@ digraph process {
 
 workspace 与 ledger 与 subagent-driven-development 共用——同一个目录、同一种格式——所以一份计划可以在执行中途换执行者，新执行者从同一份 ledger 接着往下做。
 
-- 每份计划拥有一个 workspace：技能开始时运行 `../subagent-driven-development/scripts/sdd-workspace PLAN_FILE`——它会打印本计划的 git 忽略目录（`<repo-root>/.superpowers/sdd/<plan-basename>/`），该目录是这份计划所有产物的家：ledger、brief、review package。别的计划的目录永远不归你读写。
+- 每份计划拥有一个 workspace：技能开始时运行 `bash ../subagent-driven-development/scripts/sdd-workspace PLAN_FILE`——它会打印本计划的 git 忽略目录（`<repo-root>/.superpowers/sdd/<plan-basename>/`），该目录是这份计划所有产物的家：ledger、brief、review package。别的计划的目录永远不归你读写。
 - 在本计划的 `<workspace>/progress.md` 检查 ledger。如果它的第一行点名的是你的计划文件，那么带 `Task <N>: complete` 行的任务就是已完成的——不要重做；从第一个没有该行的任务继续。即使你的上下文已不记得做过，它们的提交也确实存在于 git 中：压缩之后，宁可相信 ledger 与 `git log`，也不要相信自己的回忆。第一行点名了另一份计划文件的 ledger，是别的计划的进度：别动它，另起一份全新的。
 - 创建 ledger，第一行写身份：`# SDD ledger — plan: <plan file path>`。
 - `git clean -fdx` 会摧毁 workspace（它是 git 忽略的临时区）；真要发生，从 `git log` 恢复。
@@ -96,7 +96,7 @@ workspace 与 ledger 与 subagent-driven-development 共用——同一个目录
 
 ### 1. 接手任务
 
-- 运行本技能的 `scripts/task-start PLAN_FILE N`。它在一次调用中打印 brief 路径与 BASE（该任务评审区间的起点提交）。每个任务都要读 brief，包括你在准备阶段记得的那些：你记得的是摘要，brief 里才是精确的取值、签名与测试用例。
+- 运行本技能的 `bash scripts/task-start PLAN_FILE N`。它在一次调用中打印 brief 路径与 BASE（该任务评审区间的起点提交）。每个任务都要读 brief，包括你在准备阶段记得的那些：你记得的是摘要，brief 里才是精确的取值、签名与测试用例。
 - 把该任务的 todo 标为 in_progress。
 
 每一次工具调用都是一轮重新读取你全部上下文的过程。记账要搭着干活一起走——追加 ledger 与提交放在同一次调用里，绝不单独花一次调用。
@@ -126,7 +126,7 @@ workspace 与 ledger 与 subagent-driven-development 共用——同一个目录
 
 ### 4. 完成任务
 
-运行本技能的 `scripts/task-done PLAN_FILE N BASE -- <测试命令>`，测试命令用 brief 为整个任务点名的那条。它会运行测试，把完整输出留在 workspace，打印尾部，并且——只在测试通过时——把完成行追加到 ledger：
+运行本技能的 `bash scripts/task-done PLAN_FILE N BASE -- <测试命令>`，测试命令用 brief 为整个任务点名的那条。它会运行测试，把完整输出留在 workspace，打印尾部，并且——只在测试通过时——把完成行追加到 ledger：
 
 `Task <N>: complete (commits <base7>..<head7>, tests: <command> → <result>)`
 
@@ -134,7 +134,7 @@ workspace 与 ledger 与 subagent-driven-development 共用——同一个目录
 
 ## 最终评审
 
-运行 `../subagent-driven-development/scripts/review-package PLAN_FILE MERGE_BASE HEAD`（MERGE_BASE = 分支起点的提交，例如 `git merge-base main HEAD`），并从它打印出的文件出发评审。
+运行 `bash ../subagent-driven-development/scripts/review-package PLAN_FILE MERGE_BASE HEAD`（MERGE_BASE = 分支起点的提交，例如 `git merge-base main HEAD`），并从它打印出的文件出发评审。
 
 **有 subagent 工具时：** 用可用的最强模型派发 reviewer——全分支评审是一项判断题——使用 requesting-code-review 的 [code-reviewer.md](../requesting-code-review/code-reviewer.md)，并把包路径、计划与规格路径、计划的 Review Focus 段（若存在）逐字交给它（该段列出计划的测试未覆盖的输入类别与失败模式——reviewer 要逐条刻意检查），再加一个指向 ledger 中 `Ruling:` 行的提示，让它能权衡你所做的决定。明确指定模型；省略模型会继承本会话的模型，而它未必是最强的。这是整轮执行唯一买到的一份全新上下文。不要跳过它，也不要用你自己读 diff 来代替它。
 

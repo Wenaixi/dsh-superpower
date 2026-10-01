@@ -255,6 +255,53 @@ for (const { file, ref } of missingRefs) {
 console.log(`[verify] unreferenced files: ${orphanFiles.length} WARN`)
 for (const o of orphanFiles) console.log(`[verify] WARN unreferenced ${o}`)
 
+
+
+// ---------------------------------------------------------------------------
+// 随包脚本调用契约检查：技能正文里调用 scripts/* 必须带解释器前缀（bash/node），
+// 裸路径会被部分宿主打包器剥掉可执行位而失败（writing-skills 契约原文）
+// ---------------------------------------------------------------------------
+
+console.log('[verify] bundled-script-call check')
+
+// 反引号内裸脚本调用（`scripts/x.sh` 或 `../x/scripts/y.sh` 无前缀）
+const bareCallRe = /`(?:(?:\.\.\/)?[\w-]+\/)*scripts\/[\w.\/-]+\.(?:sh|js|cjs|mjs)`/g
+const prefixedOkRe = /`(?:bash|node|npx|python3?)\s+(?:(?:\.\.\/)?[\w-]+\/)*scripts\/[\w.\/-]+\.(?:sh|js|cjs|mjs)`/g
+
+let bareCalls = 0
+// 教学示例豁免：writing-skills/SKILL.md 本身就在讲这条契约，正文里的反例不算违规
+const BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md'])
+async function scanBareCalls(dir) {
+  const list = await readdir(dir, { withFileTypes: true })
+  for (const item of list) {
+    if (item.name.startsWith('.')) continue
+    const full = join(dir, item.name)
+    if (item.isDirectory()) await scanBareCalls(full)
+    else if (item.name.endsWith('.md')) {
+      const relPath = relative(root, full).replace(/\\/g, '/')
+      if (BARE_CALL_EXEMPT.has(relPath)) continue
+      const content = await readFile(full, 'utf8')
+      const stripped = content.replace(/```[\s\S]*?```/g, '')
+      const bare = [...stripped.matchAll(bareCallRe)]
+      // 前缀合法调用先行摘除，剩余裸调用才计
+      for (const m of bare) {
+        // 资源指针豁免：反引号目标是真实存在的文件（模板/客户端资源），非执行调用
+        const targetPath = m[0].replace(/`/g, '')
+        const realTarget = resolve(dir, targetPath)
+        const isResource = await stat(realTarget).then(() => true).catch(() => false)
+        if (isResource) continue
+        if (!prefixedOkRe.test(m[0])) {
+          console.error(`[verify] BARE SCRIPT CALL ${relative(root, full)}: ${m[0]}`)
+          bareCalls++
+          ok = false
+        }
+      }
+    }
+  }
+}
+await scanBareCalls(skillDir)
+console.log(`[verify] bundled-script-call check ${bareCalls === 0 ? 'PASS' : 'FAIL: ' + bareCalls + ' bare call(s)'}`)
+if (bareCalls === 0) console.log('')
 // ---------------------------------------------------------------------------
 // 深度接口边界自检：SkillDocument/SkillCatalog 的契约断言（接口即测试表面）
 // 8 条断言覆盖 BOM/CRLF/kebab/必填字段/排重/名称漂移/中止语义
