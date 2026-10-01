@@ -1,11 +1,11 @@
 # DSH Tools Reference for Superpowers
 
-> 面向模型的 DSH 工具速查。Superpowers 原版文案中的 Claude Code / Codex 工具名在此映射为 DSH 等价物。
-> 当 skill 指示使用某一工具时，按下表替换即可。
+> 面向模型的 DSH 工具速查。Superpowers 技能在 DSH 平台环境下的原生工具等价物与行为规范。
+> 当 skill 指示执行特定工具动作时，按本表原生 DSH 工具执行。
 
 ## 核心映射
 
-| 原版提及 | DSH 等价 | 备注 |
+| 技能动作 | DSH 等价 | 备注 |
 |---|---|---|
 | `Bash` / `bash` | `pwsh`（首选，Windows 友好）或 `bash` | 长耗时命令用 `run_in_background: true`，通过 `job_output` / `job_list` 收敛 |
 | `Read` / `Write` / `Edit` | `fs` 工具的 `read` / `write` / `edit` | `read` 前无需 `fs/observed` 校验，`write/edit` 自动触发 `fs/observed` 失效 |

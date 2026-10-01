@@ -18,8 +18,8 @@
 # legacy workspace adopts instead of detecting; acceptable, marker-less
 # workspaces age out as plans finish.
 #
-# The workspace lives in the working tree (not under .git/) because Claude Code
-# treats .git/ as a protected path and denies agent writes there — which blocks
+# The workspace lives in the working tree (not under .git/) because subagent
+# sandbox policies treat .git/ as a protected path and deny writes there — which blocks
 # an implementer subagent from writing its report file. A self-ignoring
 # .gitignore at .superpowers/sdd/ keeps every plan's workspace out of
 # `git status` and out of accidental commits without modifying any tracked file.

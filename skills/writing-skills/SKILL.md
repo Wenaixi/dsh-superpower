@@ -9,7 +9,7 @@ description: "Superpower Skill：在创建新技能、编辑或重构现有技�
 
 **编写技能就是将测试驱动开发应用于流程文档。**
 
-**个人技能存放于运行时的技能目录**（Claude Code 上为 `~/.claude/skills/`）—— 其他运行时的路径请参见 [codex-tools.md](../using-superpowers/references/codex-tools.md) 或 [gemini-tools.md](../using-superpowers/references/gemini-tools.md)。Codex、Copilot CLI 与 Gemini CLI 同样识别 `~/.agents/skills/` 作为跨运行时别名。
+**个人技能存放于 DSH 的技能目录**：全局技能为 `~/.dsh/skills/`，项目级技能为 `<project>/.dsh/skills/`，亦可通过 DSH bundle 插件（`cordis.patch.yml` 注入 `ctx.skills`）分发提供。详细工具映射请参见 [dsh-tools.md](../using-superpowers/references/dsh-tools.md)。
 
 你编写测试用例（带 subagent 的压力场景）、观察其失败（基线行为）、编写技能（文档）、观察测试通过（agent 已遵守）、再进行重构（堵住漏洞）。
 
@@ -17,7 +17,7 @@ description: "Superpower Skill：在创建新技能、编辑或重构现有技�
 
 **必备前置知识：** 使用本技能前，你必须理解 test-driven-development。该技能定义了基本的 红-绿-重构 循环，本技能则是将 TDD 适配到文档编写上。
 
-**官方指引：** 关于 Anthropic 官方的技能编写最佳实践，请参见 anthropic-best-practices.md。本文档在以 TDD 为核心的方法之外，提供了额外的模式与指南作为补充。
+**官方指引：** 关于 DSH 平台技能的标准与工具规范，请参见 [dsh-tools.md](../using-superpowers/references/dsh-tools.md)。本文档在以 TDD 为核心的方法之外，提供了额外的模式与指南作为补充。
 
 ## 什么是技能？
 

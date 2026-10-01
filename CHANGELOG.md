@@ -8,6 +8,7 @@
 
 ### 破坏性变更
 
+- **平台专属化：仅支持 DSH (DeepSeek Harness)**：移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层。删除 `using-superpowers/references/` 下 7 个非 DSH 工具映射文件（`claude-code-tools.md`、`codex-tools.md`、`gemini-tools.md`、`hermes-tools.md`、`muse-tools.md`、`pi-tools.md`、`antigravity-tools.md`）、`writing-skills/anthropic-best-practices.md` 与 `writing-skills/examples/CLAUDE_MD_TESTING.md`；技能正文的平台适配小节固化为 DSH 原生工具规范；随包脚本（`brainstorming/scripts/server.cjs`、`start-server.sh`）移除 Codex/Claude Code 探测分支；契约门禁（`HOST_DOCS`、豁免清单）与上游同步复核引擎（新增 `NON_DSH_PLATFORM_REFS` 豁免集合）同步专属化，上游复核不再因缺失报错。
 - **技能名与目录去掉 `superpower-` 前缀**：14 个技能回归上游原名（`brainstorming`、`executing-plans`、`subagent-driven-development` …），`frontmatter.name`、目录名、全部正文引用同步更新。旧名 `skill("superpower-writing-plans")` 不再可用，改用 `skill("writing-plans")`。语义化版本因破坏性变更升为 `7.0.0`。
 - **同名技能优先级反转（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 `SUPERPOWERS_RANK` 由 `550` 改为 `10`，小于 `dsh-skill-filesystem` 的项目/用户根（100~500）与官方内置 bundled（600），因此任何与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills`、自定义根）或官方 bundled 技能均不会覆盖本包——本插件技能唯一生效。
 - **全文符号清除 + 核心术语回英文**：全部 15 个技能的译文正文与辅助文档中的图形状态符号（对勾、叉号、警示三角等）替换为 ASCII 标记（`[OK]`/`[FAIL]`/`[WARN]`），文档不再包含任何 emoji；核心专业术语回英文原词（`subagent`/`agent`、`reviewer`/`re-reviewer`、`ledger`、`finding`、`brief`、`workspace`/`worktree`、`harness`、`human partner`），句子仍为简体中文。

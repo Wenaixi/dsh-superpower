@@ -31,13 +31,11 @@ export class SkillContractChecker {
   // -------------------------------------------------------------------------
 
   static REFERENCE_EXEMPT = new Set([
-    'skills/writing-skills/anthropic-best-practices.md',
     'skills/brainstorming/visual-companion.md',
     'skills/diagnosing-superpowers/prompts/scrub.md',
     'skills/diagnosing-superpowers/references/github-issues.md',
     'skills/diagnosing-superpowers/templates/bundle-README.md',
     'skills/systematic-debugging/test-pressure-2.md',
-    'skills/using-superpowers/references/muse-tools.md',
     'skills/writing-skills/SKILL.md',
   ])
 
@@ -50,11 +48,11 @@ export class SkillContractChecker {
     'skills/systematic-debugging/CREATION-LOG.md',
   ])
 
-  static HOST_DOCS = new Set(['SKILL.md', 'GEMINI.md', 'AGENTS.md', 'CLAUDE.md', 'SOUL.md', 'TODO.md', 'README.md'])
+  static HOST_DOCS = new Set(['SKILL.md', 'AGENTS.md', 'CLAUDE.md', 'TODO.md', 'README.md'])
   static RESOURCE_SUBS = ['references', 'prompts', 'templates', 'scripts', 'examples', '']
 
   static SCRIPT_RESOURCE_EXEMPT = new Set(['scripts/frame-template.html', 'scripts/helper.js'])
-  static BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md', 'skills/writing-skills/anthropic-best-practices.md'])
+  static BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md'])
 
   static SYMBOL_PATTERN = /[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF\u2B50-\u2B55\u{1F300}-\u{1FAFF}]/u
 
@@ -92,9 +90,9 @@ export class SkillContractChecker {
    */
   assertGuardCanFail() {
     // 1. extractRefs 自检
-    const sample = '见 [a](../using-superpowers/references/codex-tools.md)。先读 `references/context-safety.md` 与 `implementer-prompt.md`，再 `bash scripts/review-package x`。'
+    const sample = '见 [a](../using-superpowers/references/dsh-tools.md)。先读 `references/context-safety.md` 与 `implementer-prompt.md`，再 `bash scripts/review-package x`。'
     const refs = SkillContractChecker.extractRefs(sample)
-    if (!refs.includes('../using-superpowers/references/codex-tools.md')) throw new Error('link form not extracted')
+    if (!refs.includes('../using-superpowers/references/dsh-tools.md')) throw new Error('link form not extracted')
     if (!refs.includes('references/context-safety.md')) throw new Error('tick-path form not extracted')
     if (!refs.includes('implementer-prompt.md')) throw new Error('tick-bare form not extracted')
     const fenced = '```bash\nscripts/tool.sh\n```'

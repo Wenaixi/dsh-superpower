@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 
-[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 完整移植 — 15 个技能注入 `ctx.skills`，开箱即用，全中文。
+[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 专属移植版 — 15 个技能注入 `ctx.skills`，开箱即用，全中文，**仅支持 DSH (DeepSeek Harness) 平台**，不提供其它 AI 宿主适配。
 
 ## 安装
 
@@ -96,7 +96,7 @@ skills/             # 15 技能（中文化，v7.0.0 起无 superpower- 前缀�
 lib/                # 已提交，GitHub 直装零构建
 ```
 
-版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。详见 `CHANGELOG.md`。
+版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。自本版起本插件为 **DSH 专属**，已移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层。详见 `CHANGELOG.md`。
 
 ## 常见问题
 

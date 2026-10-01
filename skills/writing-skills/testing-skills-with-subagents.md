@@ -12,7 +12,7 @@
 
 **前置要求：** 使用本技能前，必须先掌握 test-driven-development。该技能定义了 RED-GREEN-REFACTOR 基础循环，本技能则提供面向技能测试的专用格式（压力场景、合理化对照表）。
 
-**完整实战示例：** 参见 examples/CLAUDE_MD_TESTING.md，其中包含针对 CLAUDE.md 文档变体的完整测试过程。
+**完整实战示例：** 参见用 DSH 指令文件（`AGENTS.md` / `CLAUDE.md`）实际运行一遍上面的 TDD 映射，验证技能在压力场景下的发现率与合规性。
 
 ## 适用场景
 

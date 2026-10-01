@@ -51,16 +51,10 @@ description: "Superpower Skill：适用于任何对话开始前，建立技能�
 
 ## 平台适配
 
-如果你的执行环境出现在此列表中，请先阅读对应的参考文件获取专项说明：
+本套件专为 **DSH (DeepSeek Harness)** 原生环境设计，仅支持 DSH 平台：
 
-- DSH (DeepSeek Harness): `references/dsh-tools.md` — **请优先阅读。** 将 Bash→pwsh/bash、Read/Write/Edit→fs、Glob/Grep→fs-search、Task/Subagent→subagent/workflow、TodoWrite→todo、AskUserQuestion→ask-user、Skill→skill 进行映射。本套件中的所有技能均假定使用 DSH 工具。
-- Claude Code: `references/claude-code-tools.md`
-- Codex: `references/codex-tools.md`
-- Pi: `references/pi-tools.md`
-- Antigravity: `references/antigravity-tools.md`
-- Hermes Agent: `references/hermes-tools.md`
-- Muse: `references/muse-tools.md`
+- DSH 工具规范：`references/dsh-tools.md` — 本套件中的所有技能均假定使用 DSH 工具（Bash→pwsh/bash、Read/Write/Edit→fs、Glob/Grep→fs-search、Task/Subagent→subagent/workflow、TodoWrite→todo、AskUserQuestion→ask-user、Skill→skill）。
 
 ## 用户指令
 
-用户指令（CLAUDE.md、AGENTS.md、GEMINI.md 等，以及直接请求）的优先级高于技能，技能又高于默认行为。仅当 human partner 明确指示时，才可跳过技能工作流或指令。
+用户指令（AGENTS.md、CLAUDE.md 等，以及直接请求）的优先级高于技能，技能又高于默认行为。仅当 human partner 明确指示时，才可跳过技能工作流或指令。

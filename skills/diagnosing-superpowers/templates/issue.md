@@ -7,7 +7,7 @@
 | 字段 | 值 | 来源 / 支撑证据 |
 |-------|-------|-------------------------------|
 | superpowers 版本 | <version>（<sha 或 "not a checkout">） | <历史证据 / 未验证快照 / 当前观察 / 未知>；<位置> |
-| harness（Claude Code、Cursor 等） | <harness> | <标签>；<位置> |
+| harness (DSH) | <harness> | <标签>；<位置> |
 | harness 版本 | <version> | <标签>；<位置> |
 | 你的模型 + 版本 | <所见 model ids> | <标签>；<位置> |
 | 已安装的全部插件 | <列表> | <标签>；<位置> |

@@ -21,6 +21,27 @@ export class SyncEngine {
   static NON_MD_EXEMPT = new Set(['systematic-debugging/find-polluter.sh'])
   static TITLE_EXEMPT = new Set(['subagent-driven-development/SKILL.md'])
 
+  // 已按 DSH 专属化移除的非 DSH 平台参考文档（上游有、本地无 -> 豁免为 INFO）
+  static NON_DSH_PLATFORM_REFS = new Set([
+    'using-superpowers/references/antigravity-tools.md',
+    'using-superpowers/references/claude-code-tools.md',
+    'using-superpowers/references/codex-tools.md',
+    'using-superpowers/references/gemini-tools.md',
+    'using-superpowers/references/hermes-tools.md',
+    'using-superpowers/references/muse-tools.md',
+    'using-superpowers/references/pi-tools.md',
+    'writing-skills/examples/CLAUDE_MD_TESTING.md',
+    'writing-skills/anthropic-best-practices.md',
+  ])
+
+  // 本插件 DSH 专属化中有意改写、与上游人为分叉的文件（两树均存在 -> 跳过内容比对，仅 INFO）
+  static DSH_DIVERGENCE_EXEMPT = new Set([
+    'brainstorming/scripts/server.cjs',
+    'brainstorming/scripts/start-server.sh',
+    'brainstorming/visual-companion.md',
+    'subagent-driven-development/scripts/sdd-workspace',
+  ])
+
   static TOKEN_PATTERNS = [
     ['参数', /(?<=^|[\s(`])--?[A-Za-z][\w-]*/gm],
     ['环境变量', /\${?[A-Z_][A-Z0-9_]{1,}\}?/g],
@@ -80,6 +101,11 @@ export class SyncEngine {
       const loOk = loFiles.includes(rel)
 
       if (!loOk) {
+        if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) {
+          console.log(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
+          notes.push(rel)
+          continue
+        }
         console.log(`FAIL [缺失] ${rel}（上游有，本地无）`)
         fails++
         continue
@@ -95,9 +121,19 @@ export class SyncEngine {
       const l = norm(lRaw)
       const isSkill = rel.endsWith('/SKILL.md')
 
+      // 两树均存在但本地已按 DSH 专属化有意分叉 -> 跳过内容比对
+      if (SyncEngine.DSH_DIVERGENCE_EXEMPT.has(rel)) {
+        console.log(`INFO [DSH专属分叉] ${rel}（本地已专属化改写，豁免）`)
+        notes.push(rel)
+        continue
+      }
+
       // 非 md 文件比对
       if (!rel.endsWith('.md')) {
-        if (!SyncEngine.NON_MD_EXEMPT.has(rel) && u !== l) {
+        if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) {
+          console.log(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
+          notes.push(rel)
+        } else if (!SyncEngine.NON_MD_EXEMPT.has(rel) && u !== l) {
           console.log(`FAIL [非md不一致] ${rel}`)
           fails++
         } else if (!SyncEngine.NON_MD_EXEMPT.has(rel)) {
@@ -135,6 +171,11 @@ export class SyncEngine {
       }
 
       // 代码块逐块核验
+      if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) {
+        console.log(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
+        notes.push(rel)
+        continue
+      }
       const ub = splitBlocks(u)
       const lb = splitBlocks(l)
       if (ub.length !== lb.length) {
@@ -206,6 +247,7 @@ export class SyncEngine {
     const codeOnly = (s) => [...s.matchAll(/\`\`\`(\w*)[^\n]*\n([\s\S]*?)\`\`\`/g)].map((m) => m[2]).join('\n')
 
     for (const rel of mdFiles) {
+      if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) continue
       let lRaw = ''
       try {
         lRaw = norm(await readFile(join(this.localDir, rel), 'utf8'))

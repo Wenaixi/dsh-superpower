@@ -51,40 +51,14 @@ bash scripts/start-server.sh --project-dir /path/to/project --open
 
 **注意：** 将项目根目录作为 `--project-dir` 传入，这样原型会持久化到 `.superpowers/brainstorm/` 并在服务器重启后依然保留。若不传，文件会写入 `/tmp` 并被清理。如果 `.gitignore` 中尚未包含 `.superpowers/`，请提醒用户添加。
 
-**按平台启动服务器：**
+**在 DSH 中启动服务器：**
 
-**Claude Code：**
 ```bash
-# Default mode works — the script backgrounds the server itself.
-bash scripts/start-server.sh --project-dir /path/to/project --open
-```
-
-在 Windows 上，脚本会自动检测并切换到前台模式（会阻塞工具调用）。请在 Bash 工具调用上使用 `run_in_background: true`，使服务器在turn之间保持运行，然后在下一轮读取 `$STATE_DIR/server-info` 以获取 URL 和端口。
-
-**Codex：**
-```bash
-# Codex reaps background processes. The script auto-detects CODEX_CI and
-# switches to foreground mode. Run it normally — no extra flags needed.
-bash scripts/start-server.sh --project-dir /path/to/project --open
-```
-
-**Gemini CLI：**
-```bash
-# Use --foreground and set is_background: true on your shell tool call
-# so the process survives across turns
+# 在 DSH 中使用 pwsh（Windows 首选）或 bash 工具，传入 run_in_background: true
 bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 ```
 
-**Copilot CLI：**
-```bash
-# Start it with Copilot CLI's non-blocking/background shell mechanism so the
-# server survives across turns. Keep --foreground so the harness, not the
-# script, owns backgrounding. The launcher is a .sh, so invoke it via bash
-# (on Windows, call Git Bash's bash.exe from the PowerShell tool).
-bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
-```
-
-**其他环境：** 服务器必须在后台持续运行并跨越 turn。如果你的环境会回收 detached 进程，请使用 `--foreground` 并通过平台提供的后台执行机制来启动命令。
+服务器必须在后台持续运行并跨越 turn。在 DSH 工具调用中使用 `run_in_background: true`，然后在下一轮读取 `$STATE_DIR/server-info` 以获取 URL 和端口。
 
 如果 URL 在你的浏览器中无法访问（在远程/容器化环境中很常见），请绑定非回环地址：
 
