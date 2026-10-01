@@ -1,12 +1,12 @@
 /**
  * @wenaixi/dsh-superpower — SkillCatalog 深度模块
  *
- * 封装技能目录的发现、遍历、健康探测、排重、名称漂移校验与索引检索。
+ * 封装技能目录的发现、遍历、健康探测、排重、名称漂移校验与版本化快照索引。
  *
  * 核心设计：
- * - Depth: 将大量文件系统遍历、stat 存活探测、去重与错误处理隐藏在极简接口之后；
- * - Locality: 集中管理技能目录发现逻辑与规范一致性规则；
- * - Leverage: 同时支撑 SuperpowersProvider 运行时与 verify.mjs 质检治理。
+ * - Depth: 将文件系统遍历、mtime 存活检测、去重、状态回写与快照复用隐藏在极简接口之后；
+ * - Locality: 集中管理技能目录发现逻辑、缓存一致性与规范合规规则；
+ * - Leverage: 同时支撑 SuperpowersProvider 高性能运行时与 verify.mjs 质检治理。
  */
 
 import { readdir, stat } from 'node:fs/promises'
@@ -23,6 +23,7 @@ export interface CatalogLogger {
 export interface CatalogLookupOptions {
   signal?: AbortSignal
   logger?: CatalogLogger
+  forceScan?: boolean
 }
 
 export interface CatalogEntry {
@@ -49,12 +50,18 @@ export class SkillCatalog {
   private readonly missingSkillMd: string[] = []
   private readonly loadErrors: { path: string; error: string }[] = []
 
+  // 快照缓存与版本探测状态
+  private cachedCandidates: readonly SkillCandidate[] | null = null
+  private lastScannedMtimeMs = 0
+  private lastScanProviderName?: string
+  private lastScanRank?: number
+
   constructor(skillDir: string) {
     this.skillDir = skillDir
   }
 
   /**
-   * 从指定目录异步扫描并构建 SkillCatalog 深度实例。
+   * 从指定目录异步扫描并构建已预热的 SkillCatalog 深度实例。
    */
   static async fromDirectory(skillDir: string, options?: CatalogLookupOptions): Promise<SkillCatalog> {
     options?.signal?.throwIfAborted()
@@ -63,9 +70,52 @@ export class SkillCatalog {
     return catalog
   }
 
-  private async scan(options?: CatalogLookupOptions): Promise<void> {
+  /**
+   * 清空快照与索引，强制下一轮查询重新从磁盘装载。
+   */
+  invalidate(): void {
+    this.cachedCandidates = null
+    this.lastScannedMtimeMs = 0
+    this.entriesByName.clear()
+    this.entriesByDir.clear()
+    this.duplicates.length = 0
+    this.missingSkillMd.length = 0
+    this.loadErrors.length = 0
+  }
+
+  /**
+   * 探测目录是否发生变动。
+   */
+  private async isDirModified(signal?: AbortSignal): Promise<boolean> {
+    if (this.lastScannedMtimeMs === 0 || this.entriesByName.size === 0) return true
+    try {
+      signal?.throwIfAborted()
+      const dirStat = await stat(this.skillDir)
+      return dirStat.mtimeMs > this.lastScannedMtimeMs
+    } catch {
+      return true
+    }
+  }
+
+  /**
+   * 执行全量目录遍历与技能索引构建。
+   */
+  async scan(options?: CatalogLookupOptions): Promise<void> {
     const signal = options?.signal
     const logger = options?.logger
+
+    let dirStat: import('node:fs').Stats | undefined
+    try {
+      dirStat = await stat(this.skillDir)
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code
+      if (code === 'ENOENT' || code === 'ENOTDIR') {
+        logger?.warn(`[SkillCatalog] skillDir not found: ${this.skillDir}`)
+        this.invalidate()
+        return
+      }
+      throw err
+    }
 
     let dirents: import('node:fs').Dirent[]
     try {
@@ -77,10 +127,19 @@ export class SkillCatalog {
       const code = (err as NodeJS.ErrnoException)?.code
       if (code === 'ENOENT' || code === 'ENOTDIR') {
         logger?.warn(`[SkillCatalog] skillDir not found: ${this.skillDir}`)
+        this.invalidate()
         return
       }
       throw err
     }
+
+    // 重置内存临时状态
+    this.entriesByName.clear()
+    this.entriesByDir.clear()
+    this.duplicates.length = 0
+    this.missingSkillMd.length = 0
+    this.loadErrors.length = 0
+    this.cachedCandidates = null
 
     const sorted = dirents.filter((e) => e.isDirectory() && !e.name.startsWith('.')).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -128,22 +187,41 @@ export class SkillCatalog {
       this.entriesByName.set(doc.name, catalogEntry)
       this.entriesByDir.set(entry.name, catalogEntry)
     }
+
+    this.lastScannedMtimeMs = dirStat.mtimeMs
   }
 
   /**
-   * 将当前目录下的所有有效技能映射为 DSH SkillCandidate 数组。
+   * 映射当前有效技能为 DSH SkillCandidate 快照。
+   * 自动按 mtime 评估有效性，未变动时直接复用不可变快照，零重复读盘。
    */
-  listCandidates(providerName: string, rank: number): readonly SkillCandidate[] {
-    const candidates: SkillCandidate[] = []
-    for (const entry of this.entriesByName.values()) {
-      candidates.push(entry.document.toCandidate(providerName, rank))
+  async listCandidates(providerName: string, rank: number, options?: CatalogLookupOptions): Promise<readonly SkillCandidate[]> {
+    options?.signal?.throwIfAborted()
+
+    const needsScan =
+      options?.forceScan ||
+      this.cachedCandidates === null ||
+      this.lastScanProviderName !== providerName ||
+      this.lastScanRank !== rank ||
+      (await this.isDirModified(options?.signal))
+
+    if (needsScan) {
+      await this.scan(options)
+      const list: SkillCandidate[] = []
+      for (const entry of this.entriesByName.values()) {
+        list.push(entry.document.toCandidate(providerName, rank))
+      }
+      this.cachedCandidates = Object.freeze(list)
+      this.lastScanProviderName = providerName
+      this.lastScanRank = rank
     }
-    return candidates
+
+    return this.cachedCandidates!
   }
 
   /**
    * 根据候选技能的 locator 与名称解析出完整 SkillDefinition。
-   * 优先命中内存缓存；若路径变动则重新读取文件并检查名称一致性。
+   * 优先命中内存缓存；若发生热重读，自动自愈更新回内存映射，消除状态撕裂缝隙。
    */
   async getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions): Promise<SkillDefinition | undefined> {
     options?.signal?.throwIfAborted()
@@ -172,6 +250,18 @@ export class SkillCatalog {
       options?.logger?.warn(`[SkillCatalog] get ${candidate.name}: name drift "${doc.name}" != "${candidate.name}"`)
       return undefined
     }
+
+    // 自愈回写：将重新读取解析出的文档更新进内部索引，保持状态严格一致
+    const dirName = cached?.directoryName ?? candidate.name
+    const updatedEntry: CatalogEntry = {
+      directoryName: dirName,
+      skillPath: locator.path,
+      document: doc,
+      nameDrift: doc.name !== dirName,
+    }
+    this.entriesByName.set(doc.name, updatedEntry)
+    this.entriesByDir.set(dirName, updatedEntry)
+    this.cachedCandidates = null // 快照失效，以便下一轮刷新
 
     return doc.toDefinition(providerName)
   }

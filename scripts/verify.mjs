@@ -55,18 +55,8 @@ if (report.total !== 15) {
 console.log('[verify] relative-reference check')
 let deadLinks = 0
 
-function extractRelativeLinks(mdContent) {
-  // 去除围栏代码块，避免误报代码中的相对路径
-  const stripped = mdContent.replace(/```[\s\S]*?```/g, '')
-  const links = []
-  // 匹配形如 [text](path) 或 [text](<path>)
-  const re = /\[[^\]]*\]\((<?)([^>\)\s]+)\1(?:\s+["'][^"']*["'])?\)/g
-  let m
-  while ((m = re.exec(stripped)) !== null) {
-    const target = m[2]
-    if (/^(https?:|mailto:|#)/.test(target)) continue
-    links.push(target)
-  }
+// 复用 extractRefs 的链接形态（形态 a/markdown 链接），消除两套链接正则并存（评审 F-01）
+const extractRelativeLinks = (mdContent) => extractRefs(mdContent).filter((t) => !t.startsWith('/') && !/^[a-z]+:/i.test(t))
   return links
 }
 

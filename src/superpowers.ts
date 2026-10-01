@@ -71,37 +71,30 @@ function resolveDefaultSkillDir(configSkillDir?: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Provider 实现 — 纯调度与生命周期治理，具体编目与文档解析委托给 SkillCatalog 深度模块
+// Provider 实现 — 纯调度与生命周期治理，具体编目、快照与文档解析委托给 SkillCatalog 深度模块
 // ---------------------------------------------------------------------------
 
 class SuperpowersProvider implements SkillProvider {
   readonly name: string
-  private readonly skillDir: string
+  readonly catalog: SkillCatalog
   private readonly ctx: Context
-  private catalog?: SkillCatalog
 
   constructor(ctx: Context, _control: SkillProviderControl, config: Config) {
     assertNotRuntimeProvider(config.providerName)
     this.ctx = ctx
     this.name = config.providerName
-    this.skillDir = resolveDefaultSkillDir(config.skillDir)
+    const skillDir = resolveDefaultSkillDir(config.skillDir)
+    this.catalog = new SkillCatalog(skillDir)
   }
 
   async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
-    this.catalog = await SkillCatalog.fromDirectory(this.skillDir, {
+    return this.catalog.listCandidates(this.name, SUPERPOWERS_RANK, {
       signal: options.signal,
       logger: this.ctx.logger,
     })
-    return this.catalog.listCandidates(this.name, SUPERPOWERS_RANK)
   }
 
   async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
-    if (!this.catalog) {
-      this.catalog = await SkillCatalog.fromDirectory(this.skillDir, {
-        signal: options.signal,
-        logger: this.ctx.logger,
-      })
-    }
     return this.catalog.getDefinition(candidate, this.name, {
       signal: options.signal,
       logger: this.ctx.logger,
@@ -120,18 +113,23 @@ export function apply(ctx: Context, config: Config): void {
 
   // 将 provider 注册与事件监听放入同一个 effect，保证卸载时的清理顺序可控
   ctx.effect(() => {
+    let activeProvider: SuperpowersProvider | undefined
+
     const disposeProvider = ctx.skills.registerProvider((control) => {
-      return new SuperpowersProvider(ctx, control, config)
+      activeProvider = new SuperpowersProvider(ctx, control, config)
+      return activeProvider
     })
 
-    // skills/change 为 emit 模式（见 @deepseek-ai/dsh-skill Events 定义：@mode emit），非 waterfall，无需 next()
+    // skills/change 为 emit 模式，感知外部变更并精准失效内存快照
     const disposeListener = ctx.on('skills/change', () => {
-      ctx.logger.debug('[superpowers] skills catalog changed')
+      ctx.logger.debug('[superpowers] skills catalog changed, invalidating snapshot')
+      activeProvider?.catalog.invalidate()
     })
 
     return () => {
       disposeListener()
       disposeProvider()
+      activeProvider?.catalog.invalidate()
     }
   })
 }

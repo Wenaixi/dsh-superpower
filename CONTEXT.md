@@ -7,12 +7,14 @@
 ## 核心领域概念与深度模块
 
 ### 1. SkillCatalog (技能编目)
-- **定位**: 深度模块 (Deep Module)，负责技能集合的发现、遍历、健康度检测与生命周期缓存。
+- **定位**: 深度模块 (Deep Module)，负责技能集合的发现、轻量 mtime 版本探测、不可变快照缓存与自愈索引。
 - **职责**:
   - 扫描文件系统中的技能目录，过滤隐藏文件与非技能目录；
   - 探测每个子目录下的 `SKILL.md` 文件存活性；
   - 委托 `SkillDocument` 解析文档，执行名称去重与名称漂移（Directory Name vs Frontmatter Name）校验；
-  - 提供快速内存索引，支持 `listCandidates` 与 `getDefinition`；
+  - 维护版本化不可变快照 (`cachedCandidates`)，未发生变动时 0 额外磁盘 I/O；
+  - 在 `getDefinition` 热重读时自动回写内部内存映射，彻底消灭状态撕裂隔离缝；
+  - 对外暴露极简的 `invalidate()` 接口，深度联动 Cordis `skills/change` 事件；
   - 对外提供 `verifyIntegrity()` 完整性体检接口，供测试脚本与治理流程复用。
 - **缝隙 (Seams)**: 位于物理文件系统 I/O 与 Cordis 运行时 Provider 之间，将复杂的文件探测和异常处理完全封装在门后。
 

@@ -1,12 +1,12 @@
 /**
  * @wenaixi/dsh-superpower — SkillCatalog 深度模块
  *
- * 封装技能目录的发现、遍历、健康探测、排重、名称漂移校验与索引检索。
+ * 封装技能目录的发现、遍历、健康探测、排重、名称漂移校验与版本化快照索引。
  *
  * 核心设计：
- * - Depth: 将大量文件系统遍历、stat 存活探测、去重与错误处理隐藏在极简接口之后；
- * - Locality: 集中管理技能目录发现逻辑与规范一致性规则；
- * - Leverage: 同时支撑 SuperpowersProvider 运行时与 verify.mjs 质检治理。
+ * - Depth: 将文件系统遍历、mtime 存活检测、去重、状态回写与快照复用隐藏在极简接口之后；
+ * - Locality: 集中管理技能目录发现逻辑、缓存一致性与规范合规规则；
+ * - Leverage: 同时支撑 SuperpowersProvider 高性能运行时与 verify.mjs 质检治理。
  */
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill';
 import { SkillDocument } from './document.js';
@@ -18,6 +18,7 @@ export interface CatalogLogger {
 export interface CatalogLookupOptions {
     signal?: AbortSignal;
     logger?: CatalogLogger;
+    forceScan?: boolean;
 }
 export interface CatalogEntry {
     directoryName: string;
@@ -43,19 +44,35 @@ export declare class SkillCatalog {
     private readonly duplicates;
     private readonly missingSkillMd;
     private readonly loadErrors;
+    private cachedCandidates;
+    private lastScannedMtimeMs;
+    private lastScanProviderName?;
+    private lastScanRank?;
     constructor(skillDir: string);
     /**
-     * 从指定目录异步扫描并构建 SkillCatalog 深度实例。
+     * 从指定目录异步扫描并构建已预热的 SkillCatalog 深度实例。
      */
     static fromDirectory(skillDir: string, options?: CatalogLookupOptions): Promise<SkillCatalog>;
-    private scan;
     /**
-     * 将当前目录下的所有有效技能映射为 DSH SkillCandidate 数组。
+     * 清空快照与索引，强制下一轮查询重新从磁盘装载。
      */
-    listCandidates(providerName: string, rank: number): readonly SkillCandidate[];
+    invalidate(): void;
+    /**
+     * 探测目录是否发生变动。
+     */
+    private isDirModified;
+    /**
+     * 执行全量目录遍历与技能索引构建。
+     */
+    scan(options?: CatalogLookupOptions): Promise<void>;
+    /**
+     * 映射当前有效技能为 DSH SkillCandidate 快照。
+     * 自动按 mtime 评估有效性，未变动时直接复用不可变快照，零重复读盘。
+     */
+    listCandidates(providerName: string, rank: number, options?: CatalogLookupOptions): Promise<readonly SkillCandidate[]>;
     /**
      * 根据候选技能的 locator 与名称解析出完整 SkillDefinition。
-     * 优先命中内存缓存；若路径变动则重新读取文件并检查名称一致性。
+     * 优先命中内存缓存；若发生热重读，自动自愈更新回内存映射，消除状态撕裂缝隙。
      */
     getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions): Promise<SkillDefinition | undefined>;
     /**
