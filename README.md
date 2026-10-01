@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 
-[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 完整移植 — 14 个技能注入 `ctx.skills`，开箱即用，全中文。
+[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 完整移植 — 15 个技能注入 `ctx.skills`，开箱即用，全中文。
 
 ## 安装
 
@@ -34,7 +34,7 @@ dsh --profile web  # 进会话，技能自动可用
 
 ```bash
 git clone https://github.com/Wenaixi/dsh-superpower.git && cd dsh-superpower
-pnpm install && pnpm build && node scripts/verify.mjs   # 14/14 PASS
+pnpm install && pnpm build && node scripts/verify.mjs   # 15/15 PASS
 dsh plugin --profile web add ./                           # 本地路径安装
 pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz  # 离线 tarball
 
@@ -51,34 +51,39 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 | 技能 | 触发时机 |
 |---|---|
-| `superpower-using-superpowers` | 任意会话起点（1% 原则） |
-| `superpower-brainstorming` | 新功能前，Spike / Bounded / Architectural 分级 |
-| `superpower-writing-plans` | 设计获批后，切 2–5 分钟任务 |
-| `superpower-using-git-worktrees` | 隔离分支 |
-| `superpower-executing-plans` / `superpower-subagent-driven-development` | 按计划执行，后者每任务一子智能体 + 两阶段评审 |
-| `superpower-dispatching-parallel-agents` | 并行分发 |
-| `superpower-test-driven-development` | RED-GREEN-REFACTOR |
-| `superpower-systematic-debugging` / `superpower-verification-before-completion` | 调试闭环 |
-| `superpower-requesting-code-review` / `superpower-receiving-code-review` | 评审 |
-| `superpower-finishing-a-development-branch` | 集成 |
-| `superpower-writing-skills` | 写新技能 |
+| `using-superpowers` | 任意会话起点（1% 原则） |
+| `brainstorming` | 新功能前，Spike / Bounded / Architectural 分级 |
+| `writing-plans` | 设计获批后，切"一项可校验结果的动作"任务 |
+| `using-git-worktrees` | 隔离分支 |
+| `executing-plans` / `subagent-driven-development` | 按计划执行，前者内联整跑一次终审，后者每任务一子智能体 + 两阶段评审 |
+| `dispatching-parallel-agents` | 并行分发 |
+| `test-driven-development` | RED-GREEN-REFACTOR |
+| `systematic-debugging` / `verification-before-completion` | 调试闭环 |
+| `requesting-code-review` / `receiving-code-review` | 评审 |
+| `diagnosing-superpowers` | 会话出问题后定位根因（`path:line` 证据） |
+| `finishing-a-development-branch` | 集成 |
+| `writing-skills` | 写新技能 |
 
-映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/superpower-using-superpowers/references/dsh-tools.md`。
+映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/using-superpowers/references/dsh-tools.md`。
+
+> **同名技能优先**：用户或项目自行安装的本地技能（`~/.dsh/skills`、项目 `.dsh/skills` 等，rank 100–500）与本包（rank 550）同名时，本地技能优先；本包只覆盖官方内置 bundled（rank 600）。
 
 ## 使用
 
 ```
-“帮我做 XXX”  → superpower-brainstorming → superpower-writing-plans → superpower-subagent-driven-development
-“修这个缺陷”  → superpower-systematic-debugging
-“帮我评审”    → superpower-requesting-code-review
+“帮我做 XXX”  → brainstorming → writing-plans → subagent-driven-development
+“修这个缺陷”  → systematic-debugging
+“帮我评审”    → requesting-code-review
+“刚才会话出问题了” → diagnosing-superpowers
 ```
 
-校验：`await ctx.skills.list({cwd})` 应有 14 条 `provider: superpowers`。
+校验：`await ctx.skills.list({cwd})` 应有 15 条 `provider: superpowers`。
 
 ## 开发
 
 ```bash
 pnpm install && pnpm build && pnpm typecheck && node scripts/verify.mjs
+node scripts/check-same-name-priority.mjs  # 同名优先实测（真实 SkillRegistry + rank 裁决）
 dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
 
@@ -86,11 +91,11 @@ dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 
 ```
 src/superpowers.ts  # SkillProvider rank 550
-skills/             # 14 技能（中文化）
+skills/             # 15 技能（中文化，v7.0.0 起无 superpower- 前缀）
 lib/                # 已提交，GitHub 直装零构建
 ```
 
-版本：`v6.3.1` 起本仓库脱离上游独立演进（上游基准锁定 `obra/superpowers v6.3.0`），后续变更以正式版本线发布；`tag v*` 触发发布，`push` 仅跑 CI。详见 `CHANGELOG.md`。
+版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；同名前本地技能优先。详见 `CHANGELOG.md`。
 
 ## 常见问题
 

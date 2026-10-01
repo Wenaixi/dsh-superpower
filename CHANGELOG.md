@@ -1,8 +1,34 @@
 # 更新日志
 
-本文件记录 `dsh-superpower` 的所有值得关注的变更。**v6.3.1 起本仓库脱离上游 [obra/superpowers](https://github.com/obra/superpowers) 独立演进**：上游基准锁定 `v6.3.0`（2026-08-12），此后本仓库自行维护技能与修复，不再逐版跟随上游版本号；同步上游新特性时按需 cherry-pick 并记录于此。
+本文件记录 `dsh-superpower` 的所有值得关注的变更。**v6.3.1 起本仓库脱离上游 [obra/superpowers](https://github.com/obra/superpowers) 独立演进**；**v7.0.0 起回归上游命名并整批同步上游 v6.4.2**（技能名去掉 `superpower-` 前缀，与上游保持一致）。同步上游新特性时按需 cherry-pick 并记录于此。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [7.0.0] - 2026-10-01
+
+### 破坏性变更
+
+- **技能名与目录去掉 `superpower-` 前缀**：14 个技能回归上游原名（`brainstorming`、`executing-plans`、`subagent-driven-development` …），`frontmatter.name`、目录名、全部正文引用同步更新。旧名 `skill("superpower-writing-plans")` 不再可用，改用 `skill("writing-plans")`。语义化版本因破坏性变更升为 `7.0.0`。
+- **同名外来技能优先**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决；本包 rank 550 高于 `dsh-skill-filesystem` 的项目/用户根（100~500），因此用户或项目自行安装的同名技能天然优先于本包，无需额外覆盖逻辑。
+
+### 新增
+
+- **同步上游 v6.4.2 内容**（上游基准 v6.3.0 → v6.4.2）：
+  - 新增技能 `diagnosing-superpowers`（20 个文件）：会话出问题后定位根因、以 `path:line` 证据报告;含 `references/session-discovery.md` 的 DSH 会话日志定位增补。
+  - `writing-plans`：改写为记录决策而非代码转写（"What a Step Contains" 取代 "No Placeholders"）、步骤粒度改"一项可校验结果的动作"、新增 Review Focus 段与用户复核计划关卡；删除上游已废弃的 `plan-document-reviewer-prompt.md`。
+  - `executing-plans`：重建为 Native（内联）执行模式，连续执行至整仓完成再一次性全分支评审，配套新增 `scripts/task-start` / `scripts/task-done`。
+  - `brainstorming`：先澄清"为什么想要这东西"再提方案，批准绑定设计阶段。
+  - `requesting-code-review` / `code-reviewer.md`：BASE_SHA 改用 `git merge-base origin/main HEAD`，评审者按"合理用户预期"判断规格未提及行为，新增 Declined to judge 清单。
+  - `test-driven-development`：green 定义改为"项目自己的全套测试命令"，按名报告全部失败。
+  - `subagent-driven-development`：同名 plan 独立工作区；`review-package` 对空/非后代 `BASE..HEAD` 区间拒绝（exit 3）；控制器可嵌套一层运行。
+  - `using-superpowers`：新增 `references/muse-tools.md` 与 `references/claude-code-tools.md`，保留 DSH 专属 `dsh-tools.md`。
+- **依赖升级**：devDependencies `@deepseek-ai/dsh-skill` 升到 `0.2.0-rc.2`（与 dsh 0.2.0-rc.2 内嵌版本对齐）、`@deepseek-ai/cordis` 固定 `4.0.4`；peerDependencies 的 dsh-skill 范围改为 `>=0.1.0-rc.1 <0.3.0-0`，实测命中 0.1.0-rc.8 / 0.1.1-rc.2 / 0.1.7-rc.2 / 0.2.0-rc.x，dsh 0.2.0 系安装不再需要版本豁免。
+
+### 修复
+
+- **`scripts/verify.mjs` 期望技能数 14 → 15**，并新增"技能正文相对路径引用存在性"检查，杜绝执行时死链。
+- **新增 `scripts/check-same-name-priority.mjs` 自检**：用真实 `SkillRegistry` 验证同名优先级（仅有本包 / 叠加 rank 100 用户同名技能 / 叠加 rank 700 高优 provider 三组断言），把"同名优先"从文档承诺变成可运行证据。
+- **修正 `dsh.10` 条目过时陈述**：当时的 peer 范围实测仅命中 0.0.1-rc.1 与 0.1.0-rc.8 两个真实版本（CHANGELOG 原文"6 个真实版本全部命中"不准确）。
 
 ## [6.3.1] - 2026-08-23
 
@@ -27,7 +53,7 @@
 
 ### 修复
 
-- **`@deepseek-ai/dsh-skill` peer 范围改为显式预发布分支**：原 `^0.1.1-rc.2` 按 node-semver 规则只会放行 `0.1.1-rc.2` 一个版本，`0.1.0-rc.x` 等既有 harness 预发布构建会被静默排除，用户安装时触发 `ERESOLVE`。按 awesome-dsh-plugin 投稿规范推荐写法改为 `>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`，覆盖 `0.0.1-rc.x` 与 `0.1.x` 全系列预发布与正式版，消除误伤。
+- **`@deepseek-ai/dsh-skill` peer 范围改为显式预发布分支**：原 `^0.1.1-rc.2` 按 node-semver 规则只会放行 `0.1.1-rc.2` 一个版本，`0.1.0-rc.x` 等既有 harness 预发布构建会被静默排除，用户安装时触发 `ERESOLVE`。按 awesome-dsh-plugin 投稿规范推荐写法改为 `>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`，覆盖 `0.0.1-rc.x` 与 `0.1.x` 全系列预发布与正式版，消除误伤。**（注：v7.0.0 已改为 `>=0.1.0-rc.1 <0.3.0-0` 覆盖 0.2.x，见 7.0.0 段。）**
 
 ## [6.3.0-dsh.9] - 2026-08-23
 
