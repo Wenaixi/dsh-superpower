@@ -82,7 +82,21 @@ jobs:
       - name: 校验 npm 认证有效
         run: npm whoami --registry https://registry.npmjs.org
 
+      - name: 检查版本是否已发布（幂等保护）
+        id: npm_check
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          if npm view "@wenaixi/dsh-superpower@$VER" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "::warning::$VER 已存在于 npm，跳过发布（tag 重推或 workflow 重跑场景）"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 发布到 npm
+        # 显式指定官方 registry，避免 runner 上 npm 配置（镜像/环境变量）干扰导致静默发布失败
+        if: steps.npm_check.outputs.skip != 'true'
         run: npm publish --access public --registry https://registry.npmjs.org
 
       # 7.0.0 发布早于平台专属化改造（736f443），tarball 残留非 DSH 文件，
