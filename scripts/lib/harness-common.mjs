@@ -7,7 +7,7 @@
  * 用法：
  *   import { check, freshRegistry, exitByFailed } from './lib/harness-common.mjs'
  *   const state = { failed: 0 }
- *   check('标签', actual, expected, state)
+ *   check(state, '标签', actual, expected)
  *   exitByFailed('插件优先级实测', state)   // 末尾调用，按 failed 数决定 exit code
  */
 
