@@ -37,3 +37,24 @@
 
 ### 5. SkillDefinition (技能定义本体)
 - **定位**: 传输对象 (Contract Object)，包含完整 Markdown 正文内容（`content`）的完整技能对象。
+
+### 6. sync-common (上游同步契约引擎)
+- **定位**: 深度模块，review-sync 三件套（deep/fences/tokens）的唯一契约实现。
+- **职责**:
+  - 导出 `norm`/`fenceRe`/`splitBlocks`（代码块契约）、`walkMd`（.md 遍历）、`splitComment`/`hasCJK`（中文化判定）、`syncSkillsList`（技能清单动态派生）；
+  - fences 的硬编码 13 技能清单改为从上游目录动态派生，新增技能自动覆盖；
+  - deep 保留自己的 `walkTree`（全文件树 + 排序），与 tokens 的 `walkMd`（仅 .md）语义刻意不合并，避免行为回归。
+- **缝隙 (Seams)**: 位于上游检出与本地 skills/ 之间，中文化契约（代码块/命令/路径保持字节一致，正文译中文）的全部规则内聚于此。
+
+### 7. harness-common (测试骨架共享引擎)
+- **定位**: 深度模块，check-same-name-priority 双脚本的公共样板（`check`/`freshRegistry`/`exitByFailed`）。
+- **职责**: 统一断言输出格式、Cordis 上下文构建与收尾退出码语义；断言语义改动只改一处。
+- **缝隙 (Seams)**: 位于测试断言与进程退出语义之间，让两个实测脚本的差异只保留在业务断言本身。
+
+### 8. 资源契约检查 (verify.mjs)
+- **定位**: verify.mjs 新增的资源引用一致性治理。
+- **职责**:
+  - `extractRefs` 统一三种引用形态：markdown 链接、反引号目录路径（references/scripts/prompts/templates/examples）、反引号裸文件名；
+  - `resolveResourceRefs` 校验引用缺失（FAIL）与孤儿文件（WARN），白名单承载上游遗留示例与运行时产物；
+  - 随包脚本调用契约：正文调用 `scripts/*` 必须带解释器前缀（bash/node），裸路径 FAIL。
+- **缝隙 (Seams)**: 位于技能正文的写作承诺与物理文件树之间，把「声称引用」与「实际存在」对齐为可断言契约。
