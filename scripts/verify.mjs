@@ -75,30 +75,32 @@ for (const dir of skillDirs) {
 }
 console.log(ok ? '[verify] relative-reference check PASS' : '[verify] relative-reference check FAIL')
 
-// 全仓 skills/ 文档禁用 emoji 与 ✅/❌/⚠️ 等符号（v7.0.0 起契约：用 [OK]/[FAIL]/[WARN] ASCII 标记）
+// 全仓文档禁用 emoji 与图形状态符号（v7.0.0 起契约：用 [OK]/[FAIL]/[WARN] ASCII 标记）
+// 覆盖范围：skills/ 全部 .md + 根文档（README/CHANGELOG/CONTRIBUTING）+ docs/ 全部 .md
 console.log('\n[verify] emoji/symbol check')
 const SYMBOL_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{2705}\u{274C}\u{26A0}\u{2713}\u{2714}\u{2716}\u{2717}\u{2718}\u{2611}]/gu
 const MEDIA_RE = /\.(?:png|jpg|jpeg|gif|svg|webp|ico|mp4|webm)$/i
 const SKIP_DIRS = new Set(['using-superpowers/references'])
-for (const dir of skillDirs) {
-  const skillRoot = join(skillDir, dir)
-  const files = []
-  async function walkSym(d) {
-    for (const e of await readdir(d, { withFileTypes: true })) {
-      const fp = join(d, e.name)
-      if (e.isDirectory()) await walkSym(fp)
-      else files.push(fp)
-    }
+const mdFiles = []
+async function collectMd(d, b) {
+  for (const e of await readdir(d, { withFileTypes: true })) {
+    const fp = join(d, e.name)
+    if (e.isDirectory()) { if (!SKIP_DIRS.has(relative(b, fp).replace(/\\/g, '/'))) await collectMd(fp, b) }
+    else if (e.name.endsWith('.md')) mdFiles.push(fp)
   }
-  await walkSym(skillRoot)
-  for (const fp of files) {
-    if (!fp.endsWith('.md') || MEDIA_RE.test(fp)) continue
-    const text = await readFile(fp, 'utf8')
-    const m = text.match(SYMBOL_RE)
-    if (m) {
-      console.error(`[verify] SYMBOL ${relative(root, fp)}: ${[...new Set(m)].join('')}`)
-      ok = false
-    }
+}
+for (const dir of skillDirs) await collectMd(join(skillDir, dir), skillDir)
+for (const rel of ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'docs']) {
+  const p = resolve(root, rel)
+  try { if ((await stat(p)).isDirectory()) await collectMd(p, resolve(root, 'docs')) ; else if (rel.endsWith('.md')) mdFiles.push(p) } catch { /* 不存在则忽略 */ }
+}
+for (const fp of mdFiles) {
+  if (MEDIA_RE.test(fp)) continue
+  const text = await readFile(fp, 'utf8')
+  const m = text.match(SYMBOL_RE)
+  if (m) {
+    console.error(`[verify] SYMBOL ${relative(root, fp)}: ${[...new Set(m)].join('')}`)
+    ok = false
   }
 }
 console.log(ok ? '[verify] emoji/symbol check PASS' : '[verify] emoji/symbol check FAIL')
