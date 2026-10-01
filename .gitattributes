@@ -1,0 +1,21 @@
+# 统一行尾策略：仓库内全部使用 LF（包含文本与脚本）。
+# core.autocrlf=true 只影响检出时的 CRLF 转换，不影响索引/提交内容。
+* text=auto eol=lf
+
+# 脚本与产物必须保持 LF，禁止检出时转成 CRLF
+*.sh text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.cjs text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.dot text eol=lf
+*.d.ts text eol=lf
+*.map text eol=lf
+
+# 无扩展名的 bash 脚本（skill 内 scripts/、上游原始脚本）
+skills/**/scripts/* text eol=lf
