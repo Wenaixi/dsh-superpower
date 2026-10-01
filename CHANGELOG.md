@@ -28,6 +28,7 @@
 
 - **`scripts/verify.mjs` 期望技能数 14 → 15**，并新增"技能正文相对路径引用存在性"检查，杜绝执行时死链。
 - **新增 `scripts/check-same-name-priority.mjs` 自检**：用真实 `SkillRegistry` 验证同名优先级（仅有本包 / 叠加 rank 100 用户同名技能 / 叠加 rank 700 高优 provider 三组断言），把"同名优先"从文档承诺变成可运行证据。
+- **新增 `scripts/check-same-name-priority-fs.mjs` 同层实测**：直接加载官方 `@deepseek-ai/dsh-skill-filesystem`，在同一个 `SkillRegistry` 内验证 rank 裁决（自定义根 rank 300 覆盖本包 550、注册顺序颠倒结果不变、无覆盖时本包全可见），8/8 PASS；测试技能写系统临时目录并整棵删除，不触碰真实用户/项目技能根。
 - **修正 `dsh.10` 条目过时陈述**：当时的 peer 范围实测仅命中 0.0.1-rc.1 与 0.1.0-rc.8 两个真实版本（CHANGELOG 原文"6 个真实版本全部命中"不准确）。
 
 ## [6.3.1] - 2026-08-23

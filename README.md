@@ -83,7 +83,8 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 ```bash
 pnpm install && pnpm build && pnpm typecheck && node scripts/verify.mjs
-node scripts/check-same-name-priority.mjs  # 同名优先实测（真实 SkillRegistry + rank 裁决）
+node scripts/check-same-name-priority.mjs    # 同名优先实测一：自研桩（rank 100 覆盖 / rank 700 不抢）
+node scripts/check-same-name-priority-fs.mjs # 同名优先实测二：官方 dsh-skill-filesystem 同层实测
 dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
 
