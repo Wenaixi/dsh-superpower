@@ -1,8 +1,21 @@
-import { mkdtemp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
-import { dirname, join, relative, resolve } from 'node:path'
+/**
+ * @wenaixi/dsh-superpower — 全量质量门禁与契约验证调度器
+ *
+ * 统筹调度：
+ * 1. SkillCatalog 编目与目录健康度校验（15 技能、无重名、无漂移）
+ * 2. SkillContractChecker 契约检查（死链、资源引用、孤儿文件、脚本调用守卫）
+ * 3. Visual Companion 随包脚本语法与健全性检查
+ * 4. SkillDocument / SkillCatalog 核心边界自检
+ * 5. 全仓无 Emoji / 图形状态符号硬扫描
+ * 6. 核心依赖文件存在性断言
+ */
+
+import { mkdtemp, mkdir, rm, stat, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { SkillCatalog, SkillDocument } from '../lib/superpowers.js'
+import { SkillContractChecker } from './lib/contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const skillDir = join(root, 'skills')
@@ -11,7 +24,10 @@ console.log('[verify] skillDir:', skillDir)
 
 let ok = true
 
-// 基于 SkillCatalog 深度模块进行严格的编目发现与健康度校验，与运行时逻辑完全对齐
+// ---------------------------------------------------------------------------
+// 1. 基于 SkillCatalog 深度模块进行严格的编目发现与健康度校验
+// ---------------------------------------------------------------------------
+
 const catalog = await SkillCatalog.fromDirectory(skillDir)
 const report = catalog.verifyIntegrity()
 
@@ -49,287 +65,79 @@ if (report.total !== 15) {
 }
 
 // ---------------------------------------------------------------------------
-// 相对引用存活性检查：扫描 skills/**/*.md 中的相对路径引用，跳过代码块
+// 2. 内容与引用契约治理（委托 SkillContractChecker 深度模块）
 // ---------------------------------------------------------------------------
 
+const contract = new SkillContractChecker(root)
+
+// 契约守卫真实可失败自检（证明规则不是假绿）
+contract.assertGuardCanFail()
+
+// (2.1) 相对引用死链检查
 console.log('[verify] relative-reference check')
-let deadLinks = 0
-
-// markdown 链接目标的唯一提取器（死链检查与资源契约共用，消除两套正则并存，评审 F-01）
-function extractLinkTargets(stripped) {
-  const links = []
-  const re = /\[[^\]]*\]\((<?)([^\)>\s]+)\1(?:\s+["'][^'"]*["'])?\)/g
-  let m
-  while ((m = re.exec(stripped)) !== null) {
-    const t = m[2]
-    if (!/^(https?:|mailto:|#)/.test(t)) links.push(t)
-  }
-  return links
-}
-const extractRelativeLinks = (mdContent) => extractLinkTargets(mdContent.replace(/```[\s\S]*?```/g, ''))
-
-async function checkRelativeLinks(dir) {
-  const list = await readdir(dir, { withFileTypes: true })
-  for (const item of list) {
-    const full = join(dir, item.name)
-    if (item.isDirectory()) {
-      await checkRelativeLinks(full)
-    } else if (item.name.endsWith('.md')) {
-      const content = await readFile(full, 'utf8')
-      const targets = extractRelativeLinks(content)
-      for (const target of targets) {
-        // 去除可能的锚点
-        const clean = target.replace(/#.*$/, '')
-        if (!clean) continue
-        const resolved = resolve(dir, clean)
-        try {
-          await stat(resolved)
-        } catch {
-          console.error(`[verify] DEAD LINK in ${relative(root, full)}: ${target} -> ${relative(root, resolved)}`)
-          deadLinks++
-          ok = false
-        }
-      }
-    }
-  }
-}
-
-await checkRelativeLinks(skillDir)
-if (deadLinks === 0) {
+const deadLinks = await contract.checkRelativeLinks()
+if (deadLinks.length === 0) {
   console.log('[verify] relative-reference check PASS\n')
 } else {
-  console.error(`[verify] relative-reference check FAIL: ${deadLinks} dead link(s)\n`)
+  for (const dl of deadLinks) {
+    console.error(`[verify] DEAD LINK in ${dl.file}: ${dl.target} -> ${dl.resolved}`)
+  }
+  console.error(`[verify] relative-reference check FAIL: ${deadLinks.length} dead link(s)\n`)
+  ok = false
 }
 
-
-// ---------------------------------------------------------------------------
-// 资源契约检查：统一三种引用形态（相对链接 / 反引号目录路径 / 反引号裸文件名）
-// 引用集合 ⊆ 技能目录文件集合；孤儿文件 WARN；示例文档白名单豁免
-// ---------------------------------------------------------------------------
-
+// (2.2) 资源契约检查（两遍扫描 + 孤儿文件白名单）
 console.log('[verify] resource-contract check')
-
-// 自检：提取器必须覆盖三种形态，且围栏代码块内的示例引用不得泄漏
-function assertRefExtraction() {
-  const sample = `见 [a](../using-superpowers/references/codex-tools.md)。先读 \`references/context-safety.md\` 与 \`implementer-prompt.md\`，再 \`bash scripts/review-package x\`。`
-  const refs = extractRefs(sample)
-  if (!refs.includes('../using-superpowers/references/codex-tools.md')) throw new Error('link form not extracted')
-  if (!refs.includes('references/context-safety.md')) throw new Error('tick-path form not extracted')
-  if (!refs.includes('implementer-prompt.md')) throw new Error('tick-bare form not extracted')
-  const fenced = `\`\`bash\nscripts/tool.sh\n\`\`\``
-  if (extractRefs(fenced).length !== 0) throw new Error('fenced example leaked into refs')
-}
-
-// 守卫自检：孤儿判定与裸调用识别必须真实可失败（接口即测试表面，评审 MAJOR-1/2）
-function assertGuardCanFail() {
-  // 孤儿判定：无任何提及的 md 必须被判孤儿
-  const names = new Set(['a.md', 'b.md'])
-  const refs = new Set(['a.md'])
-  const orphan = [...names].filter((n) => !refs.has(n))
-  if (orphan.length !== 1 || orphan[0] !== 'b.md') throw new Error('orphan guard cannot fail')
-  // 裸调用识别：`scripts/task-start PLAN_FILE 1`（无前缀、含参数）必须命中
-  const bareRe = /`(?:\.\.\/)?[\w-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
-  const sample = '请执行 `scripts/task-start PLAN_FILE 1`'
-  const hit = [...sample.matchAll(bareRe)]
-  if (hit.length !== 1 || !hit[0][0].includes('task-start')) throw new Error('bare-call guard cannot fail')
-  // 带前缀的合法调用不得命中裸调用正则
-  const prefixed = '运行 `bash scripts/task-done PLAN_FILE 1 0`'
-  if ([...prefixed.matchAll(bareRe)].length !== 0) throw new Error('prefixed call mis-flagged as bare')
-}
-
-assertRefExtraction()
-assertGuardCanFail()
-
-function extractRefs(mdContent) {
-  // 去除围栏代码块，避免示例命令泄漏进引用域
-  const stripped = mdContent.replace(/```[\s\S]*?```/g, '')
-  const refs = new Set()
-  // 形态 a：markdown 链接（复用 extractLinkTargets 唯一提取器，消除双正则，评审 F-01）
-  for (const t of extractLinkTargets(stripped)) refs.add(t)
-  // 形态 b：反引号目录路径 `references/x.md` / `scripts/y.sh`
-  const tickPathRe = /`((?:references|scripts|prompts|templates|examples)\/[\w./-]+)`/g
-  let m
-  while ((m = tickPathRe.exec(stripped)) !== null) refs.add(m[1])
-  // 形态 c：反引号裸文件名 `x.md`
-  const tickBareRe = /`([\w.-]+\.(?:md|js|ts|cjs|sh|html))`/g
-  while ((m = tickBareRe.exec(stripped)) !== null) refs.add(m[1])
-  return [...refs]
-}
-
-// 示例文档白名单（正文中引用的路径是写作示例，非本仓文件承诺）
-const REFERENCE_EXEMPT = new Set([
-  // 写作示例文档：正文中引用的路径是教学示例，非本仓文件承诺
-  'skills/writing-skills/anthropic-best-practices.md',
-  // 视觉伴侣命名建议：提示用语义化文件名，非文件引用
-  'skills/brainstorming/visual-companion.md',
-  // diagnosing 运行时产物：scrub-log/诊断报告/时间线由 agent 运行生成，非仓内文件
-  'skills/diagnosing-superpowers/prompts/scrub.md',
-  'skills/diagnosing-superpowers/references/github-issues.md',
-  'skills/diagnosing-superpowers/templates/bundle-README.md',
-  // 示例测试：test-pressure 是上游遗留示例，无仓内 ts 测试
-  'skills/systematic-debugging/test-pressure-2.md',
-  // 跨技能引用：muse 平台映射引用 SDD 的 prompt 模板（存在于 subagent-driven-development/）
-  'skills/using-superpowers/references/muse-tools.md',
-  // 调用契约举例：writing-skills 教"必须用 bash/node 前缀"，tool.sh 为示例
-  'skills/writing-skills/SKILL.md',
-])
-
-// 孤儿文件白名单（上游 v6.4.2 原样同步遗留，同步契约禁止删除/移动）
-const ORPHAN_EXEMPT = new Set([
-  'skills/brainstorming/spec-document-reviewer-prompt.md',
-  'skills/systematic-debugging/test-pressure-1.md',
-  'skills/systematic-debugging/test-pressure-2.md',
-  'skills/systematic-debugging/test-pressure-3.md',
-  'skills/systematic-debugging/test-academic.md',
-  'skills/systematic-debugging/CREATION-LOG.md',
-])
-
-
-// 宿主约定文档名（运行时/宿主文件，非本仓文件承诺，不做存在性断言）
-const HOST_DOCS = new Set(['SKILL.md', 'GEMINI.md', 'AGENTS.md', 'CLAUDE.md', 'SOUL.md', 'TODO.md', 'README.md'])
-const RESOURCE_SUBS = ['references', 'prompts', 'templates', 'scripts', 'examples', '']
-
-// 解析技能内引用：技能根 + 已知子目录逐级尝试；跨技能（../）按绝对路径解析
-async function resolveRefInSkill(fileDir, ref) {
-  if (ref.startsWith('../')) {
-    return stat(resolve(fileDir, ref)).then(() => true).catch(() => false)
-  }
-  const base = ref.split('/').pop() || ref
-  if (HOST_DOCS.has(base)) return true
-  // 技能根：向上找含 SKILL.md 的目录
-  let d = fileDir
-  let root = fileDir
-  while (true) {
-    if (await stat(join(d, 'SKILL.md')).then(() => true).catch(() => false)) { root = d; break }
-    const parent = dirname(d)
-    if (parent === d) break
-    d = parent
-  }
-  for (const sub of RESOURCE_SUBS) {
-    const p = sub ? join(root, sub, ref) : join(root, ref)
-    if (await stat(p).then(() => true).catch(() => false)) return true
-  }
-  return false
-}
-
-// 扫描技能目录：引用缺失（FAIL）与存在未引用（WARN），均跳过白名单
-async function resolveResourceRefs(dir) {
-  const missing = []
-  const orphans = []
-  const referenced = new Set()
-
-  // 全仓 md 文件 basename 清单（普通文本提及也视为引用，消除形态盲区）
-  const allMdNames = new Set()
-  async function collectNames(d) {
-    const list = await readdir(d, { withFileTypes: true })
-    for (const item of list) {
-      const full = join(d, item.name)
-      if (item.isDirectory()) await collectNames(full)
-      else if (item.name.endsWith('.md') && item.name !== 'SKILL.md') allMdNames.add(item.name)
-    }
-  }
-  await collectNames(dir)
-
-  // 第一遍：收集所有引用（basename 级，含正文普通文本提及），并逐条解析缺失
-  async function walk(d) {
-    const list = await readdir(d, { withFileTypes: true })
-    for (const item of list) {
-      const full = join(d, item.name)
-      const rel = relative(root, full).replace(/\\/g, '/')
-      if (item.isDirectory()) {
-        await walk(full)
-      } else if (item.name.endsWith('.md')) {
-        const content = await readFile(full, 'utf8')
-        for (const name of allMdNames) if (content.includes(name)) referenced.add(name)
-        for (const ref of extractRefs(content)) {
-          const clean = ref.replace(/#.*$/, '')
-          if (!clean || REFERENCE_EXEMPT.has(rel)) continue
-          referenced.add(clean.split('/').pop() || clean)
-          if (!(await resolveRefInSkill(d, clean))) missing.push({ file: rel, ref })
-        }
-      }
-    }
-  }
-  await walk(dir)
-
-  // 孤儿：非 SKILL.md 且未被任何引用/提及，且不在白名单（两遍扫描，评审 MAJOR-1）
-  async function collectAll(d) {
-    const list = await readdir(d, { withFileTypes: true })
-    for (const item of list) {
-      const full = join(d, item.name)
-      const rel = relative(root, full).replace(/\\/g, '/')
-      if (item.isDirectory()) await collectAll(full)
-      else if (item.name === 'SKILL.md') continue
-      else if (item.name.endsWith('.md') && !referenced.has(item.name) && !ORPHAN_EXEMPT.has(rel)) orphans.push(rel)
-    }
-  }
-  await collectAll(dir)
-
-  return { missing, orphans }
-}
-
-const { missing: missingRefs, orphans: orphanFiles } = await resolveResourceRefs(skillDir)
+const { missing: missingRefs, orphans: orphanFiles } = await contract.checkResourceRefs()
 console.log(`[verify] missing refs: ${missingRefs.length}`)
 for (const { file, ref } of missingRefs) {
   console.error(`[verify] MISSING REF ${file}: ${ref}`)
   ok = false
 }
 console.log(`[verify] unreferenced files: ${orphanFiles.length} WARN`)
-for (const o of orphanFiles) console.log(`[verify] WARN unreferenced ${o}`)
+for (const o of orphanFiles) {
+  console.log(`[verify] WARN unreferenced ${o}`)
+}
+console.log('')
 
-
-
-// ---------------------------------------------------------------------------
-// 随包脚本调用契约检查：技能正文里调用 scripts/* 必须带解释器前缀（bash/node），
-// 裸路径会被部分宿主打包器剥掉可执行位而失败（writing-skills 契约原文）
-// ---------------------------------------------------------------------------
-
+// (2.3) 随包脚本调用守卫（必须带 bash/node 前缀）
 console.log('[verify] bundled-script-call check')
+const bareCalls = await contract.checkBareScriptCalls()
+for (const bc of bareCalls) {
+  console.error(`[verify] BARE SCRIPT CALL ${bc.file}: ${bc.call}`)
+}
+console.log(`[verify] bundled-script-call check ${bareCalls.length === 0 ? 'PASS' : 'FAIL: ' + bareCalls.length + ' bare call(s)'}\n`)
+if (bareCalls.length > 0) ok = false
 
-// 反引号内裸脚本调用（`scripts/x` 或 `../x/scripts/y`）。带解释器前缀的调用不以 backtick+scripts 开头，天然不入此集合
-const bareCallRe = /`(?:\.\.\/)?[\w-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
-// 可执行资源白名单：这些反引号目标是随包资源（模板/示例），非执行调用，豁免（评审 MAJOR-2b）
-const SCRIPT_RESOURCE_EXEMPT = new Set(['scripts/frame-template.html', 'scripts/helper.js'])
-
-let bareCalls = 0
-// 教学示例豁免：writing-skills/SKILL.md 本身就在讲这条契约，正文里的反例不算违规
-const BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md', 'skills/writing-skills/anthropic-best-practices.md'])
-async function scanBareCalls(dir) {
-  const list = await readdir(dir, { withFileTypes: true })
-  for (const item of list) {
-    if (item.name.startsWith('.')) continue
-    const full = join(dir, item.name)
-    if (item.isDirectory()) await scanBareCalls(full)
-    else if (item.name.endsWith('.md')) {
-      const relPath = relative(root, full).replace(/\\/g, '/')
-      if (BARE_CALL_EXEMPT.has(relPath)) continue
-      const content = await readFile(full, 'utf8')
-      const stripped = content.replace(/```[\s\S]*?```/g, '')
-      for (const m of [...stripped.matchAll(bareCallRe)]) {
-        // 资源指针豁免：仅白名单内的随包资源（模板/示例）可裸引用，其余一律视为执行调用（评审 MAJOR-2b）
-        const targetPath = m[0].replace(/`/g, '')
-        if (SCRIPT_RESOURCE_EXEMPT.has(targetPath)) continue
-        console.error(`[verify] BARE SCRIPT CALL ${relative(root, full)}: ${m[0]}`)
-        bareCalls++
-        ok = false
-      }
-    }
+// (2.4) Visual Companion 随包脚本健全性自检（闭合候选 2 测试表面）
+console.log('[verify] companion-scripts syntax check')
+const companionResults = contract.checkCompanionScripts()
+let companionOk = true
+for (const cr of companionResults) {
+  if (cr.ok) {
+    console.log(`[verify]   OK ${cr.file}`)
+  } else {
+    console.error(`[verify]   FAIL ${cr.file}: ${cr.error}`)
+    companionOk = false
+    ok = false
   }
 }
-await scanBareCalls(skillDir)
-console.log(`[verify] bundled-script-call check ${bareCalls === 0 ? 'PASS' : 'FAIL: ' + bareCalls + ' bare call(s)'}`)
-if (bareCalls === 0) console.log('')
+console.log(`[verify] companion-scripts check ${companionOk ? 'PASS' : 'FAIL'}\n`)
+
 // ---------------------------------------------------------------------------
-// 深度接口边界自检：SkillDocument/SkillCatalog 的契约断言（接口即测试表面）
-// 8 条断言覆盖 BOM/CRLF/kebab/必填字段/排重/名称漂移/中止语义
+// 3. 深度接口边界自检：SkillDocument/SkillCatalog 契约断言（接口即测试表面）
 // ---------------------------------------------------------------------------
 
 console.log('[verify] boundary self-check')
 
 const boundaryResults = []
 const boundaryCheck = async (name, fn) => {
-  try { await fn(); boundaryResults.push('OK ' + name) }
-  catch (e) { boundaryResults.push('FAIL ' + name + ' — ' + (e?.message ?? e)) }
+  try {
+    await fn()
+    boundaryResults.push('OK ' + name)
+  } catch (e) {
+    boundaryResults.push('FAIL ' + name + ' — ' + (e?.message ?? e))
+  }
 }
 
 await boundaryCheck('BOM 剥离', () => {
@@ -363,7 +171,8 @@ await boundaryCheck('缺 description 报错', () => {
 await boundaryCheck('目录排重', async () => {
   const base = await mkdtemp(join(tmpdir(), 'sp-dup-'))
   const md = '---\nname: same-name\ndescription: d\n---\nbody'
-  await mkdir(join(base, 'alpha')); await mkdir(join(base, 'bravo'))
+  await mkdir(join(base, 'alpha'))
+  await mkdir(join(base, 'bravo'))
   await Promise.all([writeFile(join(base, 'alpha', 'SKILL.md'), md), writeFile(join(base, 'bravo', 'SKILL.md'), md)])
   const cat = await SkillCatalog.fromDirectory(base)
   if (cat.verifyIntegrity().duplicates.length !== 1) throw new Error('duplicates != 1')
@@ -390,76 +199,40 @@ await boundaryCheck('abort 中止', async () => {
 for (const line of boundaryResults) console.log('[verify]   ' + line)
 const boundaryPass = boundaryResults.filter((l) => l.startsWith('OK')).length
 console.log(`[verify] boundary self-check ${boundaryPass}/8 PASS`)
-if (boundaryPass !== 8) { ok = false; console.error('[verify] boundary self-check FAIL') } else { console.log('') }
+if (boundaryPass !== 8) {
+  ok = false
+  console.error('[verify] boundary self-check FAIL')
+} else {
+  console.log('')
+}
+
 // ---------------------------------------------------------------------------
-// 全仓无 emoji / 图形状态符号硬扫描（符号契约）
-// 范围：skills/ 全文件（含 .sh/.ts/.js 等）、根文档（README/CONTRIBUTING/CHANGELOG 等）、docs/
-// 规则：发现任何 emoji 或图形状态符号即退出并标记 FAIL
+// 4. 全仓无 Emoji / 图形状态符号硬扫描（符号契约）
 // ---------------------------------------------------------------------------
 
 console.log('[verify] emoji/symbol check')
-// 常用状态符号范围（对勾、叉号、警示三角、圆圈符号等）
-const SYMBOL_PATTERN = /[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF\u2B50-\u2B55\u{1F300}-\u{1FAFF}]/u
-let symbolViolations = 0
+const symbolViolations = await contract.checkSymbols([
+  'skills',
+  'README.md',
+  'CONTRIBUTING.md',
+  'CHANGELOG.md',
+  'docs',
+])
 
-async function scanFileForSymbols(filePath) {
-  const content = await readFile(filePath, 'utf8')
-  const lines = content.split('\n')
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (SYMBOL_PATTERN.test(line)) {
-      const match = line.match(SYMBOL_PATTERN)
-      console.error(`[verify] SYMBOL VIOLATION in ${relative(root, filePath)}:${i + 1} (char "${match[0]}", code 0x${match[0].codePointAt(0).toString(16)}): ${line.trim().slice(0, 80)}`)
-      symbolViolations++
-      ok = false
-    }
-  }
-}
-
-async function scanDirForSymbols(dir) {
-  const list = await readdir(dir, { withFileTypes: true })
-  for (const item of list) {
-    if (item.name.startsWith('.') || item.name === 'node_modules') continue
-    const full = join(dir, item.name)
-    if (item.isDirectory()) {
-      await scanDirForSymbols(full)
-    } else {
-      await scanFileForSymbols(full)
-    }
-  }
-}
-
-// 扫描 skills/ 全文件
-await scanDirForSymbols(skillDir)
-
-// 扫描根目录关键文档
-const rootDocs = ['README.md', 'CONTRIBUTING.md', 'CHANGELOG.md']
-for (const doc of rootDocs) {
-  const p = join(root, doc)
-  try {
-    await stat(p)
-    await scanFileForSymbols(p)
-  } catch {
-    // 文档不存在则跳过
-  }
-}
-
-// 扫描 docs/ 目录（如存在）
-const docsDir = join(root, 'docs')
-try {
-  const st = await stat(docsDir)
-  if (st.isDirectory()) await scanDirForSymbols(docsDir)
-} catch {
-  // docs 不存在则跳过
-}
-
-if (symbolViolations === 0) {
-  console.log('[verify] emoji/symbol check PASS')
+if (symbolViolations.length === 0) {
+  console.log('[verify] emoji/symbol check PASS\n')
 } else {
-  console.error(`[verify] emoji/symbol check FAIL: ${symbolViolations} violation(s)\n`)
+  for (const v of symbolViolations) {
+    console.error(`[verify] SYMBOL VIOLATION in ${v.file}:${v.line} (char "${v.char}", code ${v.code}): ${v.text}`)
+  }
+  console.error(`[verify] emoji/symbol check FAIL: ${symbolViolations.length} violation(s)\n`)
+  ok = false
 }
 
-// 核心文件存在性校验
+// ---------------------------------------------------------------------------
+// 5. 核心关键文件存在性校验
+// ---------------------------------------------------------------------------
+
 const required = [
   'skills/using-superpowers/references/dsh-tools.md',
   'skills/diagnosing-superpowers/SKILL.md',
@@ -467,6 +240,8 @@ const required = [
   'skills/test-driven-development/SKILL.md',
   'skills/subagent-driven-development/SKILL.md',
   'scripts/check-same-name-priority.mjs',
+  'scripts/lib/contract.mjs',
+  'scripts/lib/sync-engine.mjs',
   'lib/superpowers.js',
   'lib/document.js',
   'cordis.patch.yml',
