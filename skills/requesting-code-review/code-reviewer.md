@@ -38,7 +38,7 @@ Subagent (general-purpose):
 
     ## 只读评审
 
-    本次评审在当前检出上为只读操作。不得以任何方式修改working tree、暂存区、HEAD 或分支状态。请使用 `git show`、`git diff`、`git log` 等工具查看历史。如需基于其他版本的可用工作副本，请将其检出到独立的临时目录（例如 `git worktree add /tmp/review-[SHA] [SHA]`），切勿在当前检出上移动 HEAD。
+    本次评审在当前检出上为只读操作。不得以任何方式修改 working tree、暂存区、HEAD 或分支状态。请使用 `git show`、`git diff`、`git log` 等工具查看历史。如需基于其他版本的可用工作副本，请将其检出到独立的临时目录（例如 `git worktree add /tmp/review-[SHA] [SHA]`），切勿在当前检出上移动 HEAD。
 
     ## 禁止派发 subagent
 

@@ -32,7 +32,7 @@ Subagent (general-purpose):
     `git diff --stat [BASE_SHA]..[HEAD_SHA]` 和 `git diff [BASE_SHA]..[HEAD_SHA]`。
     不要遍历更广的代码库。仅在你能明确指出具体风险时，才去检查 diff 之外的代码——每个已命名的风险只做一次聚焦检查，并在报告中同时写明风险是什么以及你检查了什么。跨切面变更属于合理的已命名风险：如果 diff 改动了锁顺序、函数或 API 契约、或共享可变状态，检查调用点就是正确的做法。
 
-    本次评审在当前检出上为只读。不要以任何方式修改working tree、暂存区、HEAD 或分支状态。
+    本次评审在当前检出上为只读。不要以任何方式修改 working tree、暂存区、HEAD 或分支状态。
 
     ## 禁止分发 subagent
 

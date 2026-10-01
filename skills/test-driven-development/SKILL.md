@@ -46,16 +46,16 @@ NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
 
 完全基于测试重新实现，没有例外。
 
-## 红-绿-重构
+## RED-GREEN-REFACTOR（红-绿-重构）
 
 ```dot
 digraph tdd_cycle {
     rankdir=LR;
-    red [label="红色阶段\n编写失败的测试", shape=box, style=filled, fillcolor="#ffcccc"];
+    red [label="RED\n编写失败的测试", shape=box, style=filled, fillcolor="#ffcccc"];
     verify_red [label="验证是否\n按预期失败", shape=diamond];
-    green [label="绿色阶段\n最小化实现", shape=box, style=filled, fillcolor="#ccffcc"];
+    green [label="GREEN\n最小化实现", shape=box, style=filled, fillcolor="#ccffcc"];
     verify_green [label="验证是否通过\n全部通过", shape=diamond];
-    refactor [label="重构阶段\n清理优化", shape=box, style=filled, fillcolor="#ccccff"];
+    refactor [label="REFACTOR\n清理优化", shape=box, style=filled, fillcolor="#ccccff"];
     next [label="下一项", shape=ellipse];
 
     red -> verify_red;
@@ -70,7 +70,7 @@ digraph tdd_cycle {
 }
 ```
 
-### 红色阶段 - 编写失败的测试
+### RED - 编写失败的测试
 
 写一个最小化的测试，展示应该发生什么。
 
@@ -112,7 +112,7 @@ test('retry works', async () => {
 - 命名清晰
 - 使用真实代码（除非不得不 mock）
 
-### 验证红色阶段 - 观察失败
+### Verify RED - 观察失败
 
 **强制要求，切勿跳过。**
 
@@ -129,7 +129,7 @@ npm test path/to/test.test.ts
 
 **测试报错了？** 修复错误，直到它以正确的方式失败为止。
 
-### 绿色阶段 - 最小化实现
+### GREEN - 最小化实现
 
 编写刚好能让测试通过的最简代码。
 
@@ -167,7 +167,7 @@ async function retryOperation<T>(
 
 不要添加测试未要求的功能，不要顺手重构其他代码，也不要做超出测试范围的“优化”。
 
-### 验证绿色阶段 - 观察通过
+### Verify GREEN - 观察通过
 
 **强制要求。**
 
@@ -186,7 +186,7 @@ npm test path/to/test.test.ts
 
 **“其他测试”指项目的整个测试套件，而不只是你的文件。** 你自己写的测试通过，不代表套件变绿。在把改动宣布完成之前，请运行项目的测试命令（裸 `pytest`、`npm test`、`cargo test`——仓库用什么就用什么），即使你的任务只点名了一个测试文件。任务中的范围说明约束的是交付物，不是你的验证。这次运行暴露的任何失败——包括并非由你造成的失败——都要按名称写进你的报告；一个你眼睁睁看着滚过去却没提的红色测试，是一份因遗漏而伪造的报告。
 
-### 重构阶段 - 清理优化
+### REFACTOR - 清理优化
 
 仅在变绿之后：
 - 消除重复

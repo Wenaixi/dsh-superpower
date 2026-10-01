@@ -33,7 +33,7 @@ Subagent (general-purpose):
     `git diff --stat [FIX_BASE_SHA]..[HEAD_SHA]` 和
     `git diff [FIX_BASE_SHA]..[HEAD_SHA]`。
 
-    本次检出上的评审为只读。不得以任何方式改动working tree、暂存区、HEAD 或分支状态。
+    本次检出上的评审为只读。不得以任何方式改动 working tree、暂存区、HEAD 或分支状态。
 
     ## 你不得分发 subagent
 

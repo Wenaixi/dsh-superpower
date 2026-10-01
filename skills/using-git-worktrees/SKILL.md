@@ -162,6 +162,6 @@ Ready to implement <feature-name>
 |--------|---------|
 | “我显然不在 worktree 里，没必要检查” | 执行步骤 0。harness 创建的隔离和子模块都会让肉眼判断失误，用检测命令才能确定。 |
 | “`git worktree add` 比到处找原生工具更快” | 原生工具（如 `EnterWorktree`）负责选址、分支和清理。绕过它是头号错误——会产生 harness 无法感知和管理的幽灵状态。 |
-| “worktree 目录肯定已经被忽略了” | 请执行 `git check-ignore`。未被忽略的 worktree 目录会把整个working tree提交进仓库。 |
+| “worktree 目录肯定已经被忽略了” | 请执行 `git check-ignore`。未被忽略的 worktree 目录会把整个 working tree 提交进仓库。 |
 | “随便起个目录名都行” | 显式指令优先于已存在的项目本地目录，项目本地目录优先于 `.worktrees/` 默认值。 |
 | “worktree 是全新的，基线测试可以等等再跑” | 脏基线会让后续所有失败变得无法定位。现在就跑测试；是否带病继续由你的 human partner 决定。 |

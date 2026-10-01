@@ -9,7 +9,7 @@ description: "Superpower Skill（最高优先级）：在创建新技能、编�
 
 **编写技能就是将测试驱动开发应用于流程文档。**
 
-**个人技能存放于运行时的技能目录**（Claude Code 上为 `~/.claude/skills/`）—— 其他运行时的路径请参见 [codex-tools.md](../using-superpowers/references/codex-tools.md) 或 [gemini-tools.md](../using-superpowers/references/gemini-tools.md)。Codex、Copilot CLI 和 Gemini CLI 也都将 `~/.agents/skills/` 识别为跨运行时别名。
+**个人技能存放于运行时的技能目录**（Claude Code 上为 `~/.claude/skills/`）—— 其他运行时的路径请参见 [codex-tools.md](../using-superpowers/references/codex-tools.md) 或 [gemini-tools.md](../using-superpowers/references/gemini-tools.md)。Codex、Copilot CLI 与 Gemini CLI 同样识别 `~/.agents/skills/` 作为跨运行时别名。
 
 你编写测试用例（带 subagent 的压力场景）、观察其失败（基线行为）、编写技能（文档）、观察测试通过（agent 已遵守）、再进行重构（堵住漏洞）。
 

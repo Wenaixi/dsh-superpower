@@ -7,7 +7,7 @@ description: "Superpower Skill（最高优先级）：在当前会话内执行�
 
 按任务分发全新实现 subagent、每任务后进行任务评审（规格符合度 + 代码质量）、最后进行全分支广度评审来执行计划。
 
-**为什么使用 subagent：** 你将任务委托给拥有隔离上下文的专用代理。通过精确构造指令与上下文，确保其保持专注并顺利完成任务。它们不应继承你的会话上下文或历史——你只需构造其所需的一切。这也能保留你自己的上下文用于统筹协调。
+**为什么使用 subagent：** 你将任务委托给拥有隔离上下文的 specialized agents。通过精确构造指令与上下文，确保其保持专注并顺利完成任务。它们不应继承你的会话上下文或历史——你只需构造其所需的一切。这也能保留你自己的上下文用于统筹协调。
 
 **核心原则：** 每任务全新 subagent + 任务评审（规格 + 质量）+ 最终广度评审 = 高质量、快迭代
 
@@ -17,7 +17,7 @@ description: "Superpower Skill（最高优先级）：在当前会话内执行�
 
 **做裁决，不停摆。** 运行中的计划不等待 human partner。冲突、歧义、计划缺陷、你本想申请突破的上限——自行裁决。规格是约束性依据，计划是对规格的论证，你的判断填补二者未覆盖之处。将每个决策以 `Ruling: <裁决内容> — <原因> — <若错的代价>` 记录到 ledger，然后继续。错误的裁决只会带来可见、可撤销的返工；而卡在问题上停摆的会话会耗掉对方一整天且毫无收益。
 
-仅以下四件事能让你停下，且只有这四件：不可逆或破坏性操作；安全敏感操作；超出本 workspace、按惯例需先征询的副作用（如合并、推送到共享分支、发布）；以及计划破损到每条前行路径都只能靠猜。对于这些，停下来提问。
+仅以下四件事能让你停下，且只有这四件：不可逆或破坏性操作；安全敏感操作；超出本 worktree、按惯例需先征询的副作用（如合并、推送到共享分支、发布）；以及计划破损到每条前行路径都只能靠猜。对于这些，停下来提问。
 
 ## 何时使用
 
@@ -72,10 +72,10 @@ digraph process {
         "向 ledger 追加完成记录，标记 todo 已完成" [shape=box];
     }
 
-    "准备：workspace、ledger 检查、读取计划、飞行前检查" [shape=box];
+    "准备：worktree、ledger 检查、读取计划、飞行前检查" [shape=box];
     "是否还有剩余任务？" [shape=diamond];
     "分发最终代码 reviewer (../requesting-code-review/code-reviewer.md)" [shape=box];
-    "有最终 finding？一次修复分发、一次scoped re-review、裁决残留项" [shape=box];
+    "有最终 finding？一次修复分发、一次 scoped re-review、裁决残留项" [shape=box];
     "最终评审通过：删除本计划的 workspace" [shape=box];
     "使用 finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
@@ -181,7 +181,7 @@ digraph process {
 - 分发提示只描述一项任务，而非会话历史。不要将累积的先前任务摘要（“任务 1-3 之后的状态”）粘贴到后续分发中——真实会话中曾出现分发达 42k 字符、其中 99% 为粘贴历史的情况。全新 subagent 只需要其任务、所触及的接口与全局约束，不需要其他。
 - 分发中携带无 subagent 契约（已在实现者模板中）：实现者绝不分发 subagent——既不派生助手，也绝不派生 reviewer。评审由你在报告之后分发。在真实会话中，工作者自行派生的每个 reviewer 都与控制器分发的任务评审重复——相当于每任务多出一席评审。
 - 若先前任务在当前任务触及的区域暂存了 finding，请在分发中携带指向该 ledger 条目的指针。
-- 从分发结果中记录实现者的代理身份——修复循环第 1-3 轮将恢复该代理。
+- 从分发结果中记录实现者的 agent 身份——修复循环第 1-3 轮将恢复该 agent。
 - 切勿并行分发多个实现 subagent（会冲突）。
 
 模板：[implementer-prompt.md](implementer-prompt.md)
@@ -292,7 +292,7 @@ digraph process {
 ```
 You: 我正在使用 subagent 驱动开发来执行此计划。
 
-[准备：workspace 已校验]
+[准备：worktree 已校验]
 [通读一次计划文件：docs/superpowers/plans/feature-plan.md]
 [解析 workspace：bash scripts/sdd-workspace docs/superpowers/plans/feature-plan.md — 内部无 ledger，全新开始]
 [为所有任务创建 todos]

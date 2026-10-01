@@ -145,7 +145,7 @@ git commit -m "feat: add specific feature"
 
 ## 执行交接
 
-保存并自检完计划后，把链接交给你的 human partner 阅读。若对方已明确提供执行方式，请其复核计划、确认它涵盖其期望；实现前等待该复核，然后使用保留的方式。否则，请在实现前请对方复核计划并选择一种执行方式。
+保存并自检完计划后，把计划链接给到你的 human partner 阅读。若对方已明确提供执行方式，请其复核计划、确认它捕捉到了对方想要的；实现前等待该复核，然后使用保留的方式。否则，请在实现前请对方复核计划并选择一种执行方式。
 
 **当尚未提供执行方式时：**
 
@@ -158,7 +158,7 @@ git commit -m "feat: add specific feature"
 
 **当已提供执行方式时：**
 
-**“计划已完成并保存至 `docs/superpowers/plans/<filename>.md`。请复核计划。它是否涵盖了你想要的？”**
+**“计划已完成并保存至 `docs/superpowers/plans/<filename>.md`。请复核计划。它是否捕捉到了你想要的？”**
 
 **若选择 subagent 驱动：**
 - **必需子技能：** 使用 subagent-driven-development

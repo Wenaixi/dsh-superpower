@@ -1,6 +1,6 @@
 # Claude Code 工具说明
 
-Claude Code 是参考宿主：技能以其词汇表表述（subagent 派发用 `Agent`、待办、`Skill`）。本文说明 Claude Code 中唯一能让技能运行成本低于默认形态的场景，该场景由 human partner 决定是否启用，不影响技能的任何既有要求。
+Claude Code 是参考宿主：技能以其词汇表表述（`Agent` 用于派发 subagent、todos 表示待办、`Skill` 表示技能）。本文说明 Claude Code 中唯一能让技能运行成本低于默认形态的场景，该场景由 human partner 决定是否启用，不影响技能的任何既有要求。
 
 ## subagent 驱动开发的低成本编排
 
