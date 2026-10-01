@@ -55,10 +55,18 @@ if (report.total !== 15) {
 console.log('[verify] relative-reference check')
 let deadLinks = 0
 
-// 复用 extractRefs 的链接形态（形态 a/markdown 链接），消除两套链接正则并存（评审 F-01）
-const extractRelativeLinks = (mdContent) => extractRefs(mdContent).filter((t) => !t.startsWith('/') && !/^[a-z]+:/i.test(t))
+// markdown 链接目标的唯一提取器（死链检查与资源契约共用，消除两套正则并存，评审 F-01）
+function extractLinkTargets(stripped) {
+  const links = []
+  const re = /\[[^\]]*\]\((<?)([^\)>\s]+)\1(?:\s+["'][^'"]*["'])?\)/g
+  let m
+  while ((m = re.exec(stripped)) !== null) {
+    const t = m[2]
+    if (!/^(https?:|mailto:|#)/.test(t)) links.push(t)
+  }
   return links
 }
+const extractRelativeLinks = (mdContent) => extractLinkTargets(mdContent.replace(/```[\s\S]*?```/g, ''))
 
 async function checkRelativeLinks(dir) {
   const list = await readdir(dir, { withFileTypes: true })
@@ -112,24 +120,38 @@ function assertRefExtraction() {
   if (extractRefs(fenced).length !== 0) throw new Error('fenced example leaked into refs')
 }
 
+// 守卫自检：孤儿判定与裸调用识别必须真实可失败（接口即测试表面，评审 MAJOR-1/2）
+function assertGuardCanFail() {
+  // 孤儿判定：无任何提及的 md 必须被判孤儿
+  const names = new Set(['a.md', 'b.md'])
+  const refs = new Set(['a.md'])
+  const orphan = [...names].filter((n) => !refs.has(n))
+  if (orphan.length !== 1 || orphan[0] !== 'b.md') throw new Error('orphan guard cannot fail')
+  // 裸调用识别：`scripts/task-start PLAN_FILE 1`（无前缀、含参数）必须命中
+  const bareRe = /`(?:\.\.\/)?[\w-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
+  const sample = '请执行 `scripts/task-start PLAN_FILE 1`'
+  const hit = [...sample.matchAll(bareRe)]
+  if (hit.length !== 1 || !hit[0][0].includes('task-start')) throw new Error('bare-call guard cannot fail')
+  // 带前缀的合法调用不得命中裸调用正则
+  const prefixed = '运行 `bash scripts/task-done PLAN_FILE 1 0`'
+  if ([...prefixed.matchAll(bareRe)].length !== 0) throw new Error('prefixed call mis-flagged as bare')
+}
+
 assertRefExtraction()
+assertGuardCanFail()
 
 function extractRefs(mdContent) {
   // 去除围栏代码块，避免示例命令泄漏进引用域
   const stripped = mdContent.replace(/```[\s\S]*?```/g, '')
   const refs = new Set()
-  // 形态 a：markdown 链接 [text](path) / [text](<path>)
-  const linkRe = /\[[^\]]*\]\((<?)([^\)>\s]+)\1(?:\s+["'][^"']*["'])?\)/g
+  // 形态 a：markdown 链接（复用 extractLinkTargets 唯一提取器，消除双正则，评审 F-01）
+  for (const t of extractLinkTargets(stripped)) refs.add(t)
+  // 形态 b：反引号目录路径 `references/x.md` / `scripts/y.sh`
+  const tickPathRe = /`((?:references|scripts|prompts|templates|examples)\/[\w./-]+)`/g
   let m
-  while ((m = linkRe.exec(stripped)) !== null) {
-    const t = m[2]
-    if (!/^(https?:|mailto:|#)/.test(t)) refs.add(t)
-  }
-  // 形态 b：反引号目录路径 \`references/x.md\` / \`scripts/y.sh\`
-  const tickPathRe = /\`((?:references|scripts|prompts|templates|examples)\/[\w./-]+)\`/g
   while ((m = tickPathRe.exec(stripped)) !== null) refs.add(m[1])
-  // 形态 c：反引号裸文件名 \`x.md\`
-  const tickBareRe = /\`([\w.-]+\.(?:md|js|ts|cjs|sh|html))\`/g
+  // 形态 c：反引号裸文件名 `x.md`
+  const tickBareRe = /`([\w.-]+\.(?:md|js|ts|cjs|sh|html))`/g
   while ((m = tickBareRe.exec(stripped)) !== null) refs.add(m[1])
   return [...refs]
 }
@@ -196,6 +218,19 @@ async function resolveResourceRefs(dir) {
   const orphans = []
   const referenced = new Set()
 
+  // 全仓 md 文件 basename 清单（普通文本提及也视为引用，消除形态盲区）
+  const allMdNames = new Set()
+  async function collectNames(d) {
+    const list = await readdir(d, { withFileTypes: true })
+    for (const item of list) {
+      const full = join(d, item.name)
+      if (item.isDirectory()) await collectNames(full)
+      else if (item.name.endsWith('.md') && item.name !== 'SKILL.md') allMdNames.add(item.name)
+    }
+  }
+  await collectNames(dir)
+
+  // 第一遍：收集所有引用（basename 级，含正文普通文本提及），并逐条解析缺失
   async function walk(d) {
     const list = await readdir(d, { withFileTypes: true })
     for (const item of list) {
@@ -205,30 +240,27 @@ async function resolveResourceRefs(dir) {
         await walk(full)
       } else if (item.name.endsWith('.md')) {
         const content = await readFile(full, 'utf8')
+        for (const name of allMdNames) if (content.includes(name)) referenced.add(name)
         for (const ref of extractRefs(content)) {
           const clean = ref.replace(/#.*$/, '')
           if (!clean || REFERENCE_EXEMPT.has(rel)) continue
+          referenced.add(clean.split('/').pop() || clean)
           if (!(await resolveRefInSkill(d, clean))) missing.push({ file: rel, ref })
         }
-        // 该 md 文件本身若被引用，记为 referenced（basename 匹配）
-        referenced.add(item.name)
-      } else if (!item.name.endsWith('.md')) {
-        continue
       }
     }
   }
   await walk(dir)
 
-  // 孤儿：非 SKILL.md 且未出现在任何引用里，且不在白名单
+  // 孤儿：非 SKILL.md 且未被任何引用/提及，且不在白名单（两遍扫描，评审 MAJOR-1）
   async function collectAll(d) {
     const list = await readdir(d, { withFileTypes: true })
     for (const item of list) {
       const full = join(d, item.name)
       const rel = relative(root, full).replace(/\\/g, '/')
       if (item.isDirectory()) await collectAll(full)
-      else if (!item.name.endsWith('.md')) continue
       else if (item.name === 'SKILL.md') continue
-      else if (!referenced.has(item.name) && !ORPHAN_EXEMPT.has(rel)) orphans.push(rel)
+      else if (item.name.endsWith('.md') && !referenced.has(item.name) && !ORPHAN_EXEMPT.has(rel)) orphans.push(rel)
     }
   }
   await collectAll(dir)
@@ -254,13 +286,14 @@ for (const o of orphanFiles) console.log(`[verify] WARN unreferenced ${o}`)
 
 console.log('[verify] bundled-script-call check')
 
-// 反引号内裸脚本调用（`scripts/x.sh` 或 `../x/scripts/y.sh` 无前缀）
-const bareCallRe = /`(?:(?:\.\.\/)?[\w-]+\/)*scripts\/[\w.\/-]+\.(?:sh|js|cjs|mjs)`/g
-const prefixedOkRe = /`(?:bash|node|npx|python3?)\s+(?:(?:\.\.\/)?[\w-]+\/)*scripts\/[\w.\/-]+\.(?:sh|js|cjs|mjs)`/g
+// 反引号内裸脚本调用（`scripts/x` 或 `../x/scripts/y`）。带解释器前缀的调用不以 backtick+scripts 开头，天然不入此集合
+const bareCallRe = /`(?:\.\.\/)?[\w-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
+// 可执行资源白名单：这些反引号目标是随包资源（模板/示例），非执行调用，豁免（评审 MAJOR-2b）
+const SCRIPT_RESOURCE_EXEMPT = new Set(['scripts/frame-template.html', 'scripts/helper.js'])
 
 let bareCalls = 0
 // 教学示例豁免：writing-skills/SKILL.md 本身就在讲这条契约，正文里的反例不算违规
-const BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md'])
+const BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md', 'skills/writing-skills/anthropic-best-practices.md'])
 async function scanBareCalls(dir) {
   const list = await readdir(dir, { withFileTypes: true })
   for (const item of list) {
@@ -272,19 +305,13 @@ async function scanBareCalls(dir) {
       if (BARE_CALL_EXEMPT.has(relPath)) continue
       const content = await readFile(full, 'utf8')
       const stripped = content.replace(/```[\s\S]*?```/g, '')
-      const bare = [...stripped.matchAll(bareCallRe)]
-      // 前缀合法调用先行摘除，剩余裸调用才计
-      for (const m of bare) {
-        // 资源指针豁免：反引号目标是真实存在的文件（模板/客户端资源），非执行调用
+      for (const m of [...stripped.matchAll(bareCallRe)]) {
+        // 资源指针豁免：仅白名单内的随包资源（模板/示例）可裸引用，其余一律视为执行调用（评审 MAJOR-2b）
         const targetPath = m[0].replace(/`/g, '')
-        const realTarget = resolve(dir, targetPath)
-        const isResource = await stat(realTarget).then(() => true).catch(() => false)
-        if (isResource) continue
-        if (!prefixedOkRe.test(m[0])) {
-          console.error(`[verify] BARE SCRIPT CALL ${relative(root, full)}: ${m[0]}`)
-          bareCalls++
-          ok = false
-        }
+        if (SCRIPT_RESOURCE_EXEMPT.has(targetPath)) continue
+        console.error(`[verify] BARE SCRIPT CALL ${relative(root, full)}: ${m[0]}`)
+        bareCalls++
+        ok = false
       }
     }
   }
