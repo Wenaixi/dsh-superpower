@@ -34,12 +34,12 @@ digraph when_to_use {
 ## 核心模式
 
 ```typescript
-// ❌ 修改前：猜测时机
+// [FAIL] 修改前：猜测时机
 await new Promise(r => setTimeout(r, 50));
 const result = getResult();
 expect(result).toBeDefined();
 
-// ✅ 修改后：等待条件满足
+// [OK] 修改后：等待条件满足
 await waitFor(() => getResult() !== undefined);
 const result = getResult();
 expect(result).toBeDefined();
@@ -84,14 +84,14 @@ async function waitFor<T>(
 
 ## 常见错误
 
-**❌ 轮询过快：** `setTimeout(check, 1)` - 浪费 CPU
-**✅ 修正：** 每 10ms 轮询一次
+**[FAIL] 轮询过快：** `setTimeout(check, 1)` - 浪费 CPU
+**[OK] 修正：** 每 10ms 轮询一次
 
-**❌ 无超时：** 条件始终不满足时会无限循环
-**✅ 修正：** 始终设置超时，并给出清晰的错误信息
+**[FAIL] 无超时：** 条件始终不满足时会无限循环
+**[OK] 修正：** 始终设置超时，并给出清晰的错误信息
 
-**❌ 数据过期：** 在循环前缓存状态
-**✅ 修正：** 在循环内调用 getter 获取最新数据
+**[FAIL] 数据过期：** 在循环前缓存状态
+**[OK] 修正：** 在循环内调用 getter 获取最新数据
 
 ## 何时应该使用任意延时
 

@@ -37,9 +37,9 @@ git clone --depth 1 https://github.com/obra/superpowers.git /tmp/superpowers
 
 ### 与上游命名对齐：技能名无 `superpower-` 前缀（v7.0.0 起）
 
-本仓库 15 个技能的 `frontmatter.name` 与目录名与上游完全一致（`brainstorming`、`writing-plans`、`diagnosing-superpowers` …）。`v6.3.0-dsh.5` 曾统一加 `superpower-` 前缀与上游脱钩，`v7.0.0` 起反转该决策（去前缀 + 同名外来技能优先语义下前缀失去防护意义，且与上游同步不再需要手工改名）。
+本仓库 15 个技能的 `frontmatter.name` 与目录名与上游完全一致（`brainstorming`、`writing-plans`、`diagnosing-superpowers` …）。`v6.3.0-dsh.5` 曾统一加 `superpower-` 前缀与上游脱钩，`v7.0.0` 起反转该决策（去前缀；同名前由 rank 10 保证本插件胜出，与上游同步无需手工改名）。
 
-**同名优先语义：** 官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决；本包 rank 550 高于 `dsh-skill-filesystem` 的项目/用户根（100–500），用户或项目自行安装的同名技能天然优先。同步上游新增技能时目录与 frontmatter 使用上游原名即可，无需加前缀。
+**同名优先语义：** 官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 rank 10 小于 `dsh-skill-filesystem` 的项目/用户根（100–500）与官方 bundled（600），本插件技能优先级最高，同名技能一律本包胜出。同步上游新增技能时目录与 frontmatter 使用上游原名即可，无需加前缀。
 
 **每次同步上游新版本时：**
 

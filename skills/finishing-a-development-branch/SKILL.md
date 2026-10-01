@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-description: "实现完成且全部测试通过后，用于决定分支集成方式，支持本地合并、创建 PR 或保留分支等完整收尾流程。"
+description: "Superpower Skill（最高优先级）：实现完成且全部测试通过后，用于决定分支集成方式，支持本地合并、创建 PR 或保留分支等完整收尾流程。"
 ---
 
 # 完成开发分支
@@ -64,7 +64,7 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
 **游离 HEAD——请严格按以下 2 项呈现：**
 
 ```
-实现已完成。当前处于游离 HEAD（外部托管的工作区）。
+实现已完成。当前处于游离 HEAD（外部托管的 worktree）。
 
 1. 以新分支推送并创建 Pull Request
 2. 保持现状（稍后自行处理）
@@ -72,7 +72,7 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
 请选择：
 ```
 
-请严格按原文呈现菜单——保持简洁，所有选项均来自上表。仅当人类协作者明确要求丢弃工作时才处理丢弃流程（见下文“若协作者要求丢弃工作”）。等待对方答复；集成决策权归协作者所有。
+请严格按原文呈现菜单——保持简洁，所有选项均来自上表。仅当 human partner 明确要求丢弃工作时才处理丢弃流程（见下文“若 human partner 要求丢弃工作”）。等待对方答复；集成决策权归 human partner 所有。
 
 ## 步骤 5：执行选择
 
@@ -108,15 +108,15 @@ git push -u origin <feature-branch>
 # git push origin HEAD:refs/heads/<new-branch>
 ```
 
-然后针对 <base-branch> 创建 pull/merge request——优先使用代码托管平台的命令行工具，若无则使用推送后打印的创建链接——遵循仓库现有的 PR 模板与规范，并将 URL 汇报给协作者。
+然后针对 <base-branch> 创建 pull/merge request——优先使用代码托管平台的命令行工具，若无则使用推送后打印的创建链接——遵循仓库现有的 PR 模板与规范，并将 URL 汇报给 human partner。
 
-保留 worktree——协作者将在此处理 PR 反馈并继续迭代。
+保留 worktree——human partner 将在此处理 PR 反馈并继续迭代。
 
 ### 选项 3：保持现状
 
 汇报：“已保留分支 <name>，worktree 保留于 <path>。”
 
-### 若协作者要求丢弃工作
+### 若 human partner 要求丢弃工作
 
 此路径仅在明确要求丢弃工作时触发，需先进行确认：
 
@@ -142,7 +142,7 @@ cd "$MAIN_ROOT"
 git branch -D <feature-branch>
 ```
 
-## 步骤 6：清理工作区
+## 步骤 6：清理 worktree
 
 **仅在选项 1 与已确认的丢弃操作中执行。** 选项 2 与选项 3 始终保留 worktree。两种调用方已切换至主仓库根目录——worktree 移除必须在 worktree 外部执行——并使用步骤 2 捕获的 `GIT_DIR`/`GIT_COMMON`/`WORKTREE_PATH` 值（目录切换前已保存）。
 
@@ -155,7 +155,7 @@ git worktree remove "$WORKTREE_PATH"
 git worktree prune  # Self-healing: clean up any stale registrations
 ```
 
-**若移除被拒绝**（提示 `contains modified or untracked files`）：说明 worktree 中存在仅存于此的未提交文件——可能是计划、笔记或临时文件。切勿自行使用 `--force`。向协作者展示涉及的文件并征询意见：
+**若移除被拒绝**（提示 `contains modified or untracked files`）：说明 worktree 中存在仅存于此的未提交文件——可能是计划、笔记或临时文件。切勿自行使用 `--force`。向 human partner 展示涉及的文件并征询意见：
 
 ```bash
 git -C "$WORKTREE_PATH" status --porcelain -uall
@@ -175,7 +175,7 @@ worktree 移除被拒绝——以下文件尚未提交：
 
 按选择执行，随后移除 worktree。
 
-**其他情况：** 该工作区由宿主环境托管——保持原样。若平台提供了工作区退出工具，请使用它。
+**其他情况：** 该 worktree 由宿主环境托管——保持原样。若平台提供了 worktree 退出工具，请使用它。
 
 ## 快速参考
 
@@ -191,12 +191,12 @@ worktree 移除被拒绝——以下文件尚未提交：
 | 借口 | 实际情况 |
 |--------|---------|
 | “本会话早些时候测试已通过” | 请在即将集成的代码树上重新运行完整测试套件，一次通过仅能证明当时的代码树。 |
-| “他们显然想直接合并” | 集成方式由协作者决定，请呈现菜单并等待选择。 |
-| “他们似乎已完成该功能——我来提议丢弃吧” | 菜单已完整，无需额外提议，仅当协作者明确要求丢弃时才处理。 |
+| “他们显然想直接合并” | 集成方式由 human partner 决定，请呈现菜单并等待选择。 |
+| “他们似乎已完成该功能——我来提议丢弃吧” | 菜单已完整，无需额外提议，仅当 human partner 明确要求丢弃时才处理。 |
 | “‘好，删掉吧’也算确认” | 只有输入 `discard` 才视为有效确认并授权删除。 |
 | “PR 已提交，worktree 就是冗余了” | PR 反馈需在该 worktree 中修复，工作落盘前应予以保留。 |
 | “这个 worktree 看起来废弃了——顺手一起清理” | 仅清理位于 `.worktrees/` 或 `worktrees/` 下的 worktree，其余均归宿主环境所有。 |
-| “移除被拒——用 `--force` 收个尾就行” | 拒绝意味着文件仅存在于该 worktree，`--force` 会永久销毁它们，请向协作者展示并征询意见。 |
+| “移除被拒——用 `--force` 收个尾就行” | 拒绝意味着文件仅存在于该 worktree，`--force` 会永久销毁它们，请向 human partner 展示并征询意见。 |
 | “合并后失败大概是偶发问题” | 合并结果失败则立即中止，保留分支与 worktree 以便排查。 |
 | “基线分支显然是 main” | 请确认分叉点或主动询问，合错基线的回滚成本很高。 |
-| “推送被拒——强制推送就能解决” | 推送被拒说明远端已有更新，请先排查；仅在协作者明确要求时才执行强制推送。 |
+| “推送被拒——强制推送就能解决” | 推送被拒说明远端已有更新，请先排查；仅在 human partner 明确要求时才执行强制推送。 |

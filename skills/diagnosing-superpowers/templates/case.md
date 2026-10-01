@@ -1,9 +1,9 @@
 # Case：<session-id>
 
-工作区：~/.superpowers/diagnosing-superpowers/<session-id>/
+workspace：~/.superpowers/diagnosing-superpowers/<session-id>/
 创建时间：<ISO 时间戳>
 
-## 问题陈述（与你的合作者达成一致）
+## 问题陈述（与你的 human partner 达成一致）
 
 <一段话。指明会话（们）、已知的回合范围、期望什么、发生了什么、以及重要的可观察量：墙钟时间、token 数、重复动作、某个具体的意外动作。>
 
@@ -14,7 +14,7 @@
 | 角色 | 会话 id | 绝对路径 | 行数 | 字节 | 最长行（字节） | 首个 prompt（前 120 字符） | 首个时间戳 |
 |---|---|---|---|---|---|---|---|
 | 主会话 | | | | | | | |
-| 子代理 | | | | | | | |
+| subagent | | | | | | | |
 
 被拒候选：<id — 路径 — 拒绝原因>，或"无"。
 
@@ -23,8 +23,8 @@
 ## 环境
 
 - OS：<名称与版本>
-- 宿主机：<name> <version>
-- 所见模型：<model id — 位置（主会话 / 子代理 id）>
+- harness：<name> <version>
+- 所见模型：<model id — 位置（主会话 / subagent id）>
 - superpowers 安装根：<路径>；版本 <x.y.z>；git sha <sha 或 "not a checkout">
 - 会话期间读取或注入的技能文件：
 
@@ -39,7 +39,7 @@
 ## 这些文件的每个读者都应遵守的上下文安全规则
 
 - 读取此处列出的任何文件前，遵循 `references/context-safety.md`。
-- 在子代理 transcript 中，"user"是父代理。
+- 在 subagent transcript 中，"user"是父代理。
 
 ## 已发现来源与记录含义
 

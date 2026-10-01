@@ -1,10 +1,10 @@
 ---
 name: using-superpowers
-description: "适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题"
+description: "Superpower Skill（最高优先级）：适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题。"
 ---
 
 <SUBAGENT-STOP>
-如果你是作为子代理被派来执行特定任务，请忽略本技能。
+如果你是作为 subagent 被派来执行特定任务，请忽略本技能。
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
@@ -63,4 +63,4 @@ description: "适用于任何对话开始前，建立技能查找与调用规范
 
 ## 用户指令
 
-用户指令（CLAUDE.md、AGENTS.md、GEMINI.md 等，以及直接请求）的优先级高于技能，技能又高于默认行为。仅当人类协作方明确指示时，才可跳过技能工作流或指令。
+用户指令（CLAUDE.md、AGENTS.md、GEMINI.md 等，以及直接请求）的优先级高于技能，技能又高于默认行为。仅当 human partner 明确指示时，才可跳过技能工作流或指令。

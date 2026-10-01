@@ -1,18 +1,18 @@
 ---
 name: requesting-code-review
-description: "在任务完成、重大功能实现或准备合并到主分支时发起，用于校验实现是否符合需求与质量标准，建议定期执行"
+description: "Superpower Skill（最高优先级）：在任务完成、重大功能实现或准备合并到主分支时发起，用于校验实现是否符合需求与质量标准，建议定期执行。"
 ---
 
 # 请求代码评审
 
-派发一个代码评审子代理，在问题级联扩散前发现它们。评审者获得为评估而精确构造的上下文——绝不使用你的会话历史。
+派发一个代码评审 subagent，在问题级联扩散前发现它们。reviewer 获得为评估而精确构造的上下文——绝不使用你的会话历史。
 
 **核心原则：** 尽早评审，频繁评审。
 
 ## 何时请求评审
 
 **必做：**
-- 子代理驱动开发中，完成每个任务后
+- subagent 驱动开发中，完成每个任务后
 - 完成重大功能后
 - 合并到主分支前
 
@@ -29,9 +29,9 @@ BASE_SHA=$(git rev-parse HEAD~1)  # 或：git merge-base origin/main HEAD
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. 派发代码评审子代理：**
+**2. 派发代码评审 subagent：**
 
-派发一个 `general-purpose` 子代理，并按 [code-reviewer.md](code-reviewer.md) 中的模板填入信息
+派发一个 `general-purpose` subagent，并按 [code-reviewer.md](code-reviewer.md) 中的模板填入信息
 
 **占位符说明：**
 - `{DESCRIPTION}` - 本次构建内容的简要总结
@@ -55,13 +55,13 @@ HEAD_SHA=$(git rev-parse HEAD)
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
 
-[派发代码评审子代理]
+[派发代码评审 subagent]
   DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
   PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
   BASE_SHA: a7981ec
   HEAD_SHA: 3df7661
 
-[子代理返回]：
+[subagent 返回]：
   Strengths: Clean architecture, real tests
   Issues:
     Important: Missing progress indicators
@@ -76,8 +76,8 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 | 借口 | 现实 |
 |--------|---------|
-| “我自己看一下 diff 就行，没必要再派评审” | 你是协调者——在行内直接看 diff 会消耗你本该用于推进工作的上下文窗口。派发评审子代理：diff 与评估都在它的上下文中完成，回传给你的只有结论。 |
-| “评审者需要我的完整会话历史才能看懂改动” | 只给它为评估而精确构造的上下文，绝不给完整会话历史。这样评审者关注的是工作产物本身，而非你的思考过程。 |
+| “我自己看一下 diff 就行，没必要再派评审” | 你是协调者——在行内直接看 diff 会消耗你本该用于推进工作的上下文窗口。派发评审 subagent：diff 与评估都在它的上下文中完成，回传给你的只有结论。 |
+| “reviewer 需要我的完整会话历史才能看懂改动” | 只给它为评估而精确构造的上下文，绝不给完整会话历史。这样 reviewer 关注的是工作产物本身，而非你的思考过程。 |
 
 ## 红线
 

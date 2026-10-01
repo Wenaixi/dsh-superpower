@@ -9,7 +9,9 @@
 ### 破坏性变更
 
 - **技能名与目录去掉 `superpower-` 前缀**：14 个技能回归上游原名（`brainstorming`、`executing-plans`、`subagent-driven-development` …），`frontmatter.name`、目录名、全部正文引用同步更新。旧名 `skill("superpower-writing-plans")` 不再可用，改用 `skill("writing-plans")`。语义化版本因破坏性变更升为 `7.0.0`。
-- **同名外来技能优先**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决；本包 rank 550 高于 `dsh-skill-filesystem` 的项目/用户根（100~500），因此用户或项目自行安装的同名技能天然优先于本包，无需额外覆盖逻辑。
+- **同名技能优先级反转（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 `SUPERPOWERS_RANK` 由 `550` 改为 `10`，小于 `dsh-skill-filesystem` 的项目/用户根（100~500）与官方内置 bundled（600），因此任何与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills`、自定义根）或官方 bundled 技能均不会覆盖本包——本插件技能唯一生效。
+- **全文符号清除 + 核心术语回英文**：全部 15 个技能的译文正文与辅助文档中的 ✅/❌/⚠️ 等符号替换为 ASCII 标记（`[OK]`/`[FAIL]`/`[WARN]`），文档不再包含任何 emoji；核心专业术语回英文原词（`subagent`/`agent`、`reviewer`/`re-reviewer`、`ledger`、`finding`、`brief`、`workspace`/`worktree`、`harness`、`human partner`），句子仍为简体中文。
+- **frontmatter `description` 统一加前缀**：15 个 `SKILL.md` 的 `description` 开头统一为 `Superpower Skill（最高优先级）：…`，简洁标明技能来源与本插件优先级。
 
 ### 新增
 
@@ -18,7 +20,7 @@
   - `writing-plans`：改写为记录决策而非代码转写（"What a Step Contains" 取代 "No Placeholders"）、步骤粒度改"一项可校验结果的动作"、新增 Review Focus 段与用户复核计划关卡；删除上游已废弃的 `plan-document-reviewer-prompt.md`。
   - `executing-plans`：重建为 Native（内联）执行模式，连续执行至整仓完成再一次性全分支评审，配套新增 `scripts/task-start` / `scripts/task-done`。
   - `brainstorming`：先澄清"为什么想要这东西"再提方案，批准绑定设计阶段。
-  - `requesting-code-review` / `code-reviewer.md`：BASE_SHA 改用 `git merge-base origin/main HEAD`，评审者按"合理用户预期"判断规格未提及行为，新增 Declined to judge 清单。
+  - `requesting-code-review` / `code-reviewer.md`：BASE_SHA 改用 `git merge-base origin/main HEAD`，reviewer 按"合理用户预期"判断规格未提及行为，新增 Declined to judge 清单。
   - `test-driven-development`：green 定义改为"项目自己的全套测试命令"，按名报告全部失败。
   - `subagent-driven-development`：同名 plan 独立工作区；`review-package` 对空/非后代 `BASE..HEAD` 区间拒绝（exit 3）；控制器可嵌套一层运行。
   - `using-superpowers`：新增 `references/muse-tools.md` 与 `references/claude-code-tools.md`，保留 DSH 专属 `dsh-tools.md`。
@@ -27,8 +29,8 @@
 ### 修复
 
 - **`scripts/verify.mjs` 期望技能数 14 → 15**，并新增"技能正文相对路径引用存在性"检查，杜绝执行时死链。
-- **新增 `scripts/check-same-name-priority.mjs` 自检**：用真实 `SkillRegistry` 验证同名优先级（仅有本包 / 叠加 rank 100 用户同名技能 / 叠加 rank 700 高优 provider 三组断言），把"同名优先"从文档承诺变成可运行证据。
-- **新增 `scripts/check-same-name-priority-fs.mjs` 同层实测**：直接加载官方 `@deepseek-ai/dsh-skill-filesystem`，在同一个 `SkillRegistry` 内验证 rank 裁决（自定义根 rank 300 覆盖本包 550、注册顺序颠倒结果不变、无覆盖时本包全可见），8/8 PASS；测试技能写系统临时目录并整棵删除，不触碰真实用户/项目技能根。
+- **新增 `scripts/check-same-name-priority.mjs` 自检**：用真实 `SkillRegistry` 验证同名优先级（仅有本包 / 叠加 rank 100/300/500/600 同名技能均不抢 / rank 0 可抢 / 逐名裁决），把"本插件优先级最高"从文档承诺变成可运行证据。
+- **新增 `scripts/check-same-name-priority-fs.mjs` 同层实测**：直接加载官方 `@deepseek-ai/dsh-skill-filesystem`，在同一个 `SkillRegistry` 内验证 rank 裁决（自定义根 rank 300 同名不抢本包 rank 10、注册顺序颠倒结果不变、无覆盖时本包全可见），8/8 PASS；测试技能写系统临时目录并整棵删除，不触碰真实用户/项目技能根。
 - **修正 `dsh.10` 条目过时陈述**：当时的 peer 范围实测仅命中 0.0.1-rc.1 与 0.1.0-rc.8 两个真实版本（CHANGELOG 原文"6 个真实版本全部命中"不准确）。
 
 ## [6.3.1] - 2026-08-23
@@ -162,7 +164,7 @@
 
 - **Harness 支持**：新增 Devin CLI / Hermes Agent / Grok Build CLI 安装说明
 - **Brainstorming**：仪式随任务分级（Spike / Bounded / Architectural），小任务跳过双文档仪式，但审批关卡不变
-- **Subagent-Driven Development**：控制器不再因非灾难性分歧阻塞；冲突预检写入 ledger；同构小任务批量派发；实现者/评审者禁止再派生子代理；计划携带 `Spec:` 指针
+- **Subagent-Driven Development**：控制器不再因非灾难性分歧阻塞；冲突预检写入 ledger；同构小任务批量派发；实现者/reviewer 禁止再派生子 subagent；计划携带 `Spec:` 指针
 - **Finishing a Development Branch**：`git worktree remove` 遇未提交内容时不再 `--force`，而是列出文件并询问
 - **修复**：`render-graphs.js` Windows 兼容、Copilot CLI 后台化指引
 - **其它**：上游 `v6.2.0` 及更早版本见上游 RELEASE-NOTES 全文

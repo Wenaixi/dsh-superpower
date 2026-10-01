@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-description: "在创建新技能、编辑或重构现有技能，以及在部署前验证技能可用性、合规性与实际生效情况时使用"
+description: "Superpower Skill（最高优先级）：在创建新技能、编辑或重构现有技能，以及在部署前验证技能可用性、合规性与实际生效情况时使用。"
 ---
 
 # 技能编写
@@ -11,9 +11,9 @@ description: "在创建新技能、编辑或重构现有技能，以及在部署
 
 **个人技能存放于运行时的技能目录**（Claude Code 上为 `~/.claude/skills/`）—— 其他运行时的路径请参见 [codex-tools.md](../using-superpowers/references/codex-tools.md) 或 [gemini-tools.md](../using-superpowers/references/gemini-tools.md)。Codex、Copilot CLI 和 Gemini CLI 也都将 `~/.agents/skills/` 识别为跨运行时别名。
 
-你编写测试用例（带子智能体的压力场景）、观察其失败（基线行为）、编写技能（文档）、观察测试通过（智能体已遵守）、再进行重构（堵住漏洞）。
+你编写测试用例（带 subagent 的压力场景）、观察其失败（基线行为）、编写技能（文档）、观察测试通过（agent 已遵守）、再进行重构（堵住漏洞）。
 
-**核心原则：** 如果你没有亲眼看到智能体在没有技能的情况下失败，你就无法判断技能是否真正教会了正确的内容。
+**核心原则：** 如果你没有亲眼看到 agent 在没有技能的情况下失败，你就无法判断技能是否真正教会了正确的内容。
 
 **必备前置知识：** 使用本技能前，你必须理解 test-driven-development。该技能定义了基本的 红-绿-重构 循环，本技能则是将 TDD 适配到文档编写上。
 
@@ -21,7 +21,7 @@ description: "在创建新技能、编辑或重构现有技能，以及在部署
 
 ## 什么是技能？
 
-**技能**是用于已被验证有效的技巧、模式或工具的参考指南。技能帮助未来的智能体快速找到并应用高效方法。
+**技能**是用于已被验证有效的技巧、模式或工具的参考指南。技能帮助未来的 agent 快速找到并应用高效方法。
 
 **技能是：** 可复用的技巧、模式、工具、参考指南
 
@@ -31,15 +31,15 @@ description: "在创建新技能、编辑或重构现有技能，以及在部署
 
 | TDD 概念 | 技能创建 |
 |-------------|----------------|
-| **测试用例** | 带子智能体的压力场景 |
+| **测试用例** | 带 subagent 的压力场景 |
 | **生产代码** | 技能文档（SKILL.md） |
-| **测试失败（红）** | 智能体在无技能情况下违反规则（基线） |
-| **测试通过（绿）** | 智能体在有技能情况下遵守规则 |
+| **测试失败（红）** | agent 在无技能情况下违反规则（基线） |
+| **测试通过（绿）** | agent 在有技能情况下遵守规则 |
 | **重构** | 在保持合规的前提下堵住漏洞 |
 | **先写测试** | 在编写技能之前先运行基线场景 |
-| **观察失败** | 记录智能体使用的确切辩解话术 |
+| **观察失败** | 记录 agent 使用的确切辩解话术 |
 | **最小化代码** | 编写针对性解决上述违规行为的技能 |
-| **观察通过** | 验证智能体现在已遵守规则 |
+| **观察通过** | 验证 agent 现在已遵守规则 |
 | **重构循环** | 发现新的辩解话术 → 堵住 → 重新验证 |
 
 整个技能创建过程遵循 红-绿-重构 循环。
@@ -139,11 +139,11 @@ description: Use when [具体的触发条件与症状]
 
 ## 技能发现优化（SDO）
 
-**对发现至关重要：** 未来的智能体需要能够找到你的技能
+**对发现至关重要：** 未来的 agent 需要能够找到你的技能
 
 ### 1. 丰富的 Description 字段
 
-**目的：** 你的智能体会读取 description 来判断当前任务是否需要加载某个技能。要让它能回答："我现在该读这个技能吗？"
+**目的：** 你的 agent 会读取 description 来判断当前任务是否需要加载某个技能。要让它能回答："我现在该读这个技能吗？"
 
 **格式：** 以 "Use when..." 开头，聚焦触发条件
 
@@ -151,23 +151,23 @@ description: Use when [具体的触发条件与症状]
 
 description 应仅描述触发条件，不要概括技能的流程或工作流。
 
-**为什么这很重要：** 测试发现，当 description 概括了技能的工作流时，智能体可能会直接沿用 description 的描述，而不再阅读完整的技能内容。一个写着「code review between tasks」的 description 曾导致智能体只做了一次审查，尽管技能中的流程图明确展示了两次审查（先合规性审查，再代码质量审查）。
+**为什么这很重要：** 测试发现，当 description 概括了技能的工作流时，agent 可能会直接沿用 description 的描述，而不再阅读完整的技能内容。一个写着「code review between tasks」的 description 曾导致 agent 只做了一次审查，尽管技能中的流程图明确展示了两次审查（先合规性审查，再代码质量审查）。
 
-当 description 被改为仅保留「Use when executing implementation plans with independent tasks」（不含工作流概括）后，智能体才正确读取了流程图，并执行了两阶段审查流程。
+当 description 被改为仅保留「Use when executing implementation plans with independent tasks」（不含工作流概括）后，agent 才正确读取了流程图，并执行了两阶段审查流程。
 
-**陷阱：** 概括工作流的 description 会成为智能体走捷径的入口，技能正文反而被跳过。
+**陷阱：** 概括工作流的 description 会成为 agent 走捷径的入口，技能正文反而被跳过。
 
 ```yaml
-# ❌ 错误：概括了工作流——智能体可能直接照做而不读技能正文
+# [FAIL] 错误：概括了工作流——agent 可能直接照做而不读技能正文
 description: Use when executing plans - dispatches subagent per task with code review between tasks
 
-# ❌ 错误：过多流程细节
+# [FAIL] 错误：过多流程细节
 description: Use for TDD - write test first, watch it fail, write minimal code, refactor
 
-# ✅ 正确：仅包含触发条件，不概括工作流
+# [OK] 正确：仅包含触发条件，不概括工作流
 description: Use when executing implementation plans with independent tasks in the current session
 
-# ✅ 正确：仅包含触发条件
+# [OK] 正确：仅包含触发条件
 description: Use when implementing any feature or bugfix, before writing implementation code
 ```
 
@@ -180,25 +180,25 @@ description: Use when implementing any feature or bugfix, before writing impleme
 - **切勿概括技能的流程或工作流**
 
 ```yaml
-# ❌ 错误：过于抽象、模糊，未说明何时使用
+# [FAIL] 错误：过于抽象、模糊，未说明何时使用
 description: For async testing
 
-# ❌ 错误：第一人称
+# [FAIL] 错误：第一人称
 description: I can help you with async tests when they're flaky
 
-# ❌ 错误：提到了技术，但技能本身并不面向该技术
+# [FAIL] 错误：提到了技术，但技能本身并不面向该技术
 description: Use when tests use setTimeout/sleep and are flaky
 
-# ✅ 正确：以 "Use when" 开头，描述问题，不含工作流
+# [OK] 正确：以 "Use when" 开头，描述问题，不含工作流
 description: Use when tests have race conditions, timing dependencies, or pass/fail inconsistently
 
-# ✅ 正确：面向特定技术的技能，触发条件明确
+# [OK] 正确：面向特定技术的技能，触发条件明确
 description: Use when using React Router and handling authentication redirects
 ```
 
 ### 2. 关键词覆盖
 
-使用智能体会搜索的词语：
+使用 agent 会搜索的词语：
 - 错误信息："Hook timed out"、"ENOTEMPTY"、"race condition"
 - 症状："flaky"、"hanging"、"zombie"、"pollution"
 - 同义词："timeout/hang/freeze"、"cleanup/teardown/afterEach"
@@ -207,8 +207,8 @@ description: Use when using React Router and handling authentication redirects
 ### 3. 描述性命名
 
 **使用主动语态、动词优先：**
-- ✅ `creating-skills` 而非 `skill-creation`
-- ✅ `condition-based-waiting` 而非 `async-test-helpers`
+- [OK] `creating-skills` 而非 `skill-creation`
+- [OK] `condition-based-waiting` 而非 `async-test-helpers`
 
 ### 4. Token 效率（关键）
 
@@ -223,31 +223,31 @@ description: Use when using React Router and handling authentication redirects
 
 **将细节移至工具帮助中：**
 ```bash
-# ❌ 错误：在 SKILL.md 中罗列所有参数
+# [FAIL] 错误：在 SKILL.md 中罗列所有参数
 search-conversations supports --text, --both, --after DATE, --before DATE, --limit N
 
-# ✅ 正确：引用 --help
+# [OK] 正确：引用 --help
 search-conversations 支持多种模式和过滤条件。运行 --help 查看详情。
 ```
 
 **使用交叉引用：**
 ```markdown
-# ❌ 错误：重复工作流细节
+# [FAIL] 错误：重复工作流细节
 When searching, dispatch subagent with template...
 [20 行重复说明]
 
-# ✅ 正确：引用其他技能
-始终使用子智能体（可节省 50-100 倍上下文）。必需：工作流请使用 [other-skill-name]。
+# [OK] 正确：引用其他技能
+始终使用 subagent（可节省 50-100 倍上下文）。必需：工作流请使用 [other-skill-name]。
 ```
 
 **压缩示例：**
 ```markdown
-# ❌ 错误：冗长示例（42 词）
+# [FAIL] 错误：冗长示例（42 词）
 your human partner: "How did we handle authentication errors in React Router before?"
 You: I'll search past conversations for React Router authentication patterns.
 [Dispatch subagent with search query: "React Router authentication error handling 401"]
 
-# ✅ 正确：精简示例（20 词）
+# [OK] 正确：精简示例（20 词）
 Partner: "How did we handle auth errors in React Router?"
 You: Searching...
 [Dispatch subagent → synthesis]
@@ -266,10 +266,10 @@ wc -w skills/path/SKILL.md
 ```
 
 **按功能或核心洞察命名：**
-- ✅ `condition-based-waiting` > `async-test-helpers`
-- ✅ `using-skills` 而非 `skill-usage`
-- ✅ `flatten-with-flags` > `data-structure-refactoring`
-- ✅ `root-cause-tracing` > `debugging-techniques`
+- [OK] `condition-based-waiting` > `async-test-helpers`
+- [OK] `using-skills` 而非 `skill-usage`
+- [OK] `flatten-with-flags` > `data-structure-refactoring`
+- [OK] `root-cause-tracing` > `debugging-techniques`
 
 **动名词（-ing）适合描述过程：**
 - `creating-skills`、`testing-skills`、`debugging-with-logs`
@@ -280,10 +280,10 @@ wc -w skills/path/SKILL.md
 **在编写引用其他技能的文档时：**
 
 仅使用技能名称，并加上明确的必要性标记：
-- ✅ 正确：`**REQUIRED SUB-SKILL:** Use test-driven-development`
-- ✅ 正确：`**REQUIRED BACKGROUND:** You MUST understand systematic-debugging`
-- ❌ 错误：`See skills/testing/test-driven-development`（是否必需不明确）
-- ❌ 错误：`@skills/testing/test-driven-development/SKILL.md`（会强制加载，浪费上下文）
+- [OK] 正确：`**REQUIRED SUB-SKILL:** Use test-driven-development`
+- [OK] 正确：`**REQUIRED BACKGROUND:** You MUST understand systematic-debugging`
+- [FAIL] 错误：`See skills/testing/test-driven-development`（是否必需不明确）
+- [FAIL] 错误：`@skills/testing/test-driven-development/SKILL.md`（会强制加载，浪费上下文）
 
 **为什么不要使用 @ 链接：** `@` 语法会立即强制加载文件，在你真正需要之前就消耗掉 20 万以上的上下文。
 
@@ -315,7 +315,7 @@ digraph when_flowchart {
 
 风格规则见本目录下的 `graphviz-conventions.dot`。
 
-**为你的真人协作者可视化：** 使用本目录下的 `render-graphs.js` 将技能中的流程图渲染为 SVG：
+**为你的 human partner 可视化：** 使用本目录下的 `render-graphs.js` 将技能中的流程图渲染为 SVG：
 ```bash
 node ./render-graphs.js ../some-skill           # 逐个单独渲染
 node ./render-graphs.js ../some-skill --combine # 合并到一个 SVG 中
@@ -408,7 +408,7 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 - 多重压力叠加：时间 + 沉没成本 + 疲惫
 - 识别辩解话术并添加明确反制
 
-**成功标准：** 智能体在最大压力下仍遵守规则
+**成功标准：** agent 在最大压力下仍遵守规则
 
 ### 技巧型技能（操作指南）
 
@@ -419,7 +419,7 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 - 变体场景：能否处理边界情况？
 - 信息缺失测试：说明中是否存在 gaps？
 
-**成功标准：** 智能体能将技巧成功应用于新场景
+**成功标准：** agent 能将技巧成功应用于新场景
 
 ### 模式型技能（心智模型）
 
@@ -430,7 +430,7 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 - 应用场景：能否运用该心智模型？
 - 反例：是否知道何时不应使用？
 
-**成功标准：** 智能体能正确判断何时/如何应用该模式
+**成功标准：** agent 能正确判断何时/如何应用该模式
 
 ### 参考型技能（文档/API）
 
@@ -441,16 +441,16 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 - 应用场景：能否正确使用检索到的信息？
 - Gap 测试：常见用例是否已覆盖？
 
-**成功标准：** 智能体能找到并正确应用参考信息
+**成功标准：** agent 能找到并正确应用参考信息
 
 ## 跳过测试的常见借口
 
 | 借口 | 现实 |
 |--------|---------|
-| "技能已经足够清晰" | 对你清晰 ≠ 对其他智能体清晰，必须测试。 |
+| "技能已经足够清晰" | 对你清晰 ≠ 对其他 agent 清晰，必须测试。 |
 | "这只是个参考" | 参考也可能存在缺口、表述不清，需要测试检索效果。 |
 | "测试太小题大做" | 未经测试的技能一定有问题，15 分钟测试能节省数小时。 |
-| "有问题再测" | 问题 = 智能体无法使用该技能，部署前就必须测试。 |
+| "有问题再测" | 问题 = agent 无法使用该技能，部署前就必须测试。 |
 | "测试太繁琐" | 测试的繁琐程度远低于在生产环境调试有缺陷技能的痛苦。 |
 | "我很有把握没问题" | 过度自信必然导致问题，仍需测试。 |
 | "学术性审查就够了" | 阅读 ≠ 会用，必须测试应用场景。 |
@@ -467,9 +467,9 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 | 在压力下跳过/违反规则（明知故犯） | 禁止项 + 辩解对照表 + 危险信号（见下文加固方法） | 软性指引（"尽量..."、"考虑..."） |
 | 遵守了，但输出形态错误（提示词臃肿、结论被淹没、复述需求） | 正向配方或契约：明确输出是什么——包含哪些部分、按什么顺序 | 禁止清单（"不要复述"、"切勿叙述"） |
 | 对已产出内容遗漏了必需元素 | 结构化：模板中设置必填字段或槽位 | 模板附近的文字提醒 |
-| 行为应取决于某个条件 | 以可观察谓词为键的条件式（"如果简报存在，则引用它"） | 无条件规则 + 例外条款 |
+| 行为应取决于某个条件 | 以可观察谓词为键的条件式（"如果 brief 存在，则引用它"） | 无条件规则 + 例外条款 |
 
-**为什么禁止项在形态塑造问题上会适得其反：** 在竞争性动机（"让提示词自包含"）的影响下，智能体会与"不要做 X"进行博弈。在针对分发提示词指引的措辞对比测试中，禁止式措辞比配方式产生了明显更多的非期望内容，甚至比无指引的对照组表现更差——请对你自己的场景做微观测试而非想当然，但切勿默认使用禁止式。配方式无可博弈：输出要么符合既定形态，要么不符合。
+**为什么禁止项在形态塑造问题上会适得其反：** 在竞争性动机（"让提示词自包含"）的影响下，agent 会与"不要做 X"进行博弈。在针对分发提示词指引的措辞对比测试中，禁止式措辞比配方式产生了明显更多的非期望内容，甚至比无指引的对照组表现更差——请对你自己的场景做微观测试而非想当然，但切勿默认使用禁止式。配方式无可博弈：输出要么符合既定形态，要么不符合。
 
 **无论选择哪种形式，都需遵守以下规则：**
 - **不要加细腻化条款。** "除非有必要否则不要做 X" 会重新打开博弈空间——在同一措辞测试中，给获胜配方追加一条细腻化条款，就使其从稳定表现退化为不稳定。真正的例外应表述为基于可观察谓词的独立条件式。
@@ -477,9 +477,9 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 
 ## 加固技能以抵御辩解
 
-需要强制执行纪律的技能（如 TDD）必须能抵御辩解。智能体很聪明，在压力下会找到漏洞。
+需要强制执行纪律的技能（如 TDD）必须能抵御辩解。agent 很聪明，在压力下会找到漏洞。
 
-**适用范围：** 本工具箱适用于纪律性失效——智能体明知规则却在压力下跳过。对于输出形态错误或要素遗漏问题，基于禁止的加固会适得其反；请改用上一节"让形式匹配失效类型"中的形式。
+**适用范围：** 本工具箱适用于纪律性失效——agent 明知规则却在压力下跳过。对于输出形态错误或要素遗漏问题，基于禁止的加固会适得其反；请改用上一节"让形式匹配失效类型"中的形式。
 
 **心理学提示：** 理解说服技巧为何有效，有助于你系统化地运用它们。研究基础（Cialdini, 2021; Meincke et al., 2025）涵盖权威、承诺、稀缺、社会认同和统一性原则，详见 persuasion-principles.md。
 
@@ -517,7 +517,7 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 
 ### 构建辩解对照表
 
-捕获基线测试中的辩解话术（见下文测试一节）。智能体提出的每一个借口都要进入表格：
+捕获基线测试中的辩解话术（见下文测试一节）。agent 提出的每一个借口都要进入表格：
 
 ```markdown
 | 借口 | 现实 |
@@ -529,7 +529,7 @@ NO SKILL WITHOUT A FAILING TEST FIRST
 
 ### 创建危险信号清单
 
-让智能体易于自检是否正在为自己辩解：
+让 agent 易于自检是否正在为自己辩解：
 
 ```markdown
 ## 危险信号 - 立即停止并重来
@@ -557,28 +557,28 @@ description: use when implementing any feature or bugfix, before writing impleme
 
 ### 红：编写失败的测试（基线）
 
-在不带技能的情况下用子智能体运行压力场景，记录确切行为：
+在不带技能的情况下用 subagent 运行压力场景，记录确切行为：
 - 它们做了什么选择？
 - 使用了什么辩解话术（逐字记录）？
 - 哪些压力触发了违规？
 
-这就是"观察测试失败"——在编写技能之前，你必须看到智能体的自然行为。
+这就是"观察测试失败"——在编写技能之前，你必须看到 agent 的自然行为。
 
 ### 绿：编写最小化技能
 
 编写针对上述具体辩解的技能，不要为假想情况添加额外内容。
 
-在带技能的情况下运行相同场景，智能体现在应能遵守规则。
+在带技能的情况下运行相同场景，agent 现在应能遵守规则。
 
 ### 重构：堵住漏洞
 
-智能体找到了新的辩解？添加明确的反制措施，重新测试直至坚不可摧。
+agent 找到了新的辩解？添加明确的反制措施，重新测试直至坚不可摧。
 
 ### 在完整场景之前先做措辞微观测试
 
 完整的压力场景运行是最终关卡，但每次迭代都跑全量既慢又贵。在措辞层面先用微观测试验证：
 
-1. **每次调用一个全新上下文样本**——一次原生 API 调用，或在无 API 访问时使用单次子智能体。系统提示 = 指引实际所处的真实上下文（完整的技能或提示模板，而非孤立的指引）；用户消息 = 会诱发失效的任务。
+1. **每次调用一个全新上下文样本**——一次原生 API 调用，或在无 API 访问时使用单次 subagent。系统提示 = 指引实际所处的真实上下文（完整的技能或提示模板，而非孤立的指引）；用户消息 = 会诱发失效的任务。
 2. **始终包含无指引对照组。** 如果对照组没有出现失效，就说明没有需要修复的问题——立即停止，不要编写指引。
 3. **每个变体至少 5 次重复。** 单次样本会误导。
 4. **逐一人工复核每个被标记的命中。** 可以用程序化评分，但模板回声和引用的反例会被误判为命中；仅靠自动化计数会同时高估失败率和成功率。
@@ -594,22 +594,22 @@ description: use when implementing any feature or bugfix, before writing impleme
 
 ## 反模式
 
-### ❌ 叙事性示例
+### [FAIL] 叙事性示例
 "In session 2025-10-03, we found empty projectDir caused..."
 **为何不好：** 过于具体，不可复用
 
-### ❌ 多语言稀释
+### [FAIL] 多语言稀释
 example-js.js、example-py.py、example-go.go
 **为何不好：** 质量平庸，维护负担重
 
-### ❌ 在流程图中使用代码
+### [FAIL] 在流程图中使用代码
 ```dot
 step1 [label="import fs"];
 step2 [label="read file"];
 ```
 **为何不好：** 无法复制粘贴，难以阅读
 
-### ❌ 通用标签
+### [FAIL] 通用标签
 helper1、helper2、step3、pattern4
 **为何不好：** 标签应具有语义含义
 
@@ -647,7 +647,7 @@ helper1、helper2、step3、pattern4
 - [ ] 对于行为塑造类指引：措辞已通过微观测试验证（与无指引对照组对比，5 次以上重复，每个命中均人工复核）—— 纯参考型技能可标记为 N/A
 - [ ] 代码内联或链接到独立文件
 - [ ] 一个高质量示例（而非多语言示例）
-- [ ] 在有技能情况下运行场景——验证智能体现在已遵守
+- [ ] 在有技能情况下运行场景——验证 agent 现在已遵守
 
 **重构阶段 - 堵住漏洞：**
 - [ ] 识别测试中出现的新辩解
@@ -669,7 +669,7 @@ helper1、helper2、step3、pattern4
 
 ## 发现工作流
 
-未来智能体发现你技能的流程：
+未来 agent 发现你技能的流程：
 
 1. **遇到问题**（"测试不稳定"）
 2. **搜索技能**（grep description、浏览分类）

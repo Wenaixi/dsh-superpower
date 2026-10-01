@@ -822,8 +822,8 @@ Follow this style: type(scope): brief description, then detailed explanation.
 
 始终使用正斜杠，即使在 Windows 上：
 
-* ✓ **好**：`scripts/helper.py`、`reference/guide.md`
-* ✗ **避免**：`scripts\helper.py`、`reference\guide.md`
+* [OK] **好**：`scripts/helper.py`、`reference/guide.md`
+* [FAIL] **避免**：`scripts\helper.py`、`reference\guide.md`
 
 Unix 风格路径在所有平台上都可用，而 Windows 风格路径在 Unix 系统上会导致错误。
 

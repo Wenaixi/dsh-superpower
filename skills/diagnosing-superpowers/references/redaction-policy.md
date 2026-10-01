@@ -13,7 +13,7 @@
 | 仓库 | `<REPO-n>` | 仓库名、slug 与远程 URL，除非名称或 URL 在 `PUBLIC_REPOS` 中 |
 | 专有术语 | `<PROPRIETARY-n>` | `PROPRIETARY` 中的每个词，忽略大小写、整词匹配 |
 
-会话 id、工具名、技能名、相对安装根的 superpowers 文件路径、模型 id、宿主机版本与行号都保留：没有它们 bundle 就没用。
+会话 id、工具名、技能名、相对安装根的 superpowers 文件路径、模型 id、harness 版本与行号都保留：没有它们 bundle 就没用。
 
 使用提供的 PUBLIC_REPOS 与 PROPRIETARY 列表应用这些类别。私有仓库名不会让每条命令或结果都变成专有。脱敏敏感值，同时保留验证发现所需的命令、结果与来源结构。保留原始会话行标记与关联关系。把引号内的替换标记为脱敏。
 

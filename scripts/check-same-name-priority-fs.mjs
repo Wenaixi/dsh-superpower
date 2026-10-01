@@ -1,16 +1,17 @@
 /**
  * 与官方 dsh-skill-filesystem 的同层同名实测：
  * 在同一个 SkillRegistry 内同时注册本包 provider 与官方 filesystem provider，
- * 验证 rank 裁决（filesystem 自定义根 rank 300 < 本包 550，同名覆盖时用户技能胜出）。
+ * 验证 rank 裁决（本包 rank 10 < filesystem 自定义根 300 / 项目根 100-200 / 用户根 400-500 / bundled 600，
+ * 同名时本包技能胜出，即本插件优先级最高）。
  *
  * 安全设计：
  * - 官方包从用户 profile 的 node_modules 扫描定位（便携，不写死本机路径）；
  * - 测试技能写在系统临时目录（mkdtemp），测完整棵删除，绝不触碰真实用户技能根与项目目录。
  *
  * 断言：
- * 1. 本包先注册、filesystem 后注册：同名 brainstorming 归 filesystem。
+ * 1. 本包先注册、filesystem 后注册：同名 brainstorming 归 superpowers（优先级最高）。
  * 2. 注册顺序颠倒：结果不变（裁决只看 rank，与注册顺序无关）。
- * 3. 无同名覆盖：本包技能全部可见。
+ * 3. 无同名覆盖：本包技能全部可见，总数 15。
  *
  * 依赖：本机任一 dsh profile 装有 @deepseek-ai/dsh-skill-filesystem。
  * 运行：node scripts/check-same-name-priority-fs.mjs
@@ -65,7 +66,7 @@ async function writeOverride(skillRoot) {
   const dir = join(skillRoot, OVERRIDDEN)
   await mkdir(dir, { recursive: true })
   await writeFile(join(dir, 'SKILL.md'),
-    `---\nname: ${OVERRIDDEN}\ndescription: "用户自装的同名技能，用于验证同名优先。"\n---\n\n用户本地覆盖内容。\n`, 'utf8')
+    `---\nname: ${OVERRIDDEN}\ndescription: "filesystem 根里的同名技能，用于验证本包优先级最高。"\n---\n\nfilesystem 覆盖内容。\n`, 'utf8')
   return dir
 }
 
@@ -74,7 +75,7 @@ function mountFilesystem(ctx, dirs) {
   ctx.plugin(fsMod, { providerName: 'filesystem', includeDefaultRoots: false, customSkillDirs: dirs, watch: false })
 }
 
-// --- 1. 本包先注册，filesystem 后注册；自定义根（rank 300）同名覆盖 ----------------
+// --- 1. 本包先注册，filesystem 后注册；自定义根（rank 300）同名，本包仍胜出 ----------------
 {
   const ctx = await freshRegistry()
   ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
@@ -85,9 +86,9 @@ function mountFilesystem(ctx, dirs) {
   mountFilesystem(ctx, [customRoot])
   const all = await ctx.skills.list({ cwd: root })
   const hit = all.find((s) => s.name === OVERRIDDEN)
-  check('自定义根同名覆盖：brainstorming 归属', hit?.provider, 'filesystem')
-  check('自定义根同名覆盖：不产生重名条目', all.filter((s) => s.name === OVERRIDDEN).length, 1)
-  check('自定义根同名覆盖后总数仍为 15', all.length, 15)
+  check('自定义根同名：brainstorming 仍归本包', hit?.provider, 'superpowers')
+  check('自定义根同名：不产生重名条目', all.filter((s) => s.name === OVERRIDDEN).length, 1)
+  check('自定义根同名后总数仍为 15', all.length, 15)
   check('逐名裁决：未被覆盖的技能仍在', all.find((s) => s.name === UNTOUCHED)?.provider, 'superpowers')
   await rm(tmp, { recursive: true, force: true })
 }
@@ -103,7 +104,7 @@ function mountFilesystem(ctx, dirs) {
   ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
   const all = await ctx.skills.list({ cwd: root })
   const hit = all.find((s) => s.name === OVERRIDDEN)
-  check('注册顺序颠倒：brainstorming 归属', hit?.provider, 'filesystem')
+  check('注册顺序颠倒：brainstorming 仍归本包', hit?.provider, 'superpowers')
   check('注册顺序颠倒：总数仍为 15', all.length, 15)
   await rm(tmp, { recursive: true, force: true })
 }

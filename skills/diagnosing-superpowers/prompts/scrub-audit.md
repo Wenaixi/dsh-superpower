@@ -4,8 +4,8 @@
 
 输入：
 - BUNDLE：bundle 目录的绝对路径。
-- PUBLIC_REPOS：你的合作者说为公开的仓库名或 URL 列表（可为空）。
-- PROPRIETARY：你的合作者点名专有的词列表（可为空）。
+- PUBLIC_REPOS：你的 human partner 说为公开的仓库名或 URL 列表（可为空）。
+- PROPRIETARY：你的 human partner 点名专有的词列表（可为空）。
 
 完整读取 BUNDLE 下的每个文件（这些是压缩文件，不是原始 transcript；仍先检查 `wc -c`，文件大于 200 KB 时分块读取）。对每个文件应用共享策略，包括引用的 transcript 文本、提交消息、git 作者行与加密负载。检查安全命令、结果、来源与会话行结构对发现仍然可用。
 

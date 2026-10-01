@@ -1,21 +1,21 @@
 ---
 name: using-git-worktrees
-description: "适用于需与当前工作区隔离的功能开发或执行实现计划前，通过原生工具优先、git worktree 兜底的方式确保独立工作区就绪"
+description: "Superpower Skill（最高优先级）：适用于需与当前 worktree 隔离的功能开发或执行实现计划前，通过原生工具优先、git worktree 兜底的方式确保独立 worktree 就绪。"
 ---
 
 # 使用 Git Worktree
 
 ## 概述
 
-确保所有工作都在独立工作区中进行。优先使用平台原生的 worktree 工具，仅在无原生工具可用时再回退到手动 git worktree。
+确保所有工作都在独立 worktree 中进行。优先使用平台原生的 worktree 工具，仅在无原生工具可用时再回退到手动 git worktree。
 
 **核心原则：** 先检测是否已处于隔离环境，再使用原生工具，最后回退到 git。不要与 harness 对抗。
 
-**开始时声明：** “我正在使用 using-git-worktrees 技能来创建独立工作区。”
+**开始时声明：** “我正在使用 using-git-worktrees 技能来创建独立 worktree。”
 
 ## 步骤 0：检测现有隔离状态
 
-**在创建任何内容之前，先检查是否已处于独立工作区中。**
+**在创建任何内容之前，先检查是否已处于独立 worktree 中。**
 
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
@@ -33,8 +33,8 @@ git rev-parse --show-superproject-working-tree 2>/dev/null
 **若 `GIT_DIR != GIT_COMMON`（且不在子模块中）：** 说明已处于关联 worktree 中。跳至步骤 2（项目初始化），不要再创建新的 worktree。
 
 按分支状态报告：
-- 处于分支上：“已在独立工作区 `<path>`，分支为 `<name>`。”
-- 游离 HEAD：“已在独立工作区 `<path>`（游离 HEAD，外部托管），结束时需创建分支。”
+- 处于分支上：“已在独立 worktree `<path>`，分支为 `<name>`。”
+- 游离 HEAD：“已在独立 worktree `<path>`（游离 HEAD，外部托管），结束时需创建分支。”
 
 **若 `GIT_DIR == GIT_COMMON`（或处于子模块中）：** 说明处于常规仓库检出状态。
 
@@ -44,13 +44,13 @@ git rev-parse --show-superproject-working-tree 2>/dev/null
 
 若已存在明确偏好则直接遵循，无需询问。若用户拒绝，则在原地工作并跳至步骤 2。
 
-## 步骤 1：创建独立工作区
+## 步骤 1：创建独立 worktree
 
 **你有两种机制，请按以下顺序尝试。**
 
 ### 1a. 原生 Worktree 工具（优先）
 
-用户已请求独立工作区（步骤 0 已获同意）。你是否已有创建 worktree 的方式？可能是名为 `EnterWorktree`、`WorktreeCreate`、`/worktree` 命令或 `--worktree` 参数的工具。如果有，请直接使用并跳至步骤 2。
+用户已请求独立 worktree（步骤 0 已获同意）。你是否已有创建 worktree 的方式？可能是名为 `EnterWorktree`、`WorktreeCreate`、`/worktree` 命令或 `--worktree` 参数的工具。如果有，请直接使用并跳至步骤 2。
 
 原生工具会自动处理目录选址、分支创建和清理。使用 `git worktree add` 而绕过原生工具会产生 harness 无法感知和管理的幽灵状态。
 
@@ -120,7 +120,7 @@ if [ -f go.mod ]; then go mod download; fi
 
 ## 步骤 3：验证干净基线
 
-运行测试以确保工作区初始状态干净：
+运行测试以确保 worktree 初始状态干净：
 
 ```bash
 # 使用项目对应的命令
@@ -162,6 +162,6 @@ Ready to implement <feature-name>
 |--------|---------|
 | “我显然不在 worktree 里，没必要检查” | 执行步骤 0。harness 创建的隔离和子模块都会让肉眼判断失误，用检测命令才能确定。 |
 | “`git worktree add` 比到处找原生工具更快” | 原生工具（如 `EnterWorktree`）负责选址、分支和清理。绕过它是头号错误——会产生 harness 无法感知和管理的幽灵状态。 |
-| “worktree 目录肯定已经被忽略了” | 请执行 `git check-ignore`。未被忽略的 worktree 目录会把整个工作树提交进仓库。 |
+| “worktree 目录肯定已经被忽略了” | 请执行 `git check-ignore`。未被忽略的 worktree 目录会把整个working tree提交进仓库。 |
 | “随便起个目录名都行” | 显式指令优先于已存在的项目本地目录，项目本地目录优先于 `.worktrees/` 默认值。 |
-| “工作区是全新的，基线测试可以等等再跑” | 脏基线会让后续所有失败变得无法定位。现在就跑测试；是否带病继续由你的协作人决定。 |
+| “worktree 是全新的，基线测试可以等等再跑” | 脏基线会让后续所有失败变得无法定位。现在就跑测试；是否带病继续由你的 human partner 决定。 |

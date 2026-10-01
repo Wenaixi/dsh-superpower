@@ -1,10 +1,11 @@
 /**
- * 同名优先实测：用真实 SkillRegistry + 真实插件，验证 rank 550 让用户/项目同名技能胜出。
+ * 插件技能优先级实测：用真实 SkillRegistry + 真实插件，验证 rank 10 让本包技能优先级最高。
  *
  * 断言：
- * 1. 仅有本包时，brainstorming 归 superpowers（rank 550）。
- * 2. 叠加一个 rank 100 的「用户目录」provider（同名）后，brainstorming 归 filesystem 桩。
- * 3. 其他未被覆盖的技能仍归 superpowers（逐名裁决，不是整体遮蔽）。
+ * 1. 仅有本包时，brainstorming 归 superpowers。
+ * 2. 叠加 rank 100/300/500/600（filesystem 项目根/自定义根/用户根/官方 bundled）的同名 provider，
+ *    brainstorming 仍归 superpowers（本包在全部官方档位之上胜出）。
+ * 3. rank 0（比本包更小）的同名 provider 才可抢走；此时其余技能仍归本包（逐名裁决）。
  *
  * 运行：node scripts/check-same-name-priority.mjs
  */
@@ -28,19 +29,19 @@ function check(label, actual, expected) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}: ${actual}${ok ? '' : ` (期望 ${expected})`}`)
 }
 
-/** 模拟 @deepseek-ai/dsh-skill-filesystem 的用户根：rank 100，只暴露一个同名技能。 */
-function stubUserProvider(rank) {
+/** 模拟同名的其他来源 provider：只暴露一个与上游同名的技能，rank 由参数指定。 */
+function stubRivalProvider(rank, source = 'user') {
   const path = join(skillDir, OVERRIDDEN, 'SKILL.md')
   return {
-    name: 'filesystem',
+    name: `rival-${rank}`,
     async list() {
       return [
         {
           name: OVERRIDDEN,
-          description: '用户自装的同名技能，应当压过本包。',
+          description: '其他来源的同名技能。',
           invocation: { modelInvocable: true, userInvocable: true },
-          source: 'user',
-          provider: 'filesystem',
+          source,
+          provider: `rival-${rank}`,
           rank,
           locator: { path },
           resourceBase: { kind: 'directory', path: dirname(path) },
@@ -53,8 +54,8 @@ function stubUserProvider(rank) {
         name: candidate.name,
         description: candidate.description,
         invocation: candidate.invocation,
-        source: 'user',
-        provider: 'filesystem',
+        source: candidate.source,
+        provider: candidate.provider,
         resourceBase: candidate.resourceBase,
         path: candidate.path,
         content: await readFile(candidate.locator.path, 'utf8'),
@@ -78,28 +79,27 @@ async function freshRegistry() {
   check('仅有本包：brainstorming 归属', all.find((s) => s.name === OVERRIDDEN)?.provider, 'superpowers')
 }
 
-// --- 2. 叠加用户同名技能（rank 100 < 550）-------------------------------
+// --- 2. 各档位其他来源同名技能均不得抢走（100/300/500/600 < 900）----------
+for (const rank of [100, 300, 500, 600]) {
+  const ctx = await freshRegistry()
+  ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
+  ctx.skills.registerProvider(() => stubRivalProvider(rank, rank === 600 ? 'bundled' : 'user'))
+  const all = await ctx.skills.list({ cwd: root })
+  const hit = all.find((s) => s.name === OVERRIDDEN)
+  check(`其他来源 rank ${rank}：本包胜出`, hit?.provider, 'superpowers')
+  check(`其他来源 rank ${rank}：不产生重名条目`, all.filter((s) => s.name === OVERRIDDEN).length, 1)
+  check(`其他来源 rank ${rank}：总数仍为 15`, all.length, 15)
+}
+
+// --- 3. rank 小于本包（如 0）才可抢走；其余技能仍归本包（逐名裁决）---------
 {
   const ctx = await freshRegistry()
   ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
-  ctx.skills.registerProvider(() => stubUserProvider(100))
+  ctx.skills.registerProvider(() => stubRivalProvider(0))
   const all = await ctx.skills.list({ cwd: root })
-  const hit = all.find((s) => s.name === OVERRIDDEN)
-  check('同名覆盖：brainstorming 归属', hit?.provider, 'filesystem')
-  check('同名覆盖：brainstorming source', hit?.source, 'user')
-  check('同名覆盖：不产生重名条目', all.filter((s) => s.name === OVERRIDDEN).length, 1)
-  check('同名覆盖后技能总数仍为 15', all.length, 15)
+  check('rank 0 小于 10：其他来源胜出', all.find((s) => s.name === OVERRIDDEN)?.provider, 'rival-0')
   check('逐名裁决：未被覆盖的技能仍在', all.find((s) => s.name === UNTOUCHED)?.provider, 'superpowers')
 }
 
-// --- 3. rank 高于本包的 provider 不应抢走 ------------------------------
-{
-  const ctx = await freshRegistry()
-  ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
-  ctx.skills.registerProvider(() => stubUserProvider(700))
-  const hit = (await ctx.skills.list({ cwd: root })).find((s) => s.name === OVERRIDDEN)
-  check('rank 700 高于 550：本包胜出', hit?.provider, 'superpowers')
-}
-
-console.log(failed === 0 ? '\n同名优先实测：全部通过' : `\n同名优先实测：${failed} 项失败`)
+console.log(failed === 0 ? '\n插件优先级实测：全部通过' : `\n插件优先级实测：${failed} 项失败`)
 process.exit(failed === 0 ? 0 : 1)

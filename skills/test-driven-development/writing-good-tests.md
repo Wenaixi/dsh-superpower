@@ -20,11 +20,11 @@
 **独立推导期望值。** 使用字面量和人工校验的固件；表格驱动测试中 `want` 使用字面量是首选形式。由被测代码（或其辅助函数）计算出的期望值，无论代码做什么都能通过：
 
 ```typescript
-// ❌ 镜像断言：同一个构造器算出两侧——永远为真
+// [FAIL] 镜像断言：同一个构造器算出两侧——永远为真
 const expected = buildSearchQuery({ tag: 'urgent' });
 expect(buildSearchQuery({ tag: 'urgent' })).toBe(expected);
 
-// ✅ 手工推导的字面量
+// [OK] 手工推导的字面量
 expect(buildSearchQuery({ tag: 'urgent' })).toBe('tag:"urgent"');
 ```
 
@@ -55,24 +55,24 @@ expect(buildSearchQuery({ tag: 'urgent' })).toBe('tag:"urgent"');
 **mock 本身不值得断言。** 对 mock 的断言，只在 mock 存在时通过、不存在时失败——它对组件本身一无所言。应断言真实组件的行为；如果你发现自己在检查 mock，那就去掉 mock 或删掉该断言。
 
 ```typescript
-// ✅ 真实行为
+// [OK] 真实行为
 expect(screen.getByRole('navigation')).toBeInTheDocument();
 
-// ❌ mock 的存在性
+// [FAIL] mock 的存在性
 expect(screen.getByTestId('sidebar-mock')).toBeInTheDocument();
 ```
 
-**你的协作人的提醒：**“我们在测试 mock 的行为吗？”
+**你的 human partner 的提醒：**“我们在测试 mock 的行为吗？”
 
 **在正确的层级 mock。** 在替换真实方法前，先了解它的所有副作用；只 mock 缓慢或外部的操作，保留测试所依赖的部分为真实实现。不确定时，先让测试跑在真实实现上，观察究竟需要发生什么。
 
 ```typescript
-// ❌ mock 吞掉了重复检测所读取的配置写入
+// [FAIL] mock 吞掉了重复检测所读取的配置写入
 vi.mock('ToolCatalog', () => ({
   discoverAndCacheTools: vi.fn().mockResolvedValue(undefined)
 }));
 
-// ✅ 只 mock 缓慢的服务器启动；配置写入保持真实
+// [OK] 只 mock 缓慢的服务器启动；配置写入保持真实
 vi.mock('MCPServerManager');
 ```
 
@@ -82,7 +82,7 @@ vi.mock('MCPServerManager');
 
 **生产类只承载生产方法。** 仅测试需要的清理逻辑应放在测试工具中，绝不要以 `destroy()` 的形式出现在生产类上。自问：这个方法是否只被测试调用？这个类是否拥有该资源的生命周期？答案有误 → 放到测试工具里。
 
-**复杂 mock 不如真实组件。** 当 mock 的搭建超过测试逻辑本身、mock 缺少真实组件拥有的方法、或测试因 mock 变更而崩溃时，改用基于真实组件的集成测试。**你的协作人的提问：**“这里真的需要用 mock 吗？”
+**复杂 mock 不如真实组件。** 当 mock 的搭建超过测试逻辑本身、mock 缺少真实组件拥有的方法、或测试因 mock 变更而崩溃时，改用基于真实组件的集成测试。**你的 human partner 的提问：**“这里真的需要用 mock 吗？”
 
 ### 门禁检查
 

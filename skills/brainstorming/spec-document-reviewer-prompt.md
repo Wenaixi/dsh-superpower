@@ -1,6 +1,6 @@
 # Spec 文档审查提示词模板
 
-在派发 Spec 文档审查子代理时使用本模板。
+在派发 Spec 文档审查 subagent 时使用本模板。
 
 **目标：** 验证 Spec 是否完整、一致且已就绪，可进入实现规划阶段。
 
@@ -10,7 +10,7 @@
 Subagent (general-purpose):
   description: "Review spec document"
   prompt: |
-    你是一名 Spec 文档审查员，请验证该 Spec 是否完整且已就绪，可进入规划阶段。
+    你是一名 Spec 文档 spec reviewer，请验证该 Spec 是否完整且已就绪，可进入规划阶段。
 
     **待审查 Spec：** [SPEC_FILE_PATH]
 
@@ -44,4 +44,4 @@ Subagent (general-purpose):
     - [改进建议]
 ```
 
-**审查员返回：** 状态、问题（如有）、建议
+**spec reviewer 返回：** 状态、问题（如有）、建议

@@ -2,7 +2,8 @@
  * @wenaixi/dsh-superpower — DSH 移植版 Superpowers
  *
  * 将 obra/superpowers 的 15 个 skill 以 DSH 原生 SkillProvider 形式暴露，
- * 通过 ctx.skills.registerProvider 注入全局层，rank 550 使 project 级 skill 可覆盖。
+ * 通过 ctx.skills.registerProvider 注入全局层，rank 10 使本插件技能优先级最高：
+ * 小于 dsh-skill-filesystem 的项目/用户根（100–500）与官方 bundled（600）。
  */
 import type { Context } from '@deepseek-ai/cordis';
 import Schema from '@deepseek-ai/schemastery';

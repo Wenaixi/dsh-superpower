@@ -1,7 +1,7 @@
 # superpowers 会话诊断 bundle
 
 会话：<session-id>
-宿主机：<name> <version>（<来源标签>）    superpowers：<version>（<sha 或 "not a checkout">；<来源标签>）
+harness：<name> <version>（<来源标签>）    superpowers：<version>（<sha 或 "not a checkout">；<来源标签>）
 脱敏级别：skeleton | evidence | full
 构建时间：<ISO 时间戳>
 

@@ -1,4 +1,4 @@
-标题：<技能或症状>：<一行可观察量>（<宿主机>）
+标题：<技能或症状>：<一行可观察量>（<harness>）
 
 - [x] 我已搜索现有 issue 且这不是重复（搜索：<查询词>；最接近：<#n 标题，或 "none">）
 
@@ -7,8 +7,8 @@
 | 字段 | 值 | 来源 / 支撑证据 |
 |-------|-------|-------------------------------|
 | superpowers 版本 | <version>（<sha 或 "not a checkout">） | <历史证据 / 未验证快照 / 当前观察 / 未知>；<位置> |
-| 宿主机（Claude Code、Cursor 等） | <宿主机> | <标签>；<位置> |
-| 宿主机版本 | <version> | <标签>；<位置> |
+| harness（Claude Code、Cursor 等） | <harness> | <标签>；<位置> |
+| harness 版本 | <version> | <标签>；<位置> |
 | 你的模型 + 版本 | <所见 model ids> | <标签>；<位置> |
 | 已安装的全部插件 | <列表> | <标签>；<位置> |
 | OS + shell | <os 版本>, <shell> | <标签>；<位置> |
@@ -42,4 +42,4 @@
 会话 id：<ids>。交付的本地归档：<路径，脱敏级别 <级别> | 未构建>。附加 bundle：<不声明；仅在批准后附加>。诊断报告所述的 superpowers 参与程度：<possible | likely>，证据位于 <transcript 行>。本报告不提出修复。
 
 ---
-使用 `diagnosing-superpowers` 技能提交。模型、宿主机、宿主机版本与已安装插件列于上方。
+使用 `diagnosing-superpowers` 技能提交。模型、harness、harness 版本与已安装插件列于上方。

@@ -4,8 +4,8 @@
 
 输入：
 - BUNDLE：bundle 目录的绝对路径。
-- PUBLIC_REPOS：你的合作者说为公开的仓库名或 URL 列表（可为空）。
-- PROPRIETARY：你的合作者点名专有的词列表（可为空）。
+- PUBLIC_REPOS：你的 human partner 说为公开的仓库名或 URL 列表（可为空）。
+- PROPRIETARY：你的 human partner 点名专有的词列表（可为空）。
 
 共享策略定义类别与稳定占位符。让同一原始值在所有文件中映射到同一占位符，编号按首次出现顺序分配。保留策略的安全身份、关联、引文与证据规则。
 

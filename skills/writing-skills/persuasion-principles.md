@@ -23,8 +23,8 @@
 
 **示例：**
 ```markdown
-✅ Write code before test? Delete it. Start over. No exceptions.
-❌ Consider writing tests first when feasible.
+[OK] Write code before test? Delete it. Start over. No exceptions.
+[FAIL] Consider writing tests first when feasible.
 ```
 
 ### 2. 承诺一致（Commitment）
@@ -42,8 +42,8 @@
 
 **示例：**
 ```markdown
-✅ When you find a skill, you MUST announce: "I'm using [Skill Name]"
-❌ Consider letting your partner know which skill you're using.
+[OK] When you find a skill, you MUST announce: "I'm using [Skill Name]"
+[FAIL] Consider letting your partner know which skill you're using.
 ```
 
 ### 3. 稀缺（Scarcity）
@@ -61,8 +61,8 @@
 
 **示例：**
 ```markdown
-✅ After completing a task, IMMEDIATELY request code review before proceeding.
-❌ You can review code when convenient.
+[OK] After completing a task, IMMEDIATELY request code review before proceeding.
+[FAIL] You can review code when convenient.
 ```
 
 ### 4. 社会认同（Social Proof）
@@ -80,8 +80,8 @@
 
 **示例：**
 ```markdown
-✅ Checklists without todo tracking = steps get skipped. Every time.
-❌ Some people find a todo list helpful for checklists.
+[OK] Checklists without todo tracking = steps get skipped. Every time.
+[FAIL] Some people find a todo list helpful for checklists.
 ```
 
 ### 5. 归属感（Unity）
@@ -98,8 +98,8 @@
 
 **示例：**
 ```markdown
-✅ We're colleagues working together. I need your honest technical judgment.
-❌ You should probably tell me if I'm wrong.
+[OK] We're colleagues working together. I need your honest technical judgment.
+[FAIL] You should probably tell me if I'm wrong.
 ```
 
 ### 6. 互惠（Reciprocity）

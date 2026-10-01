@@ -13,13 +13,13 @@
   - `free: <一行描述>`（只用 transcript 判断）
 
 流程：
-1. 对 CANDIDATE 应用 `references/context-safety.md`。用 CASE 中记录的命令提取其身份：会话 id、cwd、首个人类 prompt、首个时间戳、宿主机版本与模型。
+1. 对 CANDIDATE 应用 `references/context-safety.md`。用 CASE 中记录的命令提取其身份：会话 id、cwd、首个人类 prompt、首个时间戳、harness 版本与模型。
 2. 对每个标记，先用行号优先的命令定位证据；再从特定行提取裁剪字段。标记为 `hit` 当你有 `path:line`；`miss` 当你搜索过且什么也没找到；`unknown` 当 transcript 缺少所需字段（说明缺哪个）。
 3. 精确返回：
 
 ```
 candidate: <会话 id> — <绝对路径>
-identity: <宿主机> <version>, <首个时间戳>, "<首 prompt, 100 字符>"
+identity: <harness> <version>, <首个时间戳>, "<首 prompt, 100 字符>"
 match: yes | partial | no
 markers:
 - <标记>: hit — <path>:<line> — "<引文 ≤ 120 字符>"

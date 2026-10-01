@@ -55,7 +55,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 | `brainstorming` | 新功能前，Spike / Bounded / Architectural 分级 |
 | `writing-plans` | 设计获批后，切"一项可校验结果的动作"任务 |
 | `using-git-worktrees` | 隔离分支 |
-| `executing-plans` / `subagent-driven-development` | 按计划执行，前者内联整跑一次终审，后者每任务一子智能体 + 两阶段评审 |
+| `executing-plans` / `subagent-driven-development` | 按计划执行，前者内联整跑一次终审，后者每任务一 subagent + 两阶段评审 |
 | `dispatching-parallel-agents` | 并行分发 |
 | `test-driven-development` | RED-GREEN-REFACTOR |
 | `systematic-debugging` / `verification-before-completion` | 调试闭环 |
@@ -66,7 +66,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/using-superpowers/references/dsh-tools.md`。
 
-> **同名技能优先**：用户或项目自行安装的本地技能（`~/.dsh/skills`、项目 `.dsh/skills` 等，rank 100–500）与本包（rank 550）同名时，本地技能优先；本包只覆盖官方内置 bundled（rank 600）。
+> **同名技能优先（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 rank 10 小于 `dsh-skill-filesystem` 的项目/用户根（100–500）与官方内置 bundled（600），因此与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills` 等）或官方 bundled 技能均由本包胜出，本插件技能唯一生效。
 
 ## 使用
 
@@ -83,20 +83,20 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 ```bash
 pnpm install && pnpm build && pnpm typecheck && node scripts/verify.mjs
-node scripts/check-same-name-priority.mjs    # 同名优先实测一：自研桩（rank 100 覆盖 / rank 700 不抢）
-node scripts/check-same-name-priority-fs.mjs # 同名优先实测二：官方 dsh-skill-filesystem 同层实测
+node scripts/check-same-name-priority.mjs    # 同名优先实测一：自研桩（rank 100/300/500/600 均不抢 / rank 0 可抢）
+node scripts/check-same-name-priority-fs.mjs # 同名优先实测二：官方 dsh-skill-filesystem 同层实测（rank 300 不抢）
 dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
 
 ## 目录
 
 ```
-src/superpowers.ts  # SkillProvider rank 550
+src/superpowers.ts  # SkillProvider rank 10（本插件技能优先级最高）
 skills/             # 15 技能（中文化，v7.0.0 起无 superpower- 前缀）
 lib/                # 已提交，GitHub 直装零构建
 ```
 
-版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；同名前本地技能优先。详见 `CHANGELOG.md`。
+版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。详见 `CHANGELOG.md`。
 
 ## 常见问题
 

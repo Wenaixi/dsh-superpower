@@ -1,6 +1,6 @@
 # GitHub issues
 
-`gh` 已安装并已认证时使用它；它处理认证、速率限制与 JSON。没有则退回公共 API 用 curl，再退回由你的合作者打开的 URL。
+`gh` 已安装并已认证时使用它；它处理认证、速率限制与 JSON。没有则退回公共 API 用 curl，再退回由你的 human partner 打开的 URL。
 
 ## 搜索
 
@@ -21,14 +21,14 @@ curl -s -H "Accept: application/vnd.github+json" \
 
 ## 提交
 
-把填好的 `templates/issue.md` 写入工作区并展示确切文本。批准后：
+把填好的 `templates/issue.md` 写入 workspace 并展示确切文本。批准后：
 
 ```bash
 gh issue create --repo obra/superpowers --title "<title>" --body-file <path> \
   --label bug --label automated-issue-report
 ```
 
-当报告者没有推送权限时，GitHub 会静默丢弃标签，因此标签只对协作者生效；模板脚注仍将 issue 标记为技能提交。`gh` 无法附加文件：在 issue 创建后，把 bundle 路径交给你的合作者通过浏览器附加。
+当报告者没有推送权限时，GitHub 会静默丢弃标签，因此标签只对协作者生效；模板脚注仍将 issue 标记为技能提交。`gh` 无法附加文件：在 issue 创建后，把 bundle 路径交给你的 human partner 通过浏览器附加。
 
 没有 `gh` 时，转交一个基于 `diagnosis_report.md` 模板的预填链接，任何报告者都能应用两个标签：
 
@@ -36,4 +36,4 @@ gh issue create --repo obra/superpowers --title "<title>" --body-file <path> \
 https://github.com/obra/superpowers/issues/new?template=diagnosis_report.md&title=<url-encoded title>&body=<url-encoded body>
 ```
 
-GitHub 拒绝超过约 8,000 字符的 URL；超过时，只发送带标题的链接，并告诉你的合作者从文件中粘贴正文。
+GitHub 拒绝超过约 8,000 字符的 URL；超过时，只发送带标题的链接，并告诉你的 human partner 从文件中粘贴正文。
