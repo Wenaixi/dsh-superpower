@@ -71,7 +71,7 @@ digraph when_to_use {
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
 Subagent (general-purpose): "Fix batch-completion-behavior.test.ts failures"
 Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
-# All three run concurrently.
+# 全部三个并发执行。
 ```
 
 在同一条回复中发起多次分发调用 = 并行执行。每条回复只发一次 = 串行执行。

@@ -33,8 +33,8 @@
 ## 启动会话
 
 ```bash
-# Start AFTER the user approves the companion. --open auto-opens their browser on
-# the first screen; --project-dir persists mockups and enables same-port restart.
+# 在用户批准 companion 后启动。--open 会在首屏自动打开其浏览器；
+# --project-dir 持久化原型并支持同端口重启。
 bash scripts/start-server.sh --project-dir /path/to/project --open
 
 # Returns: {"type":"server-started","port":52341,

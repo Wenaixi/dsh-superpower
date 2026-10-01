@@ -30,8 +30,8 @@ description: "Superpower Skill：实现完成且全部测试通过后，用于�
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
 GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
-# Capture now, while still inside the workspace — Step 5 changes directory
-# before cleanup (Step 6) needs this value
+# 此时仍在工作区内，立即捕获此值——步骤 5 会切换目录，
+# 而后清理阶段（步骤 6）需要该值
 WORKTREE_PATH=$(git rev-parse --show-toplevel)
 ```
 

@@ -54,7 +54,7 @@ function initializeWorkspace(projectDir: string, sessionId: string) {
 
 ```typescript
 async function gitInit(directory: string) {
-  // In tests, refuse git init outside temp directories
+  // 在测试中，拒绝在临时目录之外执行 git init
   if (process.env.NODE_ENV === 'test') {
     const normalized = normalize(resolve(directory));
     const tmpDir = normalize(resolve(tmpdir()));

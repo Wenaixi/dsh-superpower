@@ -68,7 +68,7 @@ Project.create('name', context.tempDir); // Accessed before beforeEach!
 当无法手动追溯时，添加插桩：
 
 ```typescript
-// Before the problematic operation
+// 在执行问题操作之前
 async function gitInit(directory: string) {
   const stack = new Error().stack;
   console.error('DEBUG git init:', {
