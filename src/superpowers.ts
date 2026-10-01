@@ -6,8 +6,7 @@
  * 小于 dsh-skill-filesystem 的项目/用户根（100–500）与官方 bundled（600）。
  */
 
-import { readdir, stat } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import type {
@@ -18,9 +17,11 @@ import type {
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
 import Schema from '@deepseek-ai/schemastery'
+import { SkillCatalog } from './catalog.js'
 import { SkillDocument } from './document.js'
 
-// 具名导出 SkillDocument，为验证治理与测试表面提供统一深度接口
+// 具名导出深度模块，为验证治理与测试表面提供统一深度接口
+export { SkillCatalog } from './catalog.js'
 export { SkillDocument } from './document.js'
 
 // ---------------------------------------------------------------------------
@@ -70,13 +71,14 @@ function resolveDefaultSkillDir(configSkillDir?: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Provider 实现 — 纯调度与生命周期治理，具体解析与映射委托给 SkillDocument 深度模块
+// Provider 实现 — 纯调度与生命周期治理，具体编目与文档解析委托给 SkillCatalog 深度模块
 // ---------------------------------------------------------------------------
 
 class SuperpowersProvider implements SkillProvider {
   readonly name: string
   private readonly skillDir: string
   private readonly ctx: Context
+  private catalog?: SkillCatalog
 
   constructor(ctx: Context, _control: SkillProviderControl, config: Config) {
     assertNotRuntimeProvider(config.providerName)
@@ -86,86 +88,24 @@ class SuperpowersProvider implements SkillProvider {
   }
 
   async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
-    options.signal?.throwIfAborted()
-
-    const candidates: SkillCandidate[] = []
-    const seen = new Set<string>()
-    let entries: import('node:fs').Dirent[]
-    try {
-      entries = await (readdir as unknown as (p: string, o: Record<string, unknown>) => Promise<import('node:fs').Dirent[]>)(
-        this.skillDir,
-        { withFileTypes: true, signal: options.signal } as unknown as Record<string, unknown>,
-      )
-    } catch (err: unknown) {
-      const code = (err as NodeJS.ErrnoException)?.code
-      if (code === 'ENOENT' || code === 'ENOTDIR') {
-        this.ctx.logger.warn(`[superpowers] skillDir not found: ${this.skillDir}`)
-        return []
-      }
-      throw err
-    }
-
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      options.signal?.throwIfAborted()
-      if (!entry.isDirectory()) continue
-      if (entry.name.startsWith('.')) continue
-      const skillPath = join(this.skillDir, entry.name, 'SKILL.md')
-      try {
-        await stat(skillPath)
-      } catch (err: unknown) {
-        const code = (err as NodeJS.ErrnoException)?.code
-        this.ctx.logger.debug(`[superpowers] skip ${entry.name}: no SKILL.md (${code ?? String(err)})`)
-        continue
-      }
-
-      let doc: SkillDocument
-      try {
-        doc = await SkillDocument.fromFile(skillPath, options.signal)
-      } catch (err: unknown) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: 解析失败 — ${String(err)}`)
-        continue
-      }
-
-      if (seen.has(doc.name)) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: duplicate skill name "${doc.name}"`)
-        continue
-      }
-
-      // 目录名与 skill name 不一致时以 frontmatter 为准，但打印提示
-      if (doc.name !== entry.name) {
-        this.ctx.logger.warn(`[superpowers] skill name "${doc.name}" != directory "${entry.name}" (using frontmatter)`)
-      }
-
-      seen.add(doc.name)
-      candidates.push(doc.toCandidate(this.name, SUPERPOWERS_RANK))
-    }
-
-    return candidates
+    this.catalog = await SkillCatalog.fromDirectory(this.skillDir, {
+      signal: options.signal,
+      logger: this.ctx.logger,
+    })
+    return this.catalog.listCandidates(this.name, SUPERPOWERS_RANK)
   }
 
   async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
-    options.signal?.throwIfAborted()
-    const locator = candidate.locator as { path: string; directory: string } | undefined
-    if (!locator?.path || !locator?.directory) return undefined
-
-    let doc: SkillDocument
-    try {
-      doc = await SkillDocument.fromFile(locator.path, options.signal)
-    } catch (err: unknown) {
-      if ((err as DOMException)?.name === 'AbortError') throw err
-      const code = (err as NodeJS.ErrnoException)?.code
-      if (code === 'ENOENT') return undefined
-      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: read failed (${code ?? String(err)})`)
-      return undefined
+    if (!this.catalog) {
+      this.catalog = await SkillCatalog.fromDirectory(this.skillDir, {
+        signal: options.signal,
+        logger: this.ctx.logger,
+      })
     }
-
-    if (doc.name !== candidate.name) {
-      // 名称漂移视为失效，触发上层 invalidate
-      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: name drift "${doc.name}" != "${candidate.name}"`)
-      return undefined
-    }
-
-    return doc.toDefinition(this.name)
+    return this.catalog.getDefinition(candidate, this.name, {
+      signal: options.signal,
+      logger: this.ctx.logger,
+    })
   }
 }
 
@@ -196,4 +136,4 @@ export function apply(ctx: Context, config: Config): void {
   })
 }
 
-export default { name, inject, Config, apply, SkillDocument }
+export default { name, inject, Config, apply, SkillDocument, SkillCatalog }

@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { SkillDocument } from '../lib/superpowers.js'
+import { SkillCatalog, SkillDocument } from '../lib/superpowers.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const skillDir = join(root, 'skills')
@@ -10,33 +10,38 @@ console.log('[verify] skillDir:', skillDir)
 
 let ok = true
 
-const entries = await readdir(skillDir, { withFileTypes: true })
-const dirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith('.')).map((e) => e.name).sort()
+// 基于 SkillCatalog 深度模块进行严格的编目发现与健康度校验，与运行时逻辑完全对齐
+const catalog = await SkillCatalog.fromDirectory(skillDir)
+const report = catalog.verifyIntegrity()
 
-console.log(`[verify] found ${dirs.length} skill directories: ${dirs.join(', ')}`)
+console.log(`[verify] found ${report.total} skills`)
 
-// 基于 SkillDocument 深度模块进行严格的 frontmatter 与契约解析，消除正则解析漂移
-for (const dir of dirs) {
-  const p = join(skillDir, dir, 'SKILL.md')
-  let doc
-  try {
-    doc = await SkillDocument.fromFile(p)
-  } catch (err) {
-    console.error(`[verify] ${dir}: 解析失败 — ${err.message}`)
-    ok = false
-    continue
-  }
-
-  if (doc.name !== dir) {
-    console.error(`[verify] ${dir}: name drift (frontmatter "${doc.name}" != dir "${dir}")`)
+for (const entry of report.entries) {
+  if (entry.nameDrift) {
+    console.error(`[verify] ${entry.directoryName}: name drift (frontmatter "${entry.document.name}" != dir "${entry.directoryName}")`)
     ok = false
   } else {
-    console.log(`[verify] OK ${dir} (${doc.description.slice(0, 50)})`)
+    console.log(`[verify] OK ${entry.directoryName} (${entry.document.description.slice(0, 50)})`)
   }
 }
 
-if (dirs.length !== 15) {
-  console.error(`[verify] expected 15 skills, found ${dirs.length}`)
+for (const missing of report.missingSkillMd) {
+  console.error(`[verify] missing SKILL.md in directory: ${missing}`)
+  ok = false
+}
+
+for (const err of report.errors) {
+  console.error(`[verify] ${err.path}: 解析失败 — ${err.error}`)
+  ok = false
+}
+
+for (const dup of report.duplicates) {
+  console.error(`[verify] duplicate skill name: ${dup}`)
+  ok = false
+}
+
+if (report.total !== 15) {
+  console.error(`[verify] expected 15 skills, found ${report.total}`)
   ok = false
 } else {
   console.log('\n[verify] expected 15 skills, found 15 -> PASS\n')
