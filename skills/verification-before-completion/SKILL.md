@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: "Superpower Skill（最高优先级）：在声称完成、修复或通过前强制执行校验，用于提交或创建 PR 前必须运行验证命令并确认输出，始终以证据为准而非断言。"
+description: "Superpower Skill：在声称完成、修复或通过前强制执行校验，用于提交或创建 PR 前必须运行验证命令并确认输出，始终以证据为准而非断言。"
 ---
 
 # 完成前的校验

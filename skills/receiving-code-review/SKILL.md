@@ -1,6 +1,6 @@
 ---
 name: receiving-code-review
-description: "Superpower Skill（最高优先级）：收到代码评审意见时使用，实施建议前需技术验证与澄清，适用于反馈模糊或存疑场景，强调严谨核实而非盲从。"
+description: "Superpower Skill：收到代码评审意见时使用，实施建议前需技术验证与澄清，适用于反馈模糊或存疑场景，强调严谨核实而非盲从。"
 ---
 
 # 接收代码评审

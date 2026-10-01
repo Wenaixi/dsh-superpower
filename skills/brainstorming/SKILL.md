@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Superpower Skill（最高优先级）：创意工作前必用——创建功能、构建组件、新增能力或变更行为前，先澄清用户意图、需求与设计，再进入实现。"
+description: "Superpower Skill：创意工作前必用——创建功能、构建组件、新增能力或变更行为前，先澄清用户意图、需求与设计，再进入实现。"
 ---
 
 # 将想法头脑风暴为设计

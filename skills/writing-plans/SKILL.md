@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: "Superpower Skill（最高优先级）：当已具备清晰的需求规格或多步骤 task description 且尚未开始编码时使用，用于把需求拆解为结构清晰、粒度可控、可直接执行、可测试与可验证的完整实施计划。"
+description: "Superpower Skill：当已具备清晰的需求规格或多步骤 task description 且尚未开始编码时使用，用于把需求拆解为结构清晰、粒度可控、可直接执行、可测试与可验证的完整实施计划。"
 ---
 
 # 编写计划

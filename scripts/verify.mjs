@@ -1,111 +1,172 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { SkillDocument } from '../lib/superpowers.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const skillDir = join(root, 'skills')
-console.log(`[verify] skillDir: ${skillDir}`)
 
-const entries = await readdir(skillDir, { withFileTypes: true })
-const skillDirs = entries.filter(e => e.isDirectory() && !e.name.startsWith('.')).map(e => e.name).sort()
-console.log(`[verify] found ${skillDirs.length} skill directories: ${skillDirs.join(', ')}`)
+console.log('[verify] skillDir:', skillDir)
 
 let ok = true
 
-// SKILL.md frontmatter 与 name/目录一致校验
-for (const dir of skillDirs) {
+const entries = await readdir(skillDir, { withFileTypes: true })
+const dirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith('.')).map((e) => e.name).sort()
+
+console.log(`[verify] found ${dirs.length} skill directories: ${dirs.join(', ')}`)
+
+// 基于 SkillDocument 深度模块进行严格的 frontmatter 与契约解析，消除正则解析漂移
+for (const dir of dirs) {
   const p = join(skillDir, dir, 'SKILL.md')
-  try { await stat(p) } catch { console.error(`[verify] MISSING ${p}`); ok = false; continue }
-  const raw = await readFile(p, 'utf8')
-  const hasFrontmatter = raw.startsWith('---\n') && raw.includes('\n---\n')
-  const nameMatch = raw.match(/name:\s*([a-z0-9-]+)/)
-  const descMatch = raw.match(/description:\s*["']?(.+)["']?/)
-  if (!hasFrontmatter) { console.error(`[verify] ${dir}: missing frontmatter`); ok = false }
-  else if (!nameMatch) { console.error(`[verify] ${dir}: missing name`); ok = false }
-  else if (nameMatch[1] !== dir) { console.error(`[verify] ${dir}: name drift (frontmatter "${nameMatch[1]}" != dir "${dir}")`); ok = false }
-  else console.log(`[verify] OK ${dir} ${descMatch ? `(${descMatch[1].slice(0, 60)})` : ''}`)
-}
-
-const EXPECTED = 15
-console.log(`\n[verify] expected ${EXPECTED} skills, found ${skillDirs.length} -> ${skillDirs.length === EXPECTED ? 'PASS' : 'FAIL'}`)
-if (skillDirs.length !== EXPECTED) ok = false
-
-// 技能正文中 markdown 链接的相对路径引用存在性检查（防执行时死链）
-console.log('\n[verify] relative-reference check')
-const refCache = new Map()
-async function refExists(p) {
-  if (refCache.has(p)) return refCache.get(p)
-  let v
-  try { await stat(p); v = true } catch { v = false }
-  refCache.set(p, v)
-  return v
-}
-const isProbablyFile = r => /\.(?:md|markdown|cjs|js|ts|sh|html|json|yaml|yml|dot|txt)$/i.test(r)
-for (const dir of skillDirs) {
-  const skillRoot = join(skillDir, dir)
-  const files = []
-  async function walk(d) {
-    for (const e of await readdir(d, { withFileTypes: true })) {
-      const fp = join(d, e.name)
-      if (e.isDirectory()) await walk(fp)
-      else files.push(fp)
-    }
+  let doc
+  try {
+    doc = await SkillDocument.fromFile(p)
+  } catch (err) {
+    console.error(`[verify] ${dir}: 解析失败 — ${err.message}`)
+    ok = false
+    continue
   }
-  await walk(skillRoot)
-  for (const fp of files) {
-    if (!fp.endsWith('.md')) continue
-    const text = await readFile(fp, 'utf8')
-    // 跳过 fenced code block（块内是文档示例，不是真实引用），只检查正文链接
-    let inFence = false
-    for (const line of text.split('\n')) {
-      if (/^\s*(```+|`{3,})/.test(line)) { inFence = !inFence; continue }
-      if (inFence) continue
-      for (const m of line.matchAll(/\]\(([^)#\s]+)\)/g)) {
-        const r = m[1]
-        if (r.startsWith('http') || r.includes('://') || r.startsWith('#') || r.startsWith('mailto:') || r.startsWith('data:')) continue
-        if (r.startsWith('superpowers:') || r.startsWith('skill(')) continue
-        const target = resolve(dirname(fp), r)
-        if (isProbablyFile(r) && !(await refExists(target))) {
-          console.error(`[verify] DEAD LINK ${relative(root, fp)} -> ${r}`)
+
+  if (doc.name !== dir) {
+    console.error(`[verify] ${dir}: name drift (frontmatter "${doc.name}" != dir "${dir}")`)
+    ok = false
+  } else {
+    console.log(`[verify] OK ${dir} (${doc.description.slice(0, 50)})`)
+  }
+}
+
+if (dirs.length !== 15) {
+  console.error(`[verify] expected 15 skills, found ${dirs.length}`)
+  ok = false
+} else {
+  console.log('\n[verify] expected 15 skills, found 15 -> PASS\n')
+}
+
+// ---------------------------------------------------------------------------
+// 相对引用存活性检查：扫描 skills/**/*.md 中的相对路径引用，跳过代码块
+// ---------------------------------------------------------------------------
+
+console.log('[verify] relative-reference check')
+let deadLinks = 0
+
+function extractRelativeLinks(mdContent) {
+  // 去除围栏代码块，避免误报代码中的相对路径
+  const stripped = mdContent.replace(/```[\s\S]*?```/g, '')
+  const links = []
+  // 匹配形如 [text](path) 或 [text](<path>)
+  const re = /\[[^\]]*\]\((<?)([^>\)\s]+)\1(?:\s+["'][^"']*["'])?\)/g
+  let m
+  while ((m = re.exec(stripped)) !== null) {
+    const target = m[2]
+    if (/^(https?:|mailto:|#)/.test(target)) continue
+    links.push(target)
+  }
+  return links
+}
+
+async function checkRelativeLinks(dir) {
+  const list = await readdir(dir, { withFileTypes: true })
+  for (const item of list) {
+    const full = join(dir, item.name)
+    if (item.isDirectory()) {
+      await checkRelativeLinks(full)
+    } else if (item.name.endsWith('.md')) {
+      const content = await readFile(full, 'utf8')
+      const targets = extractRelativeLinks(content)
+      for (const target of targets) {
+        // 去除可能的锚点
+        const clean = target.replace(/#.*$/, '')
+        if (!clean) continue
+        const resolved = resolve(dir, clean)
+        try {
+          await stat(resolved)
+        } catch {
+          console.error(`[verify] DEAD LINK in ${relative(root, full)}: ${target} -> ${relative(root, resolved)}`)
+          deadLinks++
           ok = false
         }
       }
     }
   }
 }
-console.log(ok ? '[verify] relative-reference check PASS' : '[verify] relative-reference check FAIL')
 
-// 全仓文档禁用 emoji 与图形状态符号（v7.0.0 起契约：用 [OK]/[FAIL]/[WARN] ASCII 标记）
-// 覆盖范围：skills/ 全部文件（含 .sh/.ts/.js 等脚本，非 .md 同样必须零符号）
-//           + 根文档（README/CHANGELOG/CONTRIBUTING）+ docs/ 全部 .md
-console.log('\n[verify] emoji/symbol check')
-const SYMBOL_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{2705}\u{274C}\u{26A0}\u{2713}\u{2714}\u{2716}\u{2717}\u{2718}\u{2611}]/gu
-const MEDIA_RE = /\.(?:png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|tgz|zip)$/i
-const mdFiles = []
-async function collectText(d, all) {
-  for (const e of await readdir(d, { withFileTypes: true })) {
-    const fp = join(d, e.name)
-    if (e.isDirectory()) await collectText(fp, all)
-    else if (all ? !MEDIA_RE.test(e.name) : e.name.endsWith('.md')) mdFiles.push(fp)
+await checkRelativeLinks(skillDir)
+if (deadLinks === 0) {
+  console.log('[verify] relative-reference check PASS\n')
+} else {
+  console.error(`[verify] relative-reference check FAIL: ${deadLinks} dead link(s)\n`)
+}
+
+// ---------------------------------------------------------------------------
+// 全仓无 emoji / 图形状态符号硬扫描（符号契约）
+// 范围：skills/ 全文件（含 .sh/.ts/.js 等）、根文档（README/CONTRIBUTING/CHANGELOG 等）、docs/
+// 规则：发现任何 emoji 或图形状态符号即退出并标记 FAIL
+// ---------------------------------------------------------------------------
+
+console.log('[verify] emoji/symbol check')
+// 常用状态符号范围（对勾、叉号、警示三角、圆圈符号等）
+const SYMBOL_PATTERN = /[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF\u2B50-\u2B55\u{1F300}-\u{1FAFF}]/u
+let symbolViolations = 0
+
+async function scanFileForSymbols(filePath) {
+  const content = await readFile(filePath, 'utf8')
+  const lines = content.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (SYMBOL_PATTERN.test(line)) {
+      const match = line.match(SYMBOL_PATTERN)
+      console.error(`[verify] SYMBOL VIOLATION in ${relative(root, filePath)}:${i + 1} (char "${match[0]}", code 0x${match[0].codePointAt(0).toString(16)}): ${line.trim().slice(0, 80)}`)
+      symbolViolations++
+      ok = false
+    }
   }
 }
-for (const dir of skillDirs) await collectText(join(skillDir, dir), true)
-for (const rel of ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md']) {
-  try { await stat(resolve(root, rel)); mdFiles.push(resolve(root, rel)) } catch { /* 不存在则忽略 */ }
-}
-try { await collectText(resolve(root, 'docs'), false) } catch { /* 不存在则忽略 */ }
-for (const fp of mdFiles) {
-  const text = await readFile(fp, 'utf8')
-  const m = text.match(SYMBOL_RE)
-  if (m) {
-    console.error(`[verify] SYMBOL ${relative(root, fp)}: ${[...new Set(m)].join('')}`)
-    ok = false
+
+async function scanDirForSymbols(dir) {
+  const list = await readdir(dir, { withFileTypes: true })
+  for (const item of list) {
+    if (item.name.startsWith('.') || item.name === 'node_modules') continue
+    const full = join(dir, item.name)
+    if (item.isDirectory()) {
+      await scanDirForSymbols(full)
+    } else {
+      await scanFileForSymbols(full)
+    }
   }
 }
-console.log(ok ? '[verify] emoji/symbol check PASS' : '[verify] emoji/symbol check FAIL')
 
-// 关键文件
-const checks = [
+// 扫描 skills/ 全文件
+await scanDirForSymbols(skillDir)
+
+// 扫描根目录关键文档
+const rootDocs = ['README.md', 'CONTRIBUTING.md', 'CHANGELOG.md']
+for (const doc of rootDocs) {
+  const p = join(root, doc)
+  try {
+    await stat(p)
+    await scanFileForSymbols(p)
+  } catch {
+    // 文档不存在则跳过
+  }
+}
+
+// 扫描 docs/ 目录（如存在）
+const docsDir = join(root, 'docs')
+try {
+  const st = await stat(docsDir)
+  if (st.isDirectory()) await scanDirForSymbols(docsDir)
+} catch {
+  // docs 不存在则跳过
+}
+
+if (symbolViolations === 0) {
+  console.log('[verify] emoji/symbol check PASS')
+} else {
+  console.error(`[verify] emoji/symbol check FAIL: ${symbolViolations} violation(s)\n`)
+}
+
+// 核心文件存在性校验
+const required = [
   'skills/using-superpowers/references/dsh-tools.md',
   'skills/diagnosing-superpowers/SKILL.md',
   'skills/brainstorming/SKILL.md',
@@ -113,13 +174,24 @@ const checks = [
   'skills/subagent-driven-development/SKILL.md',
   'scripts/check-same-name-priority.mjs',
   'lib/superpowers.js',
+  'lib/document.js',
   'cordis.patch.yml',
   'package.json',
 ]
-for (const rel of checks) {
-  const p = resolve(root, rel)
-  try { await stat(p); console.log(`[verify] OK ${rel}`) } catch { console.error(`[verify] MISSING ${rel}`); ok = false }
+
+for (const f of required) {
+  try {
+    await stat(join(root, f))
+    console.log(`[verify] OK ${f}`)
+  } catch {
+    console.error(`[verify] MISSING ${f}`)
+    ok = false
+  }
 }
 
-console.log(`\n[verify] ${ok ? 'ALL PASS' : 'FAIL'}`)
-process.exit(ok ? 0 : 1)
+if (!ok) {
+  console.error('\n[verify] FAILED')
+  process.exit(1)
+} else {
+  console.log('\n[verify] ALL PASS')
+}

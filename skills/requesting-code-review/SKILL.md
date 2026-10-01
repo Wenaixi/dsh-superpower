@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-description: "Superpower Skill（最高优先级）：在任务完成、重大功能实现或准备合并到主分支时发起，用于校验实现是否符合需求与质量标准，建议定期执行。"
+description: "Superpower Skill：在任务完成、重大功能实现或准备合并到主分支时发起，用于校验实现是否符合需求与质量标准，建议定期执行。"
 ---
 
 # 请求代码评审

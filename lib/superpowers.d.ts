@@ -7,6 +7,8 @@
  */
 import type { Context } from '@deepseek-ai/cordis';
 import Schema from '@deepseek-ai/schemastery';
+import { SkillDocument } from './document.js';
+export { SkillDocument } from './document.js';
 export declare const Config: Schema<Schemastery.ObjectS<{
     /** 注册到 ctx.skills 的 provider 名称，默认为 superpowers；不可为保留名 runtime */
     providerName: Schema<string, string>;
@@ -40,6 +42,7 @@ declare const _default: {
         skillDir: Schema<string, string>;
     }>>;
     apply: typeof apply;
+    SkillDocument: typeof SkillDocument;
 };
 export default _default;
 //# sourceMappingURL=superpowers.d.ts.map

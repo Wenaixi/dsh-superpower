@@ -1,6 +1,6 @@
 ---
 name: dispatching-parallel-agents
-description: "Superpower Skill（最高优先级）：面向 2 个以上无共享状态、无前后依赖的独立任务，并行委派多个 subagent 协同处理的高效分发模式。"
+description: "Superpower Skill：面向 2 个以上无共享状态、无前后依赖的独立任务，并行委派多个 subagent 协同处理的高效分发模式。"
 ---
 
 # 并行分发 agent

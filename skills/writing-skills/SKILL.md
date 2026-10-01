@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-description: "Superpower Skill（最高优先级）：在创建新技能、编辑或重构现有技能，以及在部署前验证技能可用性、合规性与实际生效情况时使用。"
+description: "Superpower Skill：在创建新技能、编辑或重构现有技能，以及在部署前验证技能可用性、合规性与实际生效情况时使用。"
 ---
 
 # 技能编写

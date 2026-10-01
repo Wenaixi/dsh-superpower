@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: "Superpower Skill（最高优先级）：实现新功能或修复缺陷时，编写实现代码前先写测试的测试驱动开发完整指南与流程约束规范。"
+description: "Superpower Skill：实现新功能或修复缺陷时，编写实现代码前先写测试的测试驱动开发完整指南与流程约束规范。"
 ---
 
 # 测试驱动开发（TDD）

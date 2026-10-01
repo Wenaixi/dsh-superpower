@@ -1,6 +1,6 @@
 ---
 name: using-git-worktrees
-description: "Superpower Skill（最高优先级）：适用于需与当前 worktree 隔离的功能开发或执行实现计划前，通过原生工具优先、git worktree 兜底的方式确保独立 worktree 就绪。"
+description: "Superpower Skill：适用于需与当前 worktree 隔离的功能开发或执行实现计划前，通过原生工具优先、git worktree 兜底的方式确保独立 worktree 就绪。"
 ---
 
 # 使用 Git Worktree

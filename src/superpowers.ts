@@ -6,10 +6,9 @@
  * 小于 dsh-skill-filesystem 的项目/用户根（100–500）与官方 bundled（600）。
  */
 
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parse } from 'yaml'
 import type { Context } from '@deepseek-ai/cordis'
 import type {
   SkillCandidate,
@@ -18,8 +17,11 @@ import type {
   SkillProvider,
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
-import { isSkillName } from '@deepseek-ai/dsh-skill'
 import Schema from '@deepseek-ai/schemastery'
+import { SkillDocument } from './document.js'
+
+// 具名导出 SkillDocument，为验证治理与测试表面提供统一深度接口
+export { SkillDocument } from './document.js'
 
 // ---------------------------------------------------------------------------
 // Config — 默认值写在 schema 里；可选字段用可选属性声明
@@ -45,7 +47,7 @@ export const name = 'superpowers'
 export const inject = ['skills'] as const
 
 // ---------------------------------------------------------------------------
-// 工具函数
+// 常量与校验
 // ---------------------------------------------------------------------------
 
 // 本插件技能优先级最高：rank 值越小优先级越高（官方注册表升序裁决），
@@ -59,91 +61,6 @@ function assertNotRuntimeProvider(providerName: string): void {
   }
 }
 
-function stringField(data: Record<string, unknown>, key: string): string | undefined {
-  const v = data[key]
-  return typeof v === 'string' && v.length > 0 ? v : undefined
-}
-
-function optionalString(data: Record<string, unknown>, key: string): Record<string, string> {
-  const v = data[key]
-  return typeof v === 'string' && v.length > 0 ? { [key]: v } : {}
-}
-
-function frontmatterBoolean(data: Record<string, unknown>, key: string): boolean | undefined {
-  if (!Object.hasOwn(data, key)) return undefined
-  const v = data[key]
-  if (typeof v === 'boolean') return v
-  if (v === 1 || v === '1') return true
-  if (v === 0 || v === '0') return false
-  if (typeof v === 'string') {
-    switch (v.toLowerCase()) {
-      case 'true':
-      case 'yes':
-      case 'on':
-        return true
-      case 'false':
-      case 'no':
-      case 'off':
-        return false
-    }
-  }
-  throw new TypeError(`frontmatter field "${key}" must be a boolean`)
-}
-
-function rejectLegacyKey(data: Record<string, unknown>, legacy: string, canonical: string): void {
-  if (Object.hasOwn(data, legacy)) {
-    throw new Error(`frontmatter field "${legacy}" is unsupported; use "${canonical}"`)
-  }
-}
-
-function parseInvocationPolicy(data: Record<string, unknown>) {
-  rejectLegacyKey(data, 'disableModelInvocation', 'disable-model-invocation')
-  rejectLegacyKey(data, 'modelInvocable', 'disable-model-invocation')
-  rejectLegacyKey(data, 'userInvocable', 'user-invocable')
-  const disableModelInvocation = frontmatterBoolean(data, 'disable-model-invocation')
-  const userInvocable = frontmatterBoolean(data, 'user-invocable')
-  return {
-    modelInvocable: disableModelInvocation !== true,
-    userInvocable: userInvocable !== false,
-  }
-}
-
-function optionalMetadata(data: Record<string, unknown>): Record<string, unknown> {
-  const v = data['metadata']
-  if (typeof v === 'object' && v !== null && !Array.isArray(v)) return { metadata: v as Record<string, unknown> }
-  return {}
-}
-
-function findClosingFrontmatter(raw: string, start: number): { start: number; bodyStart: number } | undefined {
-  let lineStart = start
-  while (lineStart <= raw.length) {
-    const nl = raw.indexOf('\n', lineStart)
-    const lineEnd = nl < 0 ? raw.length : nl
-    if (raw.slice(lineStart, lineEnd).replace(/\r$/, '') === '---') {
-      return { start: lineStart, bodyStart: nl < 0 ? raw.length : nl + 1 }
-    }
-    if (nl < 0) return undefined
-    lineStart = nl + 1
-  }
-  return undefined
-}
-
-function parseFrontmatter(raw: string):
-  | { data: Record<string, unknown>; body: string }
-  | undefined {
-  // 去 BOM：Windows 编辑器易带 \uFEFF，导致首行非 --- 而被静默跳过
-  if (raw.charCodeAt(0) === 0xfeff) raw = raw.slice(1)
-  const firstNl = raw.indexOf('\n')
-  if (firstNl < 0) return undefined
-  if (raw.slice(0, firstNl).replace(/\r$/, '') !== '---') return undefined
-  const start = firstNl + 1
-  const closing = findClosingFrontmatter(raw, start)
-  if (!closing) return undefined
-  const parsed = parse(raw.slice(start, closing.start))
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return undefined
-  return { data: parsed as Record<string, unknown>, body: raw.slice(closing.bodyStart) }
-}
-
 function resolveDefaultSkillDir(configSkillDir?: string): string {
   if (configSkillDir) return resolve(configSkillDir)
   // 包内 skills/ 目录：相对于本文件 lib/superpowers.js -> ../skills
@@ -153,7 +70,7 @@ function resolveDefaultSkillDir(configSkillDir?: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Provider
+// Provider 实现 — 纯调度与生命周期治理，具体解析与映射委托给 SkillDocument 深度模块
 // ---------------------------------------------------------------------------
 
 class SuperpowersProvider implements SkillProvider {
@@ -200,58 +117,27 @@ class SuperpowersProvider implements SkillProvider {
         this.ctx.logger.debug(`[superpowers] skip ${entry.name}: no SKILL.md (${code ?? String(err)})`)
         continue
       }
-      let parsed: { data: Record<string, unknown>; body: string } | undefined
+
+      let doc: SkillDocument
       try {
-        parsed = await parseSkillFile(skillPath)
+        doc = await SkillDocument.fromFile(skillPath, options.signal)
       } catch (err: unknown) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: YAML 解析失败 — ${String(err)}`)
-        continue
-      }
-      if (!parsed) {
-        this.ctx.logger.warn(`[superpowers] skip ${entry.name}: missing or invalid frontmatter`)
-        continue
-      }
-      const { data } = parsed
-      const skillName = stringField(data, 'name')
-      const description = stringField(data, 'description')
-      if (!skillName || !description) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: frontmatter requires name and description`)
-        continue
-      }
-      if (!isSkillName(skillName)) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: invalid skill name "${skillName}"`)
-        continue
-      }
-      if (seen.has(skillName)) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: duplicate skill name "${skillName}"`)
-        continue
-      }
-      // 目录名与 skill name 不一致时以 frontmatter 为准，但打印提示
-      if (skillName !== entry.name) {
-        this.ctx.logger.warn(`[superpowers] skill name "${skillName}" != directory "${entry.name}" (using frontmatter)`)
-      }
-      let invocation: { modelInvocable: boolean; userInvocable: boolean }
-      try {
-        invocation = parseInvocationPolicy(data)
-      } catch (e) {
-        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: ${String(e)}`)
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: 解析失败 — ${String(err)}`)
         continue
       }
 
-      seen.add(skillName)
-      candidates.push({
-        name: skillName,
-        description,
-        ...optionalString(data, 'whenToUse'),
-        invocation,
-        source: 'bundled',
-        provider: this.name,
-        rank: SUPERPOWERS_RANK,
-        locator: { path: skillPath, directory: dirname(skillPath) },
-        resourceBase: { kind: 'directory', path: dirname(skillPath) },
-        path: skillPath,
-        ...optionalMetadata(data),
-      } as SkillCandidate)
+      if (seen.has(doc.name)) {
+        this.ctx.logger.warn(`[superpowers] skip ${skillPath}: duplicate skill name "${doc.name}"`)
+        continue
+      }
+
+      // 目录名与 skill name 不一致时以 frontmatter 为准，但打印提示
+      if (doc.name !== entry.name) {
+        this.ctx.logger.warn(`[superpowers] skill name "${doc.name}" != directory "${entry.name}" (using frontmatter)`)
+      }
+
+      seen.add(doc.name)
+      candidates.push(doc.toCandidate(this.name, SUPERPOWERS_RANK))
     }
 
     return candidates
@@ -261,12 +147,10 @@ class SuperpowersProvider implements SkillProvider {
     options.signal?.throwIfAborted()
     const locator = candidate.locator as { path: string; directory: string } | undefined
     if (!locator?.path || !locator?.directory) return undefined
-    let raw: string | undefined
+
+    let doc: SkillDocument
     try {
-      raw = await (readFile as unknown as (p: string, o: Record<string, unknown>) => Promise<string>)(locator.path, {
-        encoding: 'utf8',
-        signal: options.signal,
-      } as unknown as Record<string, unknown>)
+      doc = await SkillDocument.fromFile(locator.path, options.signal)
     } catch (err: unknown) {
       if ((err as DOMException)?.name === 'AbortError') throw err
       const code = (err as NodeJS.ErrnoException)?.code
@@ -274,52 +158,15 @@ class SuperpowersProvider implements SkillProvider {
       this.ctx.logger.warn(`[superpowers] get ${candidate.name}: read failed (${code ?? String(err)})`)
       return undefined
     }
-    if (raw === undefined) return undefined
-    options.signal?.throwIfAborted()
-    const parsed = parseFrontmatter(raw)
-    if (!parsed) {
-      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: missing or invalid frontmatter`)
-      return undefined
-    }
-    const data = parsed.data
-    const skillName = stringField(data, 'name')
-    const description = stringField(data, 'description')
-    if (!skillName || !description) {
-      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: frontmatter requires name and description`)
-      return undefined
-    }
-    if (skillName !== candidate.name) {
-      // 名称漂移视为失效，触发上层 invalidate
-      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: name drift "${skillName}" != "${candidate.name}"`)
-      return undefined
-    }
-    let invocation: { modelInvocable: boolean; userInvocable: boolean }
-    try {
-      invocation = parseInvocationPolicy(data)
-    } catch (e) {
-      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: ${String(e)}`)
-      return undefined
-    }
-    return {
-      name: skillName,
-      description,
-      ...optionalString(data, 'whenToUse'),
-      invocation,
-      source: 'bundled',
-      provider: this.name,
-      resourceBase: { kind: 'directory', path: locator.directory },
-      path: locator.path,
-      ...optionalMetadata(data),
-      content: parsed.body.trim(),
-    }
-  }
-}
 
-async function parseSkillFile(path: string): Promise<{ data: Record<string, unknown>; body: string } | undefined> {
-  const raw = await readFile(path, 'utf8')
-  const parsed = parseFrontmatter(raw)
-  if (!parsed) return undefined
-  return parsed
+    if (doc.name !== candidate.name) {
+      // 名称漂移视为失效，触发上层 invalidate
+      this.ctx.logger.warn(`[superpowers] get ${candidate.name}: name drift "${doc.name}" != "${candidate.name}"`)
+      return undefined
+    }
+
+    return doc.toDefinition(this.name)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -349,4 +196,4 @@ export function apply(ctx: Context, config: Config): void {
   })
 }
 
-export default { name, inject, Config, apply }
+export default { name, inject, Config, apply, SkillDocument }

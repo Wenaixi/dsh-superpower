@@ -11,7 +11,7 @@
 - **技能名与目录去掉 `superpower-` 前缀**：14 个技能回归上游原名（`brainstorming`、`executing-plans`、`subagent-driven-development` …），`frontmatter.name`、目录名、全部正文引用同步更新。旧名 `skill("superpower-writing-plans")` 不再可用，改用 `skill("writing-plans")`。语义化版本因破坏性变更升为 `7.0.0`。
 - **同名技能优先级反转（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 `SUPERPOWERS_RANK` 由 `550` 改为 `10`，小于 `dsh-skill-filesystem` 的项目/用户根（100~500）与官方内置 bundled（600），因此任何与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills`、自定义根）或官方 bundled 技能均不会覆盖本包——本插件技能唯一生效。
 - **全文符号清除 + 核心术语回英文**：全部 15 个技能的译文正文与辅助文档中的图形状态符号（对勾、叉号、警示三角等）替换为 ASCII 标记（`[OK]`/`[FAIL]`/`[WARN]`），文档不再包含任何 emoji；核心专业术语回英文原词（`subagent`/`agent`、`reviewer`/`re-reviewer`、`ledger`、`finding`、`brief`、`workspace`/`worktree`、`harness`、`human partner`），句子仍为简体中文。
-- **frontmatter `description` 统一加前缀**：15 个 `SKILL.md` 的 `description` 开头统一为 `Superpower Skill（最高优先级）：…`，简洁标明技能来源与本插件优先级。
+- **frontmatter `description` 统一加前缀**：15 个 `SKILL.md` 的 `description` 开头统一为 `Superpower Skill：…`，简洁标明技能来源；技能优先级语义由 `SUPERPOWERS_RANK = 10` 保证，不写入描述文案。
 
 ### 新增
 

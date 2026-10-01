@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: "Superpower Skill（最高优先级）：当你在本会话中亲自作为实现者执行实施计划时使用——human partner 选择了内联执行，或环境不提供 subagent 工具。"
+description: "Superpower Skill：当你在本会话中亲自作为实现者执行实施计划时使用——human partner 选择了内联执行，或环境不提供 subagent 工具。"
 ---
 
 # 执行计划

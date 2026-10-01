@@ -1,6 +1,6 @@
 ---
 name: diagnosing-superpowers
-description: "Superpower Skill（最高优先级）：当 superpowers 会话出错、human partner 想查原因（重复工作、忽略计划、技能未触发、耗时过长、成本过高、结果不佳）或想为维护者建缺陷报告时，适用当前或历史会话。"
+description: "Superpower Skill：当 superpowers 会话出错、human partner 想查原因（重复工作、忽略计划、技能未触发、耗时过长、成本过高、结果不佳）或想为维护者建缺陷报告时，适用当前或历史会话。"
 ---
 
 # 诊断 superpowers

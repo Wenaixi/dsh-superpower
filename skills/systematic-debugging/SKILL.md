@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: "Superpower Skill（最高优先级）：遇到缺陷、测试失败或异常行为时使用，要求先完成根因分析再提出修复，确保系统化调试。"
+description: "Superpower Skill：遇到缺陷、测试失败或异常行为时使用，要求先完成根因分析再提出修复，确保系统化调试。"
 ---
 
 # 系统化调试

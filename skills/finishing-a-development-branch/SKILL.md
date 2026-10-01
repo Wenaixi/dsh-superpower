@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-description: "Superpower Skill（最高优先级）：实现完成且全部测试通过后，用于决定分支集成方式，支持本地合并、创建 PR 或保留分支等完整收尾流程。"
+description: "Superpower Skill：实现完成且全部测试通过后，用于决定分支集成方式，支持本地合并、创建 PR 或保留分支等完整收尾流程。"
 ---
 
 # 完成开发分支

@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-description: "Superpower Skill（最高优先级）：在当前会话内执行包含独立任务的实现计划时使用，基于 subagent 分发与逐任务评审保障质量。"
+description: "Superpower Skill：在当前会话内执行包含独立任务的实现计划时使用，基于 subagent 分发与逐任务评审保障质量。"
 ---
 
 # subagent 驱动开发

@@ -1,6 +1,6 @@
 ---
 name: using-superpowers
-description: "Superpower Skill（最高优先级）：适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题。"
+description: "Superpower Skill：适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题。"
 ---
 
 <SUBAGENT-STOP>
