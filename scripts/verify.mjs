@@ -23,7 +23,7 @@ for (const dir of skillDirs) {
   if (!hasFrontmatter) { console.error(`[verify] ${dir}: missing frontmatter`); ok = false }
   else if (!nameMatch) { console.error(`[verify] ${dir}: missing name`); ok = false }
   else if (nameMatch[1] !== dir) { console.error(`[verify] ${dir}: name drift (frontmatter "${nameMatch[1]}" != dir "${dir}")`); ok = false }
-  else console.log(`[verify] ✓ ${dir} ${descMatch ? `(${descMatch[1].slice(0, 60)})` : ''}`)
+  else console.log(`[verify] OK ${dir} ${descMatch ? `(${descMatch[1].slice(0, 60)})` : ''}`)
 }
 
 const EXPECTED = 15
@@ -119,7 +119,7 @@ const checks = [
 ]
 for (const rel of checks) {
   const p = resolve(root, rel)
-  try { await stat(p); console.log(`[verify] ✓ ${rel}`) } catch { console.error(`[verify] MISSING ${rel}`); ok = false }
+  try { await stat(p); console.log(`[verify] OK ${rel}`) } catch { console.error(`[verify] MISSING ${rel}`); ok = false }
 }
 
 console.log(`\n[verify] ${ok ? 'ALL PASS' : 'FAIL'}`)

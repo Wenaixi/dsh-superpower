@@ -202,7 +202,7 @@ Critical 与 Important 的发现由你自己修——这里你就是实现者—
 [步骤 2：运行失败测试——FAIL，但报的是导入错误：任务 1 导出的是
  installHook，而 brief 消费的是 install_hook]
 [Ruling: brief 的消费方名称相对任务 1 的 Produces 块是笔误；
- 改用 installHook —— ledger：Task 2: Ruling: install_hook → installHook — 与任务 1 Produces 一致 — 错了要付出什么代价：一次重命名]
+  use installHook —— ledger：Task 2: Ruling: install_hook → installHook — 与任务 1 Produces 一致 — 错了要付出什么代价：一次重命名]
 [步骤 2-5 按计划执行；提交 b7c8d9e]
 [task-done plan 2 d4e5f6a -- npm test -- recovery → ledger：Task 2: complete (commits d4e5f6a..b7c8d9e, tests: npm test -- recovery → 8/8 pass)]
 

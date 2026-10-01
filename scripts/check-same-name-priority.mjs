@@ -79,7 +79,7 @@ async function freshRegistry() {
   check('仅有本包：brainstorming 归属', all.find((s) => s.name === OVERRIDDEN)?.provider, 'superpowers')
 }
 
-// --- 2. 各档位其他来源同名技能均不得抢走（100/300/500/600 < 900）----------
+// --- 2. 各档位其他来源同名技能均不得抢走（100/300/500/600 > 本包 rank 10，均败）----------
 for (const rank of [100, 300, 500, 600]) {
   const ctx = await freshRegistry()
   ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
