@@ -26,7 +26,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # 进会话，技能自动可用
 ```
 
-> 如需锁定版本，在包名后追加 `@<version>`（如 `@wenaixi/dsh-superpower@7.0.0`）或 `#v7.0.0`（GitHub 形式）。
+> 如需锁定版本，在包名后追加 `@<version>`（如 `@wenaixi/dsh-superpower@7.0.1`）或 `#v7.0.1`（GitHub 形式）。
 >
 > > 旧名 `dsh-superpower`（无 scope）已废弃并 `npm deprecate`，请改用 `@wenaixi/dsh-superpower`。
 
@@ -96,7 +96,7 @@ skills/             # 15 技能（中文化，v7.0.0 起无 superpower- 前缀�
 lib/                # 已提交，GitHub 直装零构建
 ```
 
-版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。自本版起本插件为 **DSH 专属**，已移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层。详见 `CHANGELOG.md`。
+版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。`v7.0.0` 起本插件为 **DSH 专属**，已移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层；`v7.0.1` 为修复版，重发干净 tarball（npm `7.0.0` 发布于专属化前、已废弃，勿使用）。详见 `CHANGELOG.md`。
 
 ## 常见问题
 

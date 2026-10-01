@@ -85,6 +85,13 @@ jobs:
       - name: 发布到 npm
         run: npm publish --access public
 
+      # 7.0.0 发布早于平台专属化改造（736f443），tarball 残留非 DSH 文件，
+      # 每次正式发版时同步废弃它，确保 npm latest 指向当前干净版本。
+      - name: 废弃已污染的 7.0.0
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          npm deprecate "@wenaixi/dsh-superpower@7.0.0" "该版本发布早于平台专属化改造，tarball 残留非 DSH 平台文件；请升级到最新版（7.0.1+）。" --registry https://registry.npmjs.org || true
+
       # 为 -dsh.N 系列显式打 dsh dist-tag，避免被默认的 latest 抢占。
       # 见 CLAUDE.md 第 10 章 "dist-tag 策略"。
       - name: 为 -dsh.N 系列打 dsh dist-tag
