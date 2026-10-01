@@ -8,7 +8,7 @@
 
 ### 修复
 
-- **重新发布干净 tarball（修复 npm 7.0.0 残留非 DSH 文件）**：`v7.0.0` tag 早于平台专属化改造（`736f443`），其 npm tarball 仍携带 `using-superpowers/references/codex-tools.md` 与 `writing-skills/examples/CLAUDE_MD_TESTING.md`（安装后存在非 DSH 平台痕迹）。本版为专属化落地后的干净产物（本地深度验证：88 文件、15 技能、无平台残留），升 patch 版重发；`7.0.0` 因 npm 禁止 unpublish 保留在 registry，已通过 `npm deprecate` 标注废弃。
+- **重新发布干净 tarball（修复 npm 7.0.0 残留非 DSH 文件）**：`v7.0.0` tag 早于平台专属化改造（`736f443`），其 npm tarball 仍携带 `using-superpowers/references/codex-tools.md` 与 `writing-skills/examples/CLAUDE_MD_TESTING.md`（安装后存在非 DSH 平台痕迹）。本版为专属化落地后的干净产物（本地深度验证：88 文件、15 技能、无平台残留），升 patch 版重发；`7.0.0` 因 npm 禁止 unpublish 保留在 registry，已通过 `npm deprecate` 标注废弃。发布后官方源 `latest` 已指向 `7.0.1`（`registry.yarnpkg.com` / fresh cache 均确认），国内镜像缓存同步延迟属正常现象。
 - **本地 DSH 实机深度验证**：新建 `sp-deep-verify` profile（bundles: dsh-base + dsh-headless + 本插件），`headless` 真实会话逐技能调用 `skill` 工具加载全部 15 个技能，frontmatter description 与 `##` 标题与仓库逐一断言一致；安装产物全树扫描无平台残留（除 README 中"已移除"声明）。
 
 

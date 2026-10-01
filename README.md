@@ -100,7 +100,7 @@ lib/                # 已提交，GitHub 直装零构建
 
 ## 常见问题
 
-404/镜像延迟请改用 GitHub 形式；白名单不需要；`latest` 可用 `npm view @wenaixi/dsh-superpower --registry https://registry.npmjs.org` 查看。
+404/镜像延迟请改用 GitHub 形式或 `--registry https://registry.npmjs.org`（官方源已是最新）；白名单不需要；`latest` 可用 `npm view @wenaixi/dsh-superpower --registry https://registry.npmjs.org` 查看。
 
 ## 协议
 
