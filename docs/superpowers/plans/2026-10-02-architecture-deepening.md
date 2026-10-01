@@ -42,7 +42,7 @@
 
 - [ ] **步骤 1：跑提取前基线（三脚本再生性快照）**
 
-运行：`bash -c "SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-deep.mjs; echo EXIT=$?; SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-tokens.mjs; echo EXIT=$?"`
+运行：`bash -c "$env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-deep.mjs; echo EXIT=$LASTEXITCODE; $env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-tokens.mjs; echo EXIT=$LASTEXITCODE"`
 预期：deep 输出 FAIL: 0，tokens 输出「全部通过」，两命令 exit 0。把输出尾部记入 `.superpowers/sdd/architecture-deepening/baseline-sync.txt`（供步骤 5 比对）。
 
 - [ ] **步骤 2：在 `scripts/lib/sync-common.mjs` 中实现共享引擎**
@@ -220,7 +220,7 @@ git commit -m "test: verify 增加 SkillDocument/SkillCatalog 边界自检（BOM
 - [ ] **步骤 3：GREEN 验证（契约断言通过 + 上游同步契约不破）**
 
 运行：`node scripts/verify.mjs` → 契约断言 PASS、全绿。
-运行：`bash -c "SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-deep.mjs; echo EXIT=$?"` 与 `bash -c "SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-tokens.mjs; echo EXIT=$?"`
+运行：`bash -c "$env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-deep.mjs; echo EXIT=$LASTEXITCODE"` 与 `bash -c "$env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-tokens.mjs; echo EXIT=$LASTEXITCODE"`
 预期：deep FAIL: 0（正文行改动不进代码块比对域，允许 NOTE）、tokens 通过。若 deep 报 FAIL，按 systematic-debugging 定位（大概率是「代码块行数」或「标题数」误判，按契约裁决）。
 
 - [ ] **步骤 4：提交**
@@ -255,7 +255,7 @@ git commit -m "fix: executing-plans 脚本调用统一 bash 前缀，使 writing
 - deep L66-71 的 `/^---\n([\s\S]*?)\n---\n/` 正则提取改为：对两个文件分别 `SkillDocument.fromString(u, upPath)` / `fromString(l, loPath)`，取 `.name` 与 `.description` 比较（校验语义与运行时完全一致）。
 - 保留「上游无 frontmatter/解析失败 → FAIL」分支（捕获 fromString 抛错）。
 - 注意：deep 现检查「description 缺失/未中文化」——SkillDocument 对缺 name/description 直接抛错，正好覆盖；「未中文化」检查仍用 `hasCJK(desc)`。
-运行：`bash -c "SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-deep.mjs; echo EXIT=$?"`
+运行：`bash -c "$env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-deep.mjs; echo EXIT=$LASTEXITCODE"`
 预期：FAIL: 0（15/15 通过路径不变；若某技能因 fromString 严格校验而被拒——如上游 frontmatter 有非 kebab 名字——按 systematic-debugging 核实后裁决，大概率无此情况）。
 
 - [ ] **步骤 4：提交**
@@ -279,8 +279,8 @@ git commit -m "refactor: priority 双脚本共享 harness-common 骨架，frontm
 3. `node scripts/verify.mjs`（含资源契约 + 边界自检）
 4. `node scripts/check-same-name-priority.mjs`
 5. `node scripts/check-same-name-priority-fs.mjs`
-6. `bash -c "SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-deep.mjs; echo EXIT=$?"`
-7. `bash -c "SP_UPSTREAM=/mnt/e/tmp/superpowers/skills node scripts/review-sync-tokens.mjs; echo EXIT=$?"`
+6. `bash -c "$env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-deep.mjs; echo EXIT=$LASTEXITCODE"`
+7. `bash -c "$env:SP_UPSTREAM='E:/tmp/superpowers-v6.4.2/skills'; node scripts/review-sync-tokens.mjs; echo EXIT=$LASTEXITCODE"`
 8. `node scripts/review-sync-fences.mjs`（清单覆盖 15 技能无异常）
 预期：全部成功（build/typecheck 零错误；verify 全绿；priority 全 PASS；deep FAIL: 0；tokens 通过；fences 无异常）。任一失败 → systematic-debugging 定位修复后再跑全矩阵。
 
