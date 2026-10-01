@@ -21,8 +21,7 @@ import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir, homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
-import { SkillRegistry } from '@deepseek-ai/dsh-skill'
+import { check, freshRegistry, exitByFailed } from './lib/harness-common.mjs'
 import superpowers from '../lib/superpowers.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -48,18 +47,7 @@ if (officialPath === undefined) {
 }
 const fsMod = await import(pathToFileURL(officialPath).href)
 
-let failed = 0
-function check(label, actual, expected) {
-  const ok = actual === expected
-  if (!ok) failed += 1
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}: ${actual}${ok ? '' : ` (期望 ${expected})`}`)
-}
-
-async function freshRegistry() {
-  const ctx = new Context()
-  await ctx.plugin(SkillRegistry)
-  return ctx
-}
+const state = { failed: 0 }
 
 // 在临时根下写一个与上游同构的最小同名技能（rank 裁决只看 name，不看正文）
 async function writeOverride(skillRoot) {
@@ -86,10 +74,10 @@ function mountFilesystem(ctx, dirs) {
   mountFilesystem(ctx, [customRoot])
   const all = await ctx.skills.list({ cwd: root })
   const hit = all.find((s) => s.name === OVERRIDDEN)
-  check('自定义根同名：brainstorming 仍归本包', hit?.provider, 'superpowers')
-  check('自定义根同名：不产生重名条目', all.filter((s) => s.name === OVERRIDDEN).length, 1)
-  check('自定义根同名后总数仍为 15', all.length, 15)
-  check('逐名裁决：未被覆盖的技能仍在', all.find((s) => s.name === UNTOUCHED)?.provider, 'superpowers')
+  check(state, '自定义根同名：brainstorming 仍归本包', hit?.provider, 'superpowers')
+  check(state, '自定义根同名：不产生重名条目', all.filter((s) => s.name === OVERRIDDEN).length, 1)
+  check(state, '自定义根同名后总数仍为 15', all.length, 15)
+  check(state, '逐名裁决：未被覆盖的技能仍在', all.find((s) => s.name === UNTOUCHED)?.provider, 'superpowers')
   await rm(tmp, { recursive: true, force: true })
 }
 
@@ -104,8 +92,8 @@ function mountFilesystem(ctx, dirs) {
   ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
   const all = await ctx.skills.list({ cwd: root })
   const hit = all.find((s) => s.name === OVERRIDDEN)
-  check('注册顺序颠倒：brainstorming 仍归本包', hit?.provider, 'superpowers')
-  check('注册顺序颠倒：总数仍为 15', all.length, 15)
+  check(state, '注册顺序颠倒：brainstorming 仍归本包', hit?.provider, 'superpowers')
+  check(state, '注册顺序颠倒：总数仍为 15', all.length, 15)
   await rm(tmp, { recursive: true, force: true })
 }
 
@@ -115,9 +103,8 @@ function mountFilesystem(ctx, dirs) {
   ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
   mountFilesystem(ctx, [])
   const all = await ctx.skills.list({ cwd: root })
-  check('无同名覆盖：brainstorming 归属', all.find((s) => s.name === OVERRIDDEN)?.provider, 'superpowers')
-  check('无同名覆盖：技能总数', all.length, 15)
+  check(state, '无同名覆盖：brainstorming 归属', all.find((s) => s.name === OVERRIDDEN)?.provider, 'superpowers')
+  check(state, '无同名覆盖：技能总数', all.length, 15)
 }
 
-console.log(failed === 0 ? '\n与官方 filesystem 同层同名实测：全部通过' : `\n与官方 filesystem 同层同名实测：${failed} 项失败`)
-process.exit(failed === 0 ? 0 : 1)
+exitByFailed('与官方 filesystem 同层同名实测', state)

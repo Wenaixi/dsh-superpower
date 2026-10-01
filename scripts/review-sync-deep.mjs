@@ -10,6 +10,7 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { norm, splitBlocks, splitComment, hasCJK } from './lib/sync-common.mjs'
+import { SkillDocument } from '../lib/superpowers.js'
 
 const UP = process.env.SP_UPSTREAM || join(process.env.TEMP ?? '/tmp', 'sp-upstream', 'skills')
 const heads = (s) => (s.replace(/```[\s\S]*?```/g, '').match(/^#{1,6} /gm) || []).map((h) => h.trim())
@@ -57,16 +58,14 @@ for (const rel of rels) {
   }
 
   if (isSkill) {
-    const mU = u.match(/^---\n([\s\S]*?)\n---\n/)
-    const mL = l.match(/^---\n([\s\S]*?)\n---\n/)
-    if (!mU || !mL) { console.log(`FAIL [无frontmatter] ${rel}`); fails++; continue }
-    const fmU = mU[1].split('\n').find((x) => x.startsWith('name:'))
-    const fmL = mL[1].split('\n').find((x) => x.startsWith('name:'))
-    if (!fmU || fmU !== fmL) { console.log(`FAIL [frontmatter.name不一致] ${rel}: 上游 "${fmU ?? '无'}" 本地 "${fmL ?? '无'}"`); fails++ }
-    const descU = mU[1].match(/^description:\s*(.+)$/m)?.[1]
-    const descL = mL[1].match(/^description:\s*(.+)$/m)?.[1]
-    if (!descL) { console.log(`FAIL [description缺失] ${rel}`); fails++ }
-    else if (!/[\u4e00-\u9fff]/.test(descL)) { console.log(`FAIL [description未中文化] ${rel}`); fails++ }
+    // frontmatter 解析统一走 SkillDocument 深度接口（与运行时同一实现）
+    let du, dl
+    try { du = SkillDocument.fromString(u, rel) } catch { du = undefined }
+    try { dl = SkillDocument.fromString(l, rel) } catch { dl = undefined }
+    if (!du || !dl) { console.log(`FAIL [frontmatter非法] ${rel}: 上游 "${du ? '合法' : '非法'}" 本地 "${dl ? '合法' : '非法'}"`); fails++; continue }
+    if (du.name !== dl.name) { console.log(`FAIL [frontmatter.name不一致] ${rel}: 上游 "${du.name}" 本地 "${dl.name}"`); fails++ }
+    if (!/^Superpower Skill：/.test(dl.description)) { console.log(`FAIL [description前缀缺失] ${rel}: "${dl.description.slice(0, 40)}"`); fails++ }
+    else if (!/[\u4e00-\u9fff]/.test(dl.description)) { console.log(`FAIL [description未中文化] ${rel}`); fails++ }
   }
 
   // 代码块：逐块比对
