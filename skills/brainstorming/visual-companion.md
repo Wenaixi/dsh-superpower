@@ -59,7 +59,7 @@ bash scripts/start-server.sh --project-dir /path/to/project --open
 bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
-在 Windows 上，脚本会自动检测并切换到前台模式（会阻塞工具调用）。请在 Bash 工具调用上使用 `run_in_background: true`，使服务器在对话轮次之间保持运行，然后在下一轮读取 `$STATE_DIR/server-info` 以获取 URL 和端口。
+在 Windows 上，脚本会自动检测并切换到前台模式（会阻塞工具调用）。请在 Bash 工具调用上使用 `run_in_background: true`，使服务器在turn之间保持运行，然后在下一轮读取 `$STATE_DIR/server-info` 以获取 URL 和端口。
 
 **Codex：**
 ```bash
@@ -84,7 +84,7 @@ bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 ```
 
-**其他环境：** 服务器必须在后台持续运行并跨越对话轮次。如果你的环境会回收 detached 进程，请使用 `--foreground` 并通过平台提供的后台执行机制来启动命令。
+**其他环境：** 服务器必须在后台持续运行并跨越 turn。如果你的环境会回收 detached 进程，请使用 `--foreground` 并通过平台提供的后台执行机制来启动命令。
 
 如果 URL 在你的浏览器中无法访问（在远程/容器化环境中很常见），请绑定非回环地址：
 

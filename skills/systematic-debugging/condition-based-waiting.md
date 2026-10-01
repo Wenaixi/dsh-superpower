@@ -57,7 +57,7 @@ expect(result).toBeDefined();
 
 ## 实现
 
-通用轮询函数：
+通用poll函数：
 
 ```typescript
 async function waitFor<T>(
@@ -84,8 +84,8 @@ async function waitFor<T>(
 
 ## 常见错误
 
-**[FAIL] 轮询过快：** `setTimeout(check, 1)` - 浪费 CPU
-**[OK] 修正：** 每 10ms 轮询一次
+**[FAIL] poll过快：** `setTimeout(check, 1)` - 浪费 CPU
+**[OK] 修正：** 每 10ms poll一次
 
 **[FAIL] 无超时：** 条件始终不满足时会无限循环
 **[OK] 修正：** 始终设置超时，并给出清晰的错误信息

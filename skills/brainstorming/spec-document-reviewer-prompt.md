@@ -1,4 +1,4 @@
-# Spec 文档审查提示词模板
+# Spec 文档 reviewer prompt 模板
 
 在派发 Spec 文档审查 subagent 时使用本模板。
 

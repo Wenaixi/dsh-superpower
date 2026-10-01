@@ -12,7 +12,7 @@
 
 [上下文窗口](https://platform.claude.com/docs/en/build-with-claude/context-windows)是公共资源。你的 Skill 会与 Agent 所需的其他所有内容共享上下文窗口，包括：
 
-* 系统提示词
+* system prompt
 * 对话历史
 * 其他 Skill 的元数据
 * 你的实际请求
@@ -183,7 +183,7 @@ Skill 是对模型的补充，其效果取决于底层模型。请在所有计�
 `description` 字段用于 Skill 的发现，应同时包含 Skill 的功能和使用时机。
 
 <Warning>
-  **始终使用第三人称**。描述会被注入到系统提示词中，人称不一致会导致发现问题。
+  **始终使用第三人称**。描述会被注入到system prompt中，人称不一致会导致发现问题。
 
   * **好：** "Processes Excel files and generates reports"
   * **避免：** "I can help you process Excel files"
@@ -646,7 +646,7 @@ Adjust sections as needed for the specific analysis type.
 
 ### 示例模式
 
-对于输出质量依赖示例的 Skill，像常规提示词一样提供输入/输出对：
+对于输出质量依赖示例的 Skill，像常规prompt一样提供输入/输出对：
 
 ````markdown  theme={null}
 ## Commit message format
@@ -755,7 +755,7 @@ Follow this style: type(scope): brief description, then detailed explanation.
 
 **创建新 Skill：**
 
-1. **在不使用 Skill 的情况下完成任务**：与 Agent A 通过常规提示词协作完成一个问题。在过程中，你会自然地提供上下文、解释偏好、分享流程知识。留意你反复提供的信息。
+1. **在不使用 Skill 的情况下完成任务**：与 Agent A 通过常规prompt协作完成一个问题。在过程中，你会自然地提供上下文、解释偏好、分享流程知识。留意你反复提供的信息。
 
 2. **识别可复用的模式**：完成任务后，识别你在哪些上下文中提供了对未来类似任务有用的信息。
 
@@ -764,7 +764,7 @@ Follow this style: type(scope): brief description, then detailed explanation.
 3. **让 Agent A 创建 Skill**："创建一个 Skill，沉淀我们刚才使用的 BigQuery 分析模式。包含表结构、命名规范以及过滤测试账户的规则。"
 
    <Tip>
-     现代 Agent 原生理解 Skill 的格式和结构。你不需要特殊的系统提示词或“编写 Skill”的 Skill 来获得帮助。只需让 Agent 创建 Skill，它就会生成带有正确 frontmatter 和正文内容的 SKILL.md。
+     现代 Agent 原生理解 Skill 的格式和结构。你不需要特殊的system prompt或“编写 Skill”的 Skill 来获得帮助。只需让 Agent 创建 Skill，它就会生成带有正确 frontmatter 和正文内容的 SKILL.md。
    </Tip>
 
 4. **检查简洁性**：检查 Agent A 是否添加了不必要的解释。追问：“删除关于 win rate 含义的解释——Agent 已经知道了。”
@@ -1014,7 +1014,7 @@ Skill 在具备文件系统访问、bash 命令和代码执行能力的代码执
 
 **Agent 如何访问 Skill：**
 
-1. **元数据预加载**：启动时，所有 Skill 的 YAML frontmatter 中的名称和描述会被加载到系统提示词中
+1. **元数据预加载**：启动时，所有 Skill 的 YAML frontmatter 中的名称和描述会被加载到system prompt中
 2. **按需读取文件**：Agent 需要时使用文件读取工具从文件系统访问 SKILL.md 和其他文件
 3. **高效执行脚本**：工具脚本可通过 bash 执行，无需将完整内容加载到上下文中。只有脚本的输出会消耗 token
 4. **大文件无上下文惩罚**：引用文件、数据或文档在实际读取前不会消耗上下文 token

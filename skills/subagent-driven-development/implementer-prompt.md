@@ -1,4 +1,4 @@
-# 实现者 subagent 提示词模板
+# implementer subagent prompt 模板
 
 在分发实现者 subagent 时使用此模板。
 

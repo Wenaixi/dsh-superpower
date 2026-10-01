@@ -84,9 +84,9 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 - 运行完整测试套件
 - 整合所有变更
 
-## agent 提示词结构
+## agent prompt 结构
 
-优秀的 agent 提示词应具备：
+优秀的 agent prompt应具备：
 1. **聚焦** - 一个清晰的问题域
 2. **自包含** - 包含理解问题所需的全部上下文
 3. **输出明确** - agent 应该返回什么？

@@ -1,4 +1,4 @@
-# 任务 reviewer 提示词模板
+# task reviewer prompt 模板
 
 在派发任务评审 subagent 时使用本模板。reviewer 只读取一次任务的 diff，并返回两项裁决：规格符合度与代码质量。
 

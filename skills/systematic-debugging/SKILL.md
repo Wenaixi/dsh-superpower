@@ -280,4 +280,4 @@ description: "Superpower Skill：遇到缺陷、测试失败或异常行为时�
 
 - **`root-cause-tracing.md`** - 沿调用栈回溯追踪，直至找到最初触发点
 - **`defense-in-depth.md`** - 找到根因后在多层添加校验
-- **`condition-based-waiting.md`** - 用条件轮询替代固定时延等待
+- **`condition-based-waiting.md`** - 用条件poll替代固定时延等待

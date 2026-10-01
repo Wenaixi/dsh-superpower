@@ -1,4 +1,4 @@
-# 代码评审提示词模板
+# code reviewer prompt 模板
 
 在派发代码评审 subagent 时使用此模板。
 
