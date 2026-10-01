@@ -35,7 +35,7 @@
 ```bash
 # Start AFTER the user approves the companion. --open auto-opens their browser on
 # the first screen; --project-dir persists mockups and enables same-port restart.
-scripts/start-server.sh --project-dir /path/to/project --open
+bash scripts/start-server.sh --project-dir /path/to/project --open
 
 # Returns: {"type":"server-started","port":52341,
 #           "url":"http://localhost:52341/?key=ab12…",
@@ -56,7 +56,7 @@ scripts/start-server.sh --project-dir /path/to/project --open
 **Claude Code：**
 ```bash
 # Default mode works — the script backgrounds the server itself.
-scripts/start-server.sh --project-dir /path/to/project --open
+bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
 在 Windows 上，脚本会自动检测并切换到前台模式（会阻塞工具调用）。请在 Bash 工具调用上使用 `run_in_background: true`，使服务器在对话轮次之间保持运行，然后在下一轮读取 `$STATE_DIR/server-info` 以获取 URL 和端口。
@@ -65,14 +65,14 @@ scripts/start-server.sh --project-dir /path/to/project --open
 ```bash
 # Codex reaps background processes. The script auto-detects CODEX_CI and
 # switches to foreground mode. Run it normally — no extra flags needed.
-scripts/start-server.sh --project-dir /path/to/project --open
+bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
 **Gemini CLI：**
 ```bash
 # Use --foreground and set is_background: true on your shell tool call
 # so the process survives across turns
-scripts/start-server.sh --project-dir /path/to/project --open --foreground
+bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 ```
 
 **Copilot CLI：**
@@ -89,7 +89,7 @@ bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 如果 URL 在你的浏览器中无法访问（在远程/容器化环境中很常见），请绑定非回环地址：
 
 ```bash
-scripts/start-server.sh \
+bash scripts/start-server.sh \
   --project-dir /path/to/project \
   --host 0.0.0.0 \
   --url-host localhost
@@ -282,7 +282,7 @@ scripts/start-server.sh \
 ## 清理
 
 ```bash
-scripts/stop-server.sh $SESSION_DIR
+bash scripts/stop-server.sh $SESSION_DIR
 ```
 
 如果会话使用了 `--project-dir`，原型文件会保留在 `.superpowers/brainstorm/` 中以便后续查阅。仅 `/tmp` 会话在停止时会被删除。

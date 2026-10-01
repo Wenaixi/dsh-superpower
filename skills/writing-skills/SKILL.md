@@ -371,6 +371,8 @@ pptx/
 ```
 适用场景：参考材料篇幅过大，不适合内联
 
+通过解释器调用随包脚本（正文中用 `bash scripts/tool.sh`、`node scripts/tool.js`），绝不用裸路径：部分宿主插件打包器会剥掉可执行位，裸调 `scripts/tool.sh` 会以 `Permission denied` 失败。
+
 ## 铁律（与 TDD 相同）
 
 ```

@@ -25,7 +25,7 @@ description: "在任务完成、重大功能实现或准备合并到主分支时
 
 **1. 获取 git SHA：**
 ```bash
-BASE_SHA=$(git merge-base origin/main HEAD)  # 以 origin/main 为评审基线
+BASE_SHA=$(git rev-parse HEAD~1)  # 或：git merge-base origin/main HEAD
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 

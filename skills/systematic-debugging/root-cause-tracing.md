@@ -101,7 +101,7 @@ npm test 2>&1 | grep 'DEBUG git init'
 使用本目录下的二分脚本 `find-polluter.sh`：
 
 ```bash
-./find-polluter.sh '.git' 'src/**/*.test.ts'
+bash ./find-polluter.sh '.git' 'src/**/*.test.ts'
 ```
 
 逐个运行测试，遇到首个污染者即停止。用法见脚本说明。
