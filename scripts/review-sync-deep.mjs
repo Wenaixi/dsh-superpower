@@ -54,9 +54,11 @@ for (const rel of rels) {
   const isSkill = rel.endsWith('/SKILL.md')
 
   if (!rel.endsWith('.md')) {
-    // 非 md：字节一致（CRLF 归一后）
-    if (u !== l) { console.log(`FAIL [非md不一致] ${rel}`); fails++ }
-    else ok++
+    // 非 md：字节一致（CRLF 归一后）；find-polluter.sh 例外（符号契约已把 4 处 emoji 输出改 ASCII）
+    const EXEMPT = new Set(['systematic-debugging/find-polluter.sh'])
+    if (!EXEMPT.has(rel) && u !== l) { console.log(`FAIL [非md不一致] ${rel}`); fails++ }
+    else if (!EXEMPT.has(rel)) ok++
+    else { console.log(`INFO [非md豁免] ${rel}（符号契约 ASCII 化）`); ok++ }
     continue
   }
 
@@ -103,11 +105,14 @@ for (const rel of rels) {
     }
   }
 
-  // SKILL.md 标题数对齐
+  // SKILL.md 标题数对齐（subagent-driven-development 本地增补「嵌套控制器」一节，+1 属已知豁免）
   if (isSkill) {
+    const TITLE_EXEMPT = new Set(['subagent-driven-development/SKILL.md'])
     const hu = heads(u)
     const hl = heads(l)
-    if (hu.length !== hl.length) {
+    if (TITLE_EXEMPT.has(rel) && hl.length === hu.length + 1) {
+      console.log(`INFO [标题数豁免] ${rel}: ${hu.length} -> ${hl.length}（本地增补小节）`)
+    } else if (hu.length !== hl.length) {
       console.log(`FAIL [标题数] ${rel}: ${hu.length} -> ${hl.length}`)
       fails++
     }
