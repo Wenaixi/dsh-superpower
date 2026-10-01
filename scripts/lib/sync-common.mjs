@@ -52,3 +52,5 @@ export async function syncSkillsList(upstreamDir) {
   const all = await walkMd(upstreamDir)
   return all.filter((rel) => rel.endsWith('/SKILL.md')).sort()
 }
+
+export { SyncEngine } from './sync-engine.mjs'
