@@ -83,7 +83,7 @@ jobs:
         run: npm whoami --registry https://registry.npmjs.org
 
       - name: 发布到 npm
-        run: npm publish --access public
+        run: npm publish --access public --registry https://registry.npmjs.org
 
       # 7.0.0 发布早于平台专属化改造（736f443），tarball 残留非 DSH 文件，
       # 每次正式发版时同步废弃它，确保 npm latest 指向当前干净版本。
