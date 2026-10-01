@@ -1,33 +1,27 @@
 /**
  * 深挖：逐块打印本地与上游不一致的 fenced code block 内容，
  * 便于人工判定是「中文化约定允许的注释/自然语言」还是「代码/命令被改坏」。
- * 用法：node scripts/review-sync-deep.mjs <相对路径...>（不给参数则打印全部不一致块）
+ * 用法：node scripts/review-sync-fences.mjs <相对路径...>（不给参数则打印全部不一致块）
+ * 说明：技能清单由 sync-common 从上游目录动态派生，新增技能自动覆盖。
  */
 
 import { readFile } from 'node:fs/promises'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { norm, splitBlocks, syncSkillsList } from './lib/sync-common.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const local = join(root, 'skills')
 const upstream = process.env.SP_UPSTREAM || join(process.env.TEMP || '', 'sp-upstream', 'skills')
-const norm = (s) => s.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-const fenceRe = /```(\w*)[^\n]*\n([\s\S]*?)```/g
 
 const targets = process.argv.slice(2)
-const allFiles = [
-  'brainstorming/SKILL.md', 'dispatching-parallel-agents/SKILL.md', 'executing-plans/SKILL.md',
-  'finishing-a-development-branch/SKILL.md', 'receiving-code-review/SKILL.md', 'requesting-code-review/SKILL.md',
-  'subagent-driven-development/SKILL.md', 'systematic-debugging/SKILL.md', 'test-driven-development/SKILL.md',
-  'using-git-worktrees/SKILL.md', 'verification-before-completion/SKILL.md', 'writing-plans/SKILL.md',
-  'writing-skills/SKILL.md',
-]
-
-function splitBlocks(raw) {
-  return [...raw.matchAll(fenceRe)].map((m) => ({ lang: m[1], body: m[2] }))
+if (!targets.length) {
+  // 动态派生：老实现硬编码 13 技能清单，漏掉 diagnosing-superpowers 与 using-superpowers
+  const skills = await syncSkillsList(upstream)
+  targets.push(...skills)
 }
 
-for (const rel of targets.length ? targets : allFiles) {
+for (const rel of targets) {
   const upRaw = norm(await readFile(join(upstream, rel), 'utf8'))
   const lRaw = norm(await readFile(join(local, rel), 'utf8'))
   const upB = splitBlocks(upRaw)

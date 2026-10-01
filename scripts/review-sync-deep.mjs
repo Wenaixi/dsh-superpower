@@ -5,22 +5,16 @@
  *   - 正文自然语言、行内注释、示例对话 → 简体中文
  * 用法：$env:SP_UPSTREAM = <上游 skills 目录>; node scripts/review-sync-deep.mjs
  * 说明：文件树完整性与 SKILL.md frontmatter 为硬门槛；其余输出仅供参考。
+ * 契约：norm/fenceRe/splitBlocks/splitComment/hasCJK 来自 ./lib/sync-common.mjs（三件套共享引擎）。
  */
-import { readFile, readdir, stat } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { norm, splitBlocks, splitComment, hasCJK } from './lib/sync-common.mjs'
 
 const UP = process.env.SP_UPSTREAM || join(process.env.TEMP ?? '/tmp', 'sp-upstream', 'skills')
-const norm = (s) => s.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-const fenceRe = /```(\w*)[^\n]*\n([\s\S]*?)```/g
-const blocks = (s) => [...s.matchAll(fenceRe)].map((m) => ({ lang: m[1], body: m[2] }))
 const heads = (s) => (s.replace(/```[\s\S]*?```/g, '').match(/^#{1,6} /gm) || []).map((h) => h.trim())
-// 一行内：`#` 之后视为注释（仅行首/前置空白后出现 # 才切）
-const splitComment = (line) => {
-  const m = line.match(/^([^#]*?)(\s+#.*)$/)
-  return m ? [m[1].replace(/\s+$/, ''), m[2]] : [line, '']
-}
-const hasCJK = (s) => /[\u4e00-\u9fff\uff00-\uffef\u3000-\u303f]/.test(s)
 
+// 全文件树（含非 md 与非代码块），deep 专用：与 tokens 的 walkMd（仅 .md）语义不同，故意不合并
 async function walk(dir, base = dir) {
   const out = []
   for (const e of await readdir(dir, { withFileTypes: true })) {
@@ -76,8 +70,8 @@ for (const rel of rels) {
   }
 
   // 代码块：逐块比对
-  const ub = blocks(u)
-  const lb = blocks(l)
+  const ub = splitBlocks(u)
+  const lb = splitBlocks(l)
   if (ub.length !== lb.length) {
     console.log(`FAIL [代码块数] ${rel}: ${ub.length} -> ${lb.length}`)
     fails++
