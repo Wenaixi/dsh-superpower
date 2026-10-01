@@ -102,6 +102,157 @@ if (deadLinks === 0) {
   console.error(`[verify] relative-reference check FAIL: ${deadLinks} dead link(s)\n`)
 }
 
+
+// ---------------------------------------------------------------------------
+// 资源契约检查：统一三种引用形态（相对链接 / 反引号目录路径 / 反引号裸文件名）
+// 引用集合 ⊆ 技能目录文件集合；孤儿文件 WARN；示例文档白名单豁免
+// ---------------------------------------------------------------------------
+
+console.log('[verify] resource-contract check')
+
+// 自检：提取器必须覆盖三种形态，且围栏代码块内的示例引用不得泄漏
+function assertRefExtraction() {
+  const sample = `见 [a](../using-superpowers/references/codex-tools.md)。先读 \`references/context-safety.md\` 与 \`implementer-prompt.md\`，再 \`bash scripts/review-package x\`。`
+  const refs = extractRefs(sample)
+  if (!refs.includes('../using-superpowers/references/codex-tools.md')) throw new Error('link form not extracted')
+  if (!refs.includes('references/context-safety.md')) throw new Error('tick-path form not extracted')
+  if (!refs.includes('implementer-prompt.md')) throw new Error('tick-bare form not extracted')
+  const fenced = `\`\`bash\nscripts/tool.sh\n\`\`\``
+  if (extractRefs(fenced).length !== 0) throw new Error('fenced example leaked into refs')
+}
+
+assertRefExtraction()
+
+function extractRefs(mdContent) {
+  // 去除围栏代码块，避免示例命令泄漏进引用域
+  const stripped = mdContent.replace(/```[\s\S]*?```/g, '')
+  const refs = new Set()
+  // 形态 a：markdown 链接 [text](path) / [text](<path>)
+  const linkRe = /\[[^\]]*\]\((<?)([^\)>\s]+)\1(?:\s+["'][^"']*["'])?\)/g
+  let m
+  while ((m = linkRe.exec(stripped)) !== null) {
+    const t = m[2]
+    if (!/^(https?:|mailto:|#)/.test(t)) refs.add(t)
+  }
+  // 形态 b：反引号目录路径 \`references/x.md\` / \`scripts/y.sh\`
+  const tickPathRe = /\`((?:references|scripts|prompts|templates|examples)\/[\w./-]+)\`/g
+  while ((m = tickPathRe.exec(stripped)) !== null) refs.add(m[1])
+  // 形态 c：反引号裸文件名 \`x.md\`
+  const tickBareRe = /\`([\w.-]+\.(?:md|js|ts|cjs|sh|html))\`/g
+  while ((m = tickBareRe.exec(stripped)) !== null) refs.add(m[1])
+  return [...refs]
+}
+
+// 示例文档白名单（正文中引用的路径是写作示例，非本仓文件承诺）
+const REFERENCE_EXEMPT = new Set([
+  // 写作示例文档：正文中引用的路径是教学示例，非本仓文件承诺
+  'skills/writing-skills/anthropic-best-practices.md',
+  // 视觉伴侣命名建议：提示用语义化文件名，非文件引用
+  'skills/brainstorming/visual-companion.md',
+  // diagnosing 运行时产物：scrub-log/诊断报告/时间线由 agent 运行生成，非仓内文件
+  'skills/diagnosing-superpowers/prompts/scrub.md',
+  'skills/diagnosing-superpowers/references/github-issues.md',
+  'skills/diagnosing-superpowers/templates/bundle-README.md',
+  // 示例测试：test-pressure 是上游遗留示例，无仓内 ts 测试
+  'skills/systematic-debugging/test-pressure-2.md',
+  // 跨技能引用：muse 平台映射引用 SDD 的 prompt 模板（存在于 subagent-driven-development/）
+  'skills/using-superpowers/references/muse-tools.md',
+  // 调用契约举例：writing-skills 教"必须用 bash/node 前缀"，tool.sh 为示例
+  'skills/writing-skills/SKILL.md',
+])
+
+// 孤儿文件白名单（上游 v6.4.2 原样同步遗留，同步契约禁止删除/移动）
+const ORPHAN_EXEMPT = new Set([
+  'skills/brainstorming/spec-document-reviewer-prompt.md',
+  'skills/systematic-debugging/test-pressure-1.md',
+  'skills/systematic-debugging/test-pressure-2.md',
+  'skills/systematic-debugging/test-pressure-3.md',
+  'skills/systematic-debugging/test-academic.md',
+  'skills/systematic-debugging/CREATION-LOG.md',
+])
+
+
+// 宿主约定文档名（运行时/宿主文件，非本仓文件承诺，不做存在性断言）
+const HOST_DOCS = new Set(['SKILL.md', 'GEMINI.md', 'AGENTS.md', 'CLAUDE.md', 'SOUL.md', 'TODO.md', 'README.md'])
+const RESOURCE_SUBS = ['references', 'prompts', 'templates', 'scripts', 'examples', '']
+
+// 解析技能内引用：技能根 + 已知子目录逐级尝试；跨技能（../）按绝对路径解析
+async function resolveRefInSkill(fileDir, ref) {
+  if (ref.startsWith('../')) {
+    return stat(resolve(fileDir, ref)).then(() => true).catch(() => false)
+  }
+  const base = ref.split('/').pop() || ref
+  if (HOST_DOCS.has(base)) return true
+  // 技能根：向上找含 SKILL.md 的目录
+  let d = fileDir
+  let root = fileDir
+  while (true) {
+    if (await stat(join(d, 'SKILL.md')).then(() => true).catch(() => false)) { root = d; break }
+    const parent = dirname(d)
+    if (parent === d) break
+    d = parent
+  }
+  for (const sub of RESOURCE_SUBS) {
+    const p = sub ? join(root, sub, ref) : join(root, ref)
+    if (await stat(p).then(() => true).catch(() => false)) return true
+  }
+  return false
+}
+
+// 扫描技能目录：引用缺失（FAIL）与存在未引用（WARN），均跳过白名单
+async function resolveResourceRefs(dir) {
+  const missing = []
+  const orphans = []
+  const referenced = new Set()
+
+  async function walk(d) {
+    const list = await readdir(d, { withFileTypes: true })
+    for (const item of list) {
+      const full = join(d, item.name)
+      const rel = relative(root, full).replace(/\\/g, '/')
+      if (item.isDirectory()) {
+        await walk(full)
+      } else if (item.name.endsWith('.md')) {
+        const content = await readFile(full, 'utf8')
+        for (const ref of extractRefs(content)) {
+          const clean = ref.replace(/#.*$/, '')
+          if (!clean || REFERENCE_EXEMPT.has(rel)) continue
+          if (!(await resolveRefInSkill(d, clean))) missing.push({ file: rel, ref })
+        }
+        // 该 md 文件本身若被引用，记为 referenced（basename 匹配）
+        referenced.add(item.name)
+      } else if (!item.name.endsWith('.md')) {
+        continue
+      }
+    }
+  }
+  await walk(dir)
+
+  // 孤儿：非 SKILL.md 且未出现在任何引用里，且不在白名单
+  async function collectAll(d) {
+    const list = await readdir(d, { withFileTypes: true })
+    for (const item of list) {
+      const full = join(d, item.name)
+      const rel = relative(root, full).replace(/\\/g, '/')
+      if (item.isDirectory()) await collectAll(full)
+      else if (!item.name.endsWith('.md')) continue
+      else if (item.name === 'SKILL.md') continue
+      else if (!referenced.has(item.name) && !ORPHAN_EXEMPT.has(rel)) orphans.push(rel)
+    }
+  }
+  await collectAll(dir)
+
+  return { missing, orphans }
+}
+
+const { missing: missingRefs, orphans: orphanFiles } = await resolveResourceRefs(skillDir)
+console.log(`[verify] missing refs: ${missingRefs.length}`)
+for (const { file, ref } of missingRefs) {
+  console.error(`[verify] MISSING REF ${file}: ${ref}`)
+  ok = false
+}
+console.log(`[verify] unreferenced files: ${orphanFiles.length} WARN`)
+for (const o of orphanFiles) console.log(`[verify] WARN unreferenced ${o}`)
 // ---------------------------------------------------------------------------
 // 全仓无 emoji / 图形状态符号硬扫描（符号契约）
 // 范围：skills/ 全文件（含 .sh/.ts/.js 等）、根文档（README/CONTRIBUTING/CHANGELOG 等）、docs/
