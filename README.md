@@ -26,7 +26,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # 进会话，技能自动可用
 ```
 
-> 如需锁定版本，在包名后追加 `@<version>`（如 `@wenaixi/dsh-superpower@<version>`）或 `#v<version>`（GitHub 形式）。
+> 如需锁定版本，在包名后追加 `@<version>`（如 `@wenaixi/dsh-superpower@7.0.0`）或 `#v7.0.0`（GitHub 形式）。
 >
 > > 旧名 `dsh-superpower`（无 scope）已废弃并 `npm deprecate`，请改用 `@wenaixi/dsh-superpower`。
 
