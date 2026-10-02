@@ -10,7 +10,12 @@
 
 > 以主工作台 `web` 为例，其它 profile 改 `--profile` 后名字即可。均走 `dsh.bundle`，零构建、零白名单。
 
-**前置**：`Node >=20`、`pnpm >=9`、`dsh`（`npm i -g @deepseek-ai/dsh`）。
+> **前置**：`Node >=20`、`pnpm >=11`、`dsh`（`npm i -g @deepseek-ai/dsh`）。
+>
+> pnpm 版本说明：DSH 官方设计面向 pnpm 11+（`nodeLinker: isolated` 符号链接隔离 +
+> `allowBuilds` 构建审批）。pnpm 10.x 在规模较大的 profile 上处理依赖图时会触发
+> `FATAL ERROR: invalid array length` 而崩溃（与机器内存无关，8 GB 堆仍崩），
+> 遇到该报错请先升级 pnpm。
 
 ```bash
 # A — npm（推荐，自动安装最新）
@@ -83,20 +88,41 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 ```bash
 pnpm install && pnpm build && pnpm typecheck && node scripts/verify.mjs
-node scripts/check-same-name-priority.mjs    # 同名优先实测一：自研桩（rank 100/300/500/600 均不抢 / rank 0 可抢）
-node scripts/check-same-name-priority-fs.mjs # 同名优先实测二：官方 dsh-skill-filesystem 同层实测（rank 300 不抢）
+
+# 同名优先实测一：自研桩对照（无外部依赖，任何环境可跑）
+node scripts/check-same-name-priority.mjs
+
+# 同名优先实测二：加载官方 @deepseek-ai/dsh-skill-filesystem 做同层实测
+#   该包不在 profile 的直接依赖里，脚本会依次尝试 profile 入口、pnpm store
+#   内 .pnpm 真实目录、全局 dsh 本体三处候选路径。
+#   若本机确实没有 dsh（如纯 CI 环境），用上面的自研桩脚本完成等价验证。
+node scripts/check-same-name-priority-fs.mjs
+
+# 上游同步全量复核（deep + tokens 双绿）
+node scripts/review-sync.mjs
+
 dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
 
 ## 目录
 
 ```
-src/superpowers.ts  # SkillProvider rank 10（本插件技能优先级最高）
-skills/             # 15 技能（中文化，v7.0.0 起无 superpower- 前缀）
-lib/                # 已提交，GitHub 直装零构建
+src/superpowers.ts  # 插件入口与 SkillProvider rank 10（同名词条本包胜出）
+src/catalog.ts      # SkillCatalog：技能编目、mtime 探测、快照复用、规范自检
+src/document.ts     # SkillDocument：frontmatter 解析、契约转换、内建 selfTest
+skills/             # 15 技能（v7.0.0 起无 superpower- 前缀）
+lib/                # 已提交的构建产物，GitHub 直装零构建
+scripts/            # verify 门禁、同名裁决实测、上游同步复核
 ```
 
 版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。`v7.0.0` 起本插件为 **DSH 专属**，已移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层；`v7.0.1` 为修复版，重发干净 tarball（npm `7.0.0` 发布于专属化前、已废弃，勿使用）。详见 `CHANGELOG.md`。
+
+`v7.1.0` 起深化深模块架构：新增 `SkillCatalog`（编目/快照/规范自检）与 `SkillDocument`
+（文档解析/契约转换）两个深度模块，边界自检下沉至模块自身；同名裁决实测脚本共用
+`SkillPriorityHarness` 基座并精简超 40% 样板代码；上游同步复核收敛为统一的
+`scripts/review-sync.mjs` 命令行总线。
+`v7.1.1` 修复官方 filesystem 同名实测脚本在 pnpm isolated 布局下无法定位
+`@deepseek-ai/dsh-skill-filesystem` 的问题（候选路径扩展至 pnpm store 与全局 dsh 本体）。
 
 ## 常见问题
 

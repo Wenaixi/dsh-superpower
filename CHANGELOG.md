@@ -4,6 +4,31 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.1.1] - 2026-10-02
+
+### 修复
+
+- **`scripts/check-same-name-priority-fs.mjs` 在 pnpm isolated 布局下无法定位官方 provider（实测脚本失效）**：脚本原先只在 `~/.dsh/profiles/{web,default}/node_modules` 下查找 `@deepseek-ai/dsh-skill-filesystem`。DSH 官方推荐 `nodeLinker: isolated`，该包并非 profile 的直接依赖，只存在于 dsh 安装本体的依赖树中，故查找必然落空并抛「未在本机 DSH profiles 下找到」。本版将候选路径扩展为三类并补上兜底扫描：profile 入口（符号链接）→ pnpm store 内 `.pnpm/@deepseek-ai+dsh-skill-filesystem@*` 真实目录（通配扫描，peer 后缀形态）→ 全局 dsh 本体（`AppData/Roaming/npm/node_modules/@deepseek-ai/dsh`）。查找失败时的错误信息改为列出全部已尝试路径，并指引改用等价验证脚本 `check-same-name-priority.mjs`（自研桩对照）。修复后官方 filesystem 同层实测由「抛错无法运行」转为 4/4 PASS，「本插件同名技能优先级最高」这一承诺恢复为可运行证据。
+
+## [7.1.0] - 2026-10-02
+
+### 新增
+
+- **提炼 `SkillCatalog` 深度模块**（`src/catalog.ts`）：封装技能目录扫描、mtime 变更探测、不可变快照复用（0 额外 I/O）、热重读自愈回写与名称漂移校验；对外仅暴露 `listCandidates` / `getDefinition` / `verifySpecification()` 三个高阶接口。
+- **提炼 `SkillDocument` 深度模块**（`src/document.ts`）：封装 UTF-8 BOM 消除、CRLF 归一化、YAML frontmatter 解析、调用策略校验与 `toCandidate` / `toDefinition` 契约转换，内建纯内存 `selfTest()` 边界测试表面。
+- **提炼 `SkillPriorityHarness` 测试基座**（`scripts/lib/harness-common.mjs`）：统一编排真实 Cordis 上下文隔离、正反顺序注册生命周期与胜出判定，两个同名裁决实测脚本借此精简超 40% 样板代码。
+- **收敛上游同步复核为统一命令行总线**（`scripts/review-sync.mjs`）：原 `review-sync-deep.mjs` / `-tokens.mjs` / `-fences.mjs` 三个碎片脚本转为轻量代理，`node scripts/review-sync.mjs` 一键完成双绿核查，100% 保持既有调用兼容。
+- **边界自检深度下沉至模块自身**：`SkillDocument.selfTest()` 与 `SkillCatalog.verifySpecification()` 使规范校验成为导出接口的一部分，`scripts/verify.mjs` 彻底纯化为声明式调度器，消灭外部临时目录与脚手架接缝。
+- **扩充伴生脚本健壮性自检**：全仓 10 个伴生脚本纳入跨平台 Shebang 与 LF 行尾健壮性检查。
+
+### 修复
+
+- **发布流水线幂等保护**（`release.yml`）：tag 重推或 workflow 重跑时，`npm view` 命中已发布版本即跳过 publish，避免假红。显式指定 `--registry https://registry.npmjs.org`，修复 runner 镜像覆盖导致的 publish 静默失败。
+
+### 实机验证
+
+- 在 `sp-deep-verify` profile 中完成真实解压安装验证：15 技能全部经 `SkillRegistry` 发现与注册（provider 均为 `superpowers`，rank 裁决胜出）；15 技能全部经 `ctx.skills.get()` 完整提取正文与 frontmatter；`SkillCatalog.verifySpecification()` 在安装环境 8/8 自检全绿；安装产物 88 文件全树扫描零非 DSH 平台残留。
+
 ## [7.0.1] - 2026-10-02
 
 ### 修复

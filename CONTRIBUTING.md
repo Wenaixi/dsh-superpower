@@ -27,6 +27,88 @@ dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 4. PR 描述中注明：关联的上游版本、改动范围、是否影响 `rank` / `providerName` / `skillDir` 等配置
 5. 涉及技能正文的改动，请说明中文化与 DSH 工具映射的处理
 
+## 开发与发布流程
+
+### 环境要求
+
+| 工具 | 版本 | 说明 |
+|---|---|---|
+| Node | `>=20` | 开发与 CI 一致 |
+| pnpm | `>=11` | DSH 官方设计面向 pnpm 11+（`nodeLinker: isolated` + `allowBuilds`）。pnpm 10.x 在规模较大的 profile 上处理依赖图会触发 `FATAL ERROR: invalid array length`，与机器内存无关（8 GB 堆仍崩） |
+| dsh | 最新 | `npm i -g @deepseek-ai/dsh` |
+
+### 本地质量门禁（提交前必须全绿）
+
+```bash
+pnpm install
+pnpm build          # tsc -p tsconfig.build.json
+pnpm typecheck      # tsc --noEmit
+node scripts/verify.mjs                      # 契约门禁：伴生脚本 / 边界自检 8/8 / emoji
+node scripts/check-same-name-priority.mjs    # 同名裁决实测一（自研桩，无外部依赖）
+node scripts/check-same-name-priority-fs.mjs # 同名裁决实测二（加载官方 filesystem）
+node scripts/review-sync.mjs                 # 上游同步全量复核（deep + tokens 双绿）
+```
+
+`verify.mjs` 的 `ALL PASS` 与两个同名裁决脚本的 `全部通过` 均为发布前置条件。
+
+### 发布流程（tag 触发全自动流水线）
+
+发布由 `.github/workflows/release.yml` 接管：**推送 `v*` 标签即自动完成
+npm 发布与 GitHub Release 创建**，本地不需要执行 `npm publish`。
+
+```bash
+# 1. 确认门禁全绿，且工作区干净
+git status --short                 # 应无输出
+
+# 2. 升版本号（patch 例：7.1.1）
+#    编辑 package.json 的 version，字段值须与 tag 完全一致
+
+# 3. 写 CHANGELOG
+#    新增 "## [x.y.z] - YYYY-MM-DD" 段落，标题格式不可变更，
+#    release.yml 依据该标题提取段落生成 GitHub Release 正文
+
+# 4. 更新文档
+#    README.md 的前置要求与版本说明、CLAUDE.md 的当前版本与决策日志
+
+# 5. 提交并推送
+git add -A
+git commit -m "chore(release): v7.1.1 — <本次变更摘要>"
+git push origin main
+
+# 6. 打标签并推送（触发 CI 发布）
+git tag -a v7.1.1 -m "v7.1.1"
+git push origin v7.1.1
+
+# 7. 观察流水线
+#    https://github.com/Wenaixi/dsh-superpower/actions
+```
+
+### 流水线的硬性约束
+
+- **版本一致性**：`release.yml` 会校验 tag 与 `package.json` 的 `version` 是否一致，
+  不一致直接失败。步骤 2 与步骤 6 必须使用同一版本号。
+- **幂等保护**：若该版本已存在于 npm，流水线会跳过 publish 并给出 warning。
+  tag 重推或 workflow 重跑不会造成重复发布假红。
+- **CHANGELOG 段落必需**：缺失对应 `## [版本]` 段落时，Release 正文会退化为
+  一句提示而非报错。发版前务必确认段落存在。
+- **registry 固定**：发布始终走 `https://registry.npmjs.org`，不受 runner
+  镜像配置或本机 `registry` 设置影响。
+- **前置依赖**：仓库 Settings → Secrets and variables → Actions 需配置 `NPM_TOKEN`
+  （Classic Publish Token），否则发布步骤会显式报错并给出配置指引。
+
+### 发版后验证
+
+```bash
+# 官方源确认（国内镜像同步有延迟，以官方源为准）
+npm view @wenaixi/dsh-superpower version --registry https://registry.npmjs.org
+
+# 实机安装验证：确认 tarball 内文件与仓库一致、无平台残留
+pnpm pack
+tar -tzf wenaixi-dsh-superpower-<version>.tgz | head -30
+```
+
+---
+
 ## 同步上游
 
 ```bash

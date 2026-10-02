@@ -15,17 +15,52 @@ const OVERRIDDEN = 'brainstorming'
 const UNTOUCHED = 'test-driven-development'
 
 // 定位本地可用的 dsh-skill-filesystem
+//
+// 该包可能来自三处，按「profile 优先、再全局」的顺序尝试：
+//   1. profile 的 node_modules（npm 扁平布局，或 pnpm isolated 的符号链接入口）
+//   2. pnpm store 内的 .pnpm 真实目录（isolated 布局下顶层可能是符号链接）
+//   3. 全局 npm 安装的 dsh 本体自带（`npm i -g @deepseek-ai/dsh` 时的位置）
+//
+// 只写 profile 路径会在 pnpm isolated 布局下失效：该包并非 profile 的直接依赖，
+// 只存在于 dsh 本体的依赖树中。
 async function findFilesystemModule() {
+  const rel = 'node_modules/@deepseek-ai/dsh-skill-filesystem/lib/index.js'
   const candidates = [
-    join(homedir(), '.dsh/profiles/web/node_modules/@deepseek-ai/dsh-skill-filesystem/lib/index.js'),
-    join(homedir(), '.dsh/profiles/default/node_modules/@deepseek-ai/dsh-skill-filesystem/lib/index.js'),
+    // profile 布局：pnpm isolated 下这里是符号链接，import 可正常解析
+    join(homedir(), '.dsh/profiles/web', rel),
+    join(homedir(), '.dsh/profiles/default', rel),
+    // pnpm isolated 真实目录：符号链接缺失时按包名目录匹配
+    join(homedir(), '.dsh/profiles/web/node_modules/.pnpm/@deepseek-ai+dsh-skill-filesystem@0.2.0-rc.2/node_modules/@deepseek-ai/dsh-skill-filesystem/lib/index.js'),
+    // 全局 dsh 本体自带
+    join(homedir(), 'AppData/Roaming/npm/node_modules/@deepseek-ai/dsh', rel),
+    join(homedir(), '.nvm/versions/node', '*/lib/node_modules/@deepseek-ai/dsh', rel),
   ]
+  // pnpm isolated 下包目录名带 peer 后缀，用通配扫描兜底
+  try {
+    const { readdir } = await import('node:fs/promises')
+    for (const profile of ['web', 'default']) {
+      const pnpmDir = join(homedir(), `.dsh/profiles/${profile}/node_modules/.pnpm`)
+      const entries = await readdir(pnpmDir).catch(() => [])
+      for (const e of entries) {
+        if (e.startsWith('@deepseek-ai+dsh-skill-filesystem@')) {
+          candidates.push(join(pnpmDir, e, 'node_modules/@deepseek-ai/dsh-skill-filesystem/lib/index.js'))
+        }
+      }
+    }
+  } catch {}
+
   for (const c of candidates) {
     try {
       return await import(pathToFileURL(c).href)
     } catch {}
   }
-  throw new Error('未在本机 DSH profiles 下找到 @deepseek-ai/dsh-skill-filesystem')
+  throw new Error(
+    `未找到 @deepseek-ai/dsh-skill-filesystem，已尝试：\n` +
+      candidates.map((c) => `  - ${c}`).join('\n') +
+      `\n提示：若 dsh 通过 npm 全局安装，该包在其自带依赖树中；` +
+      `也可先运行 \`npm i -g @deepseek-ai/dsh\`，或用桩对照脚本 ` +
+      `\`node scripts/check-same-name-priority.mjs\` 完成等价验证。`,
+  )
 }
 
 const fsModule = await findFilesystemModule()
