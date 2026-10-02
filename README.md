@@ -73,6 +73,21 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 > **同名技能优先（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 rank 10 小于 `dsh-skill-filesystem` 的项目/用户根（100–500）与官方内置 bundled（600），因此与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills` 等）或官方 bundled 技能均由本包胜出，本插件技能唯一生效。
 
+## 技能开关
+
+在 DSH Web GUI 插件管理页中打开 `@wenaixi/dsh-superpower` 卡片的详情页，本包 15 个技能各有两个开关：
+
+| 开关 | 关闭后 |
+|---|---|
+| 模型可调用 | 该技能不再进入模型的可用技能目录，`skill` 工具调用也会被拒绝 |
+| 用户可调用 | 该技能不再出现在斜杠命令补全与命令行技能清单中 |
+
+面板还提供全部开启、全部关闭、恢复默认三个批量操作，以及按名称或描述过滤的搜索框。页头标注了本包的 `provider`、`rank` 与 `source`，便于排查同名覆盖。
+
+- **立即生效**：拨动后宿主刷新技能目录，模型的下一轮对话即可看到新的可用技能；当前进行中的这一轮不受影响。
+- **落盘位置**：profile 的 `cordis.patch.yml`，随 profile 一起被备份与迁移，重装插件不丢状态。
+- **作用域**：只影响本包的 15 个技能，不触碰官方或第三方插件提供的技能。
+
 ## 使用
 
 ```
@@ -98,6 +113,9 @@ node scripts/check-same-name-priority.mjs
 #   若本机确实没有 dsh（如纯 CI 环境），用上面的自研桩脚本完成等价验证。
 node scripts/check-same-name-priority-fs.mjs
 
+# 技能开关端到端实测（真实 SkillRegistry：默认全开 / 禁言生效 / 热失效闭环）
+node scripts/check-skill-switches.mjs
+
 # 上游同步全量复核（deep + tokens 双绿）
 node scripts/review-sync.mjs
 
@@ -110,9 +128,12 @@ dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 src/superpowers.ts  # 插件入口与 SkillProvider rank 10（同名词条本包胜出）
 src/catalog.ts      # SkillCatalog：技能编目、mtime 探测、快照复用、规范自检
 src/document.ts     # SkillDocument：frontmatter 解析、契约转换、内建 selfTest
+src/switches.ts     # 技能开关状态：禁言表解包与 invocation 覆盖，内建 selfTest
+src/client.js       # 浏览器半侧：插件卡片详情页的技能开关面板（手写 CJS factory）
 skills/             # 15 技能（v7.0.0 起无 superpower- 前缀）
 lib/                # 已提交的构建产物，GitHub 直装零构建
-scripts/            # verify 门禁、同名裁决实测、上游同步复核
+scripts/            # verify 门禁、同名裁决实测、开关实测、上游同步复核
+scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 skills/ 目录一致
 ```
 
 版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。`v7.0.0` 起本插件为 **DSH 专属**，已移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层；`v7.0.1` 为修复版，重发干净 tarball（npm `7.0.0` 发布于专属化前、已废弃，勿使用）。详见 `CHANGELOG.md`。
@@ -123,6 +144,8 @@ scripts/            # verify 门禁、同名裁决实测、上游同步复核
 `scripts/review-sync.mjs` 命令行总线。
 `v7.1.1` 修复官方 filesystem 同名实测脚本在 pnpm isolated 布局下无法定位
 `@deepseek-ai/dsh-skill-filesystem` 的问题（候选路径扩展至 pnpm store 与全局 dsh 本体）。
+`v7.2.0` 新增技能开关面板：本包升级为双面插件，在插件卡片详情页为 15 个技能各提供
+「模型可调用 / 用户可调用」两个开关，状态落在 profile 配置的 volatile 字段里并立即生效。
 
 ## 常见问题
 
