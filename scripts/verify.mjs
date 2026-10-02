@@ -124,6 +124,20 @@ for (const cr of companionResults) {
 }
 console.log(`[verify] companion-scripts check ${companionOk ? 'PASS' : 'FAIL'}\n`)
 
+// (2.5) 客户端半侧产物形态与命名空间一致性（语法、CJS factory、patch id 对齐）
+console.log('[verify] client-artifact check')
+const clientResults = contract.checkClientArtifact()
+for (const cr of clientResults) {
+  if (cr.ok) {
+    console.log(`[verify]   OK ${cr.file}`)
+  } else {
+    console.error(`[verify]   FAIL ${cr.file}: ${cr.error}`)
+    ok = false
+  }
+}
+const clientOk = clientResults.length > 0 && clientResults.every((cr) => cr.ok)
+console.log(`[verify] client-artifact check ${clientOk ? 'PASS' : 'FAIL'}\n`)
+
 // ---------------------------------------------------------------------------
 // 3. 深度接口边界自检：由 SkillCatalog.verifySpecification() 提供自包含规范报告（接口即测试表面）
 // ---------------------------------------------------------------------------
@@ -180,6 +194,11 @@ const required = [
   'scripts/lib/sync-engine.mjs',
   'lib/superpowers.js',
   'lib/document.js',
+  'lib/switches.js',
+  'lib/client.js',
+  'src/client.js',
+  'scripts/build-client.mjs',
+  'scripts/lib/client-manifest.mjs',
   'cordis.patch.yml',
   'package.json',
 ]

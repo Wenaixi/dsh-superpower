@@ -311,7 +311,80 @@ export class SkillContractChecker {
   }
 
   // -------------------------------------------------------------------------
-  // 5. Visual Companion 后台脚本健全性自检（闭合候选 2 测试表面）
+  // 5. 客户端半侧产物形态与命名空间一致性自检
+  // -------------------------------------------------------------------------
+
+  /**
+   * 校验浏览器半侧产物：语法合法、形态为官方 CJS factory、命名空间与 patch 逐字一致。
+   *
+   * 这三项都是静默失效源：语法错则面板整个不加载；写成 ESM 则 factory 抛错被吞掉，
+   * 页面照常显示只是没有面板；命名空间错位则 configForms.get 返回 undefined，
+   * 开关点击无任何反应。三者都不产生可见报错，只能靠门禁守住。
+   *
+   * @returns 每项检查的成败与失败原因
+   */
+  checkClientArtifact() {
+    const results = []
+    const record = (file, ok, error) => results.push({ file, ok, error })
+    const clientRel = 'lib/client.js'
+    const sourceRel = 'src/client.js'
+    const patchRel = 'cordis.patch.yml'
+
+    let source = null
+    try {
+      source = readFileSync(join(this.rootDir, clientRel), 'utf8')
+    } catch (err) {
+      record(clientRel, false, '读取失败: ' + (err?.message ?? String(err)))
+      return results
+    }
+
+    // (1) 语法合法性
+    const check = spawnSync(process.execPath, ['--check', join(this.rootDir, clientRel)], { encoding: 'utf8' })
+    if (check.status !== 0) {
+      record(clientRel, false, 'node --check 失败: ' + (check.stderr.trim() || 'syntax error'))
+    } else {
+      record(clientRel, true)
+    }
+
+    // (2) 官方 CJS factory 形态：必须是 ModuleLoader.load + factory，且不得写成 ESM
+    const shapeIssues = []
+    if (!source.includes('__ModuleLoader__.load(')) shapeIssues.push('缺少 __ModuleLoader__.load(')
+    if (!/factory\s*:\s*\(/.test(source)) shapeIssues.push('缺少 factory 形参')
+    if (/^[ ]*import[ (]/m.test(source)) shapeIssues.push('顶层出现 ESM import')
+    if (/^[ ]*export[ (]/m.test(source)) shapeIssues.push('顶层出现 ESM export')
+    if (shapeIssues.length > 0) {
+      record(sourceRel, false, shapeIssues.join('；'))
+    } else {
+      record(sourceRel, true)
+    }
+
+    // (3) settings 命名空间与 cordis.patch.yml 的条目 id 逐字一致
+    const declared = source.match(/var[ ]+SETTINGS_NAMESPACE[ ]*=[ ]*'([^']+)'/)
+    if (declared === null) {
+      record(sourceRel, false, '未找到 SETTINGS_NAMESPACE 声明')
+      return results
+    }
+    let patch
+    try {
+      patch = readFileSync(join(this.rootDir, patchRel), 'utf8')
+    } catch (err) {
+      record(patchRel, false, '读取失败: ' + (err?.message ?? String(err)))
+      return results
+    }
+    const patched = patch.match(/^\s*-\s+id:\s*(\S+)\s*$/m)
+    if (patched === null) {
+      record(patchRel, false, '未找到顶层 - id: 条目')
+    } else if (patched[1] !== declared[1]) {
+      record(patchRel, false, `条目 id "${patched[1]}" 与客户端 SETTINGS_NAMESPACE "${declared[1]}" 不一致`)
+    } else {
+      record(patchRel, true)
+    }
+
+    return results
+  }
+
+  // -------------------------------------------------------------------------
+  // 6. Visual Companion 后台脚本健全性自检（闭合候选 2 测试表面）
   // -------------------------------------------------------------------------
 
     checkCompanionScripts() {
