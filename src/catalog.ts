@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill'
 import { SkillDocument, type SpecificationTestResult } from './document.js'
+import { SkillSwitches } from './switches.js'
 
 export interface CatalogLogger {
   warn(msg: string): void
@@ -322,11 +323,12 @@ export class SkillCatalog {
    * 执行完整的核心规范测试套件，返回聚合体检报告（测试表面即接口）。
    */
   static async verifySpecification(): Promise<SpecificationReport> {
-    const [docResults, catResults] = await Promise.all([
+    const [docResults, catResults, switchResults] = await Promise.all([
       SkillDocument.selfTest(),
       SkillCatalog.selfTest(),
+      SkillSwitches.selfTest(),
     ])
-    const results = [...docResults, ...catResults]
+    const results = [...docResults, ...catResults, ...switchResults]
     const passed = results.filter((r) => r.ok).length
     const failed = results.length - passed
     return {

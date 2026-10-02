@@ -8,7 +8,7 @@
 
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context, Volatile } from '@deepseek-ai/cordis'
 import type {
   SkillCandidate,
   SkillDefinition,
@@ -19,10 +19,29 @@ import type {
 import Schema from '@deepseek-ai/schemastery'
 import { SkillCatalog } from './catalog.js'
 import { SkillDocument } from './document.js'
+import { applySwitches, readSwitches, type SkillSwitches } from './switches.js'
 
 // 具名导出深度模块，为验证治理与测试表面提供统一深度接口
 export { SkillCatalog, type SpecificationReport } from './catalog.js'
 export { SkillDocument, type SpecificationTestResult } from './document.js'
+export { SkillSwitches, applySwitches, readSwitches } from './switches.js'
+
+// ---------------------------------------------------------------------------
+// 事件类型补全 — loader/volatile-update 由 cordis-plugin-loader 声明，
+// 而该包在本包依赖图之外（pnpm isolated 布局下不可解析），
+// 故在此按官方插件同样的声明合并方式补上，让开关监听获得类型。
+// ---------------------------------------------------------------------------
+
+declare module '@deepseek-ai/cordis' {
+  interface Events {
+    /**
+     * volatile 配置值已在不重挂载的情况下提交给运行中的 fiber；派发给所属 fiber。
+     * @param paths - 变更的配置路径数组
+     * @mode emit
+     */
+    'loader/volatile-update'(paths: readonly (readonly string[])[]): void
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Config — 默认值写在 schema 里；可选字段用可选属性声明
@@ -33,11 +52,33 @@ export const Config = Schema.object({
   providerName: Schema.string().default('superpowers'),
   /** skill 目录绝对路径，默认取包内 skills/；便于本地调试指向其他目录 */
   skillDir: Schema.string(),
-}).description('@wenaixi/dsh-superpower 插件配置')
+  /** 模型侧禁言表：键为技能名，值为 true 时该技能不再进入模型目录且工具调用被拒 */
+  modelDisabled: Schema.dict(Schema.boolean()).default({}).volatile(),
+  /** 用户侧禁言表：键为技能名，值为 true 时该技能不再出现在斜杠命令与 CLI 清单中 */
+  userDisabled: Schema.dict(Schema.boolean()).default({}).volatile(),
+})
+  // 断言为 Schema<Config>：volatile() 的输出类型来自 schemastery 的传递依赖 cosmokit，
+  // 在 pnpm isolated 布局下它只能经 .pnpm 内部路径引用，tsc 的声明发射拒绝写出这种
+  // 不可移植路径（TS2742）。Config 接口已用 cordis 重导出的 Volatile 精确描述同一形状，
+  // 断言只是让声明发射改写这个 specifier，不改变任何运行时行为。
+  .description('@wenaixi/dsh-superpower 插件配置') as unknown as Schema<Config>
+
+/**
+ * 宿主注入的 volatile 配置引用形态。
+ *
+ * 本地声明而非从 @deepseek-ai/cosmokit 导入：该包只是 schemastery 的传递依赖，
+ * 在 pnpm isolated 布局下不在本包的 node_modules 直连路径上，导入它需要额外声明
+ * 一条 peer 并把产物类型签名绑到 .pnpm 内部路径，收益仅是一个只用到 get() 的形状。
+ */
+interface VolatileRef<T> {
+  get(): T
+}
 
 export interface Config {
   providerName: string
   skillDir?: string
+  modelDisabled: Volatile<Record<string, boolean>>
+  userDisabled: Volatile<Record<string, boolean>>
 }
 
 // ---------------------------------------------------------------------------
@@ -78,27 +119,46 @@ class SuperpowersProvider implements SkillProvider {
   readonly name: string
   readonly catalog: SkillCatalog
   private readonly ctx: Context
+  private readonly control: SkillProviderControl
+  private readonly currentSwitches: () => SkillSwitches
 
-  constructor(ctx: Context, _control: SkillProviderControl, config: Config) {
+  constructor(ctx: Context, control: SkillProviderControl, config: Config) {
     assertNotRuntimeProvider(config.providerName)
     this.ctx = ctx
+    this.control = control
     this.name = config.providerName
     const skillDir = resolveDefaultSkillDir(config.skillDir)
     this.catalog = new SkillCatalog(skillDir)
+    // 每次调用重新解包 volatile 引用，保证开关在运行中被改后立即可见
+    this.currentSwitches = () => readSwitches(config)
+  }
+
+  /**
+   * 让宿主注册表丢弃本 provider 的编目缓存并广播 skills/change，
+   * 同时让本包自己的候选快照重算。缺任一方都会导致开关显示已更新而模型侧目录不变。
+   */
+  invalidate(): void {
+    this.control.invalidate()
+    this.catalog.invalidate()
   }
 
   async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
-    return this.catalog.listCandidates(this.name, SUPERPOWERS_RANK, {
+    const switches = this.currentSwitches()
+    const candidates = await this.catalog.listCandidates(this.name, SUPERPOWERS_RANK, {
       signal: options.signal,
       logger: this.ctx.logger,
     })
+    return candidates.map((candidate) => applySwitches(candidate, switches))
   }
 
   async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
-    return this.catalog.getDefinition(candidate, this.name, {
+    const definition = await this.catalog.getDefinition(candidate, this.name, {
       signal: options.signal,
       logger: this.ctx.logger,
     })
+    // 加载路径同样套用：skill 工具在 get 之后二次校验 isModelInvocable，
+    // 只改 list 的候选会让模型目录消失但工具调用仍成功，语义撕裂。
+    return definition === undefined ? undefined : applySwitches(definition, this.currentSwitches())
   }
 }
 
@@ -126,7 +186,16 @@ export function apply(ctx: Context, config: Config): void {
       activeProvider?.catalog.invalidate()
     })
 
+    // 技能开关是 volatile 配置字段，改动不重挂载插件但会派发此事件。
+    // 借它让宿主注册表丢弃编目缓存并广播 skills/change，模型侧下一轮即可拿到新目录。
+    const disposeVolatile = ctx.on('loader/volatile-update', () => {
+      ctx.logger.debug('[superpowers] skill switches updated, invalidating catalog')
+      activeProvider?.invalidate()
+    })
+
     return () => {
+      // 逆序释放：先摘监听，再注销 provider，最后清理自身快照
+      disposeVolatile()
       disposeListener()
       disposeProvider()
       activeProvider?.catalog.invalidate()
