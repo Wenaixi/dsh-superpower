@@ -65,6 +65,7 @@ export class SyncEngine {
     const out = []
     const dirents = await readdir(dir, { withFileTypes: true })
     for (const e of dirents) {
+      if (e.name.startsWith('.') || e.name === 'node_modules') continue
       const p = join(dir, e.name)
       if (e.isDirectory()) {
         out.push(...(await this.walkFullTree(p, base)))

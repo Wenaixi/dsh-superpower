@@ -9,8 +9,8 @@ import type { Context } from '@deepseek-ai/cordis';
 import Schema from '@deepseek-ai/schemastery';
 import { SkillCatalog } from './catalog.js';
 import { SkillDocument } from './document.js';
-export { SkillCatalog } from './catalog.js';
-export { SkillDocument } from './document.js';
+export { SkillCatalog, type SpecificationReport } from './catalog.js';
+export { SkillDocument, type SpecificationTestResult } from './document.js';
 export declare const Config: Schema<Schemastery.ObjectS<{
     /** 注册到 ctx.skills 的 provider 名称，默认为 superpowers；不可为保留名 runtime */
     providerName: Schema<string, string>;

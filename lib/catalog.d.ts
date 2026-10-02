@@ -9,7 +9,7 @@
  * - Leverage: 同时支撑 SuperpowersProvider 高性能运行时与 verify.mjs 质检治理。
  */
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill';
-import { SkillDocument } from './document.js';
+import { SkillDocument, type SpecificationTestResult } from './document.js';
 export interface CatalogLogger {
     warn(msg: string): void;
     debug?(msg: string): void;
@@ -25,6 +25,13 @@ export interface CatalogEntry {
     skillPath: string;
     document: SkillDocument;
     nameDrift: boolean;
+}
+export interface SpecificationReport {
+    total: number;
+    passed: number;
+    failed: number;
+    results: SpecificationTestResult[];
+    ok: boolean;
 }
 export interface CatalogIntegrityReport {
     total: number;
@@ -75,6 +82,14 @@ export declare class SkillCatalog {
      * 优先命中内存缓存；若发生热重读，自动自愈更新回内存映射，消除状态撕裂缝隙。
      */
     getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions): Promise<SkillDefinition | undefined>;
+    /**
+     * 执行 SkillCatalog 自身边界契约自检（排重与漂移探测）。
+     */
+    static selfTest(): Promise<SpecificationTestResult[]>;
+    /**
+     * 执行完整的核心规范测试套件，返回聚合体检报告（测试表面即接口）。
+     */
+    static verifySpecification(): Promise<SpecificationReport>;
     /**
      * 生成目录健康度与一致性完整体检报告（供 verify 脚本与 CI 质量门禁复用）。
      */

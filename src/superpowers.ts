@@ -21,8 +21,8 @@ import { SkillCatalog } from './catalog.js'
 import { SkillDocument } from './document.js'
 
 // 具名导出深度模块，为验证治理与测试表面提供统一深度接口
-export { SkillCatalog } from './catalog.js'
-export { SkillDocument } from './document.js'
+export { SkillCatalog, type SpecificationReport } from './catalog.js'
+export { SkillDocument, type SpecificationTestResult } from './document.js'
 
 // ---------------------------------------------------------------------------
 // Config — 默认值写在 schema 里；可选字段用可选属性声明

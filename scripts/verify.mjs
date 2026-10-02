@@ -125,86 +125,22 @@ for (const cr of companionResults) {
 console.log(`[verify] companion-scripts check ${companionOk ? 'PASS' : 'FAIL'}\n`)
 
 // ---------------------------------------------------------------------------
-// 3. 深度接口边界自检：SkillDocument/SkillCatalog 契约断言（接口即测试表面）
+// 3. 深度接口边界自检：由 SkillCatalog.verifySpecification() 提供自包含规范报告（接口即测试表面）
 // ---------------------------------------------------------------------------
 
-console.log('[verify] boundary self-check')
+console.log('[verify] boundary self-check (via SkillCatalog.verifySpecification)')
 
-const boundaryResults = []
-const boundaryCheck = async (name, fn) => {
-  try {
-    await fn()
-    boundaryResults.push('OK ' + name)
-  } catch (e) {
-    boundaryResults.push('FAIL ' + name + ' — ' + (e?.message ?? e))
+const specReport = await SkillCatalog.verifySpecification()
+for (const res of specReport.results) {
+  if (res.ok) {
+    console.log(`[verify]   OK ${res.name}`)
+  } else {
+    console.error(`[verify]   FAIL ${res.name} — ${res.error}`)
+    ok = false
   }
 }
-
-await boundaryCheck('BOM 剥离', () => {
-  const d = SkillDocument.fromString('\uFEFF---\nname: bom-test\ndescription: d\n---\nbody')
-  if (d.name !== 'bom-test') throw new Error('BOM 未剥离: ' + JSON.stringify(d.name))
-})
-
-await boundaryCheck('CRLF 归一', () => {
-  const d = SkillDocument.fromString('---\r\nname: crlf-test\r\ndescription: d\r\n---\r\nbody')
-  if (d.body.trim() !== 'body') throw new Error('CRLF 归一失败: ' + JSON.stringify(d.body))
-})
-
-await boundaryCheck('kebab 校验', () => {
-  let threw = null
-  try { SkillDocument.fromString('---\nname: Not_Kebab\ndescription: d\n---\n') } catch (e) { threw = e }
-  if (!threw || !/kebab/.test(String(threw.message))) throw new Error('未抛 kebab 错误: ' + threw?.message)
-})
-
-await boundaryCheck('缺 name 报错', () => {
-  let threw = null
-  try { SkillDocument.fromString('---\ndescription: d\n---\n') } catch (e) { threw = e }
-  if (!threw || !/name/.test(String(threw.message))) throw new Error('未抛缺 name 错误: ' + threw?.message)
-})
-
-await boundaryCheck('缺 description 报错', () => {
-  let threw = null
-  try { SkillDocument.fromString('---\nname: x-test\n---\n') } catch (e) { threw = e }
-  if (!threw || !/description/.test(String(threw.message))) throw new Error('未抛缺 description 错误: ' + threw?.message)
-})
-
-await boundaryCheck('目录排重', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'sp-dup-'))
-  const md = '---\nname: same-name\ndescription: d\n---\nbody'
-  await mkdir(join(base, 'alpha'))
-  await mkdir(join(base, 'bravo'))
-  await Promise.all([writeFile(join(base, 'alpha', 'SKILL.md'), md), writeFile(join(base, 'bravo', 'SKILL.md'), md)])
-  const cat = await SkillCatalog.fromDirectory(base)
-  if (cat.verifyIntegrity().duplicates.length !== 1) throw new Error('duplicates != 1')
-  await rm(base, { recursive: true, force: true })
-})
-
-await boundaryCheck('name drift', async () => {
-  const base = await mkdtemp(join(tmpdir(), 'sp-drift-'))
-  await mkdir(join(base, 'dir-name'))
-  await writeFile(join(base, 'dir-name', 'SKILL.md'), '---\nname: other-name\ndescription: d\n---\nbody')
-  const cat = await SkillCatalog.fromDirectory(base)
-  if (!cat.verifyIntegrity().entries[0]?.nameDrift) throw new Error('nameDrift 未生效')
-  await rm(base, { recursive: true, force: true })
-})
-
-await boundaryCheck('abort 中止', async () => {
-  const ctrl = new AbortController()
-  ctrl.abort()
-  let threw = null
-  try { await SkillDocument.fromFile('whatever.md', ctrl.signal) } catch (e) { threw = e }
-  if (!threw || threw.name !== 'AbortError') throw new Error('未抛 AbortError: ' + (threw?.name ?? '无'))
-})
-
-for (const line of boundaryResults) console.log('[verify]   ' + line)
-const boundaryPass = boundaryResults.filter((l) => l.startsWith('OK')).length
-console.log(`[verify] boundary self-check ${boundaryPass}/8 PASS`)
-if (boundaryPass !== 8) {
-  ok = false
-  console.error('[verify] boundary self-check FAIL')
-} else {
-  console.log('')
-}
+console.log(`[verify] boundary self-check ${specReport.passed}/${specReport.total} ${specReport.ok ? 'PASS' : 'FAIL'}\n`)
+if (!specReport.ok) ok = false
 
 // ---------------------------------------------------------------------------
 // 4. 全仓无 Emoji / 图形状态符号硬扫描（符号契约）

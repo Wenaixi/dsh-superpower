@@ -17,6 +17,7 @@
  */
 
 import { readdir, readFile, stat } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
@@ -313,16 +314,26 @@ export class SkillContractChecker {
   // 5. Visual Companion 后台脚本健全性自检（闭合候选 2 测试表面）
   // -------------------------------------------------------------------------
 
-  checkCompanionScripts() {
-    const companionScripts = [
+    checkCompanionScripts() {
+    const jsScripts = [
       'skills/brainstorming/scripts/server.cjs',
       'skills/brainstorming/scripts/helper.js',
     ]
+    const shellScripts = [
+      'skills/brainstorming/scripts/start-server.sh',
+      'skills/brainstorming/scripts/stop-server.sh',
+      'skills/executing-plans/scripts/task-start',
+      'skills/executing-plans/scripts/task-done',
+      'skills/subagent-driven-development/scripts/task-brief',
+      'skills/subagent-driven-development/scripts/review-package',
+      'skills/subagent-driven-development/scripts/sdd-workspace',
+      'skills/systematic-debugging/find-polluter.sh',
+    ]
     const results = []
 
-    for (const scriptRel of companionScripts) {
+    // (1) JS 伴生脚本 AST 语法自检
+    for (const scriptRel of jsScripts) {
       const fullPath = join(this.rootDir, scriptRel)
-      // 使用 Node 原生 --check 进行静态语法/解析校验
       const check = spawnSync(process.execPath, ['--check', fullPath], { encoding: 'utf8' })
       if (check.status !== 0) {
         results.push({
@@ -334,6 +345,42 @@ export class SkillContractChecker {
         results.push({
           file: scriptRel,
           ok: true,
+        })
+      }
+    }
+
+    // (2) Shell 伴生脚本 Shebang 与换行符健壮性自检
+    for (const scriptRel of shellScripts) {
+      const fullPath = join(this.rootDir, scriptRel)
+      try {
+        const raw = readFileSync ? readFileSync(fullPath, 'utf8') : require('node:fs').readFileSync(fullPath, 'utf8')
+        // 校验 Shebang 头
+        if (!raw.startsWith('#!/')) {
+          results.push({
+            file: scriptRel,
+            ok: false,
+            error: 'missing valid shebang header (must start with #!/)',
+          })
+          continue
+        }
+        // 校验换行符：Shell 脚本在 Unix 环境下若包含 CRLF (\r) 会直接报错
+        if (raw.includes('\r')) {
+          results.push({
+            file: scriptRel,
+            ok: false,
+            error: 'contains carriage return (CRLF) characters which break shell execution on Unix',
+          })
+          continue
+        }
+        results.push({
+          file: scriptRel,
+          ok: true,
+        })
+      } catch (err) {
+        results.push({
+          file: scriptRel,
+          ok: false,
+          error: err?.message || String(err),
         })
       }
     }

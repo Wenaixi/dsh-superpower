@@ -1,92 +1,56 @@
 /**
- * 插件技能优先级实测：用真实 SkillRegistry + 真实插件，验证 rank 10 让本包技能优先级最高。
- *
- * 断言：
- * 1. 仅有本包时，brainstorming 归 superpowers。
- * 2. 叠加 rank 100/300/500/600（filesystem 项目根/自定义根/用户根/官方 bundled）的同名 provider，
- *    brainstorming 仍归 superpowers（本包在全部官方档位之上胜出）。
- * 3. rank 0（比本包更小）的同名 provider 才可抢走；此时其余技能仍归本包（逐名裁决）。
- *
- * 运行：node scripts/check-same-name-priority.mjs
+ * 与自研桩的同层同名实测：
+ * 在同一个 SkillRegistry 内同时注册本包 provider 与 rival provider (rank 600)，
+ * 验证 rank 裁决（本包 rank 10 < rival 600，同名时本包技能胜出）。
  */
 
-import { readFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { check, freshRegistry, exitByFailed } from './lib/harness-common.mjs'
+import { check, freshRegistry, exitByFailed, assertPriorityArbitration } from './lib/harness-common.mjs'
 import superpowers from '../lib/superpowers.js'
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const skillDir = join(root, 'skills')
 const OVERRIDDEN = 'brainstorming'
 const UNTOUCHED = 'test-driven-development'
 
-const state = { failed: 0 }
-
-/** 模拟同名的其他来源 provider：只暴露一个与上游同名的技能，rank 由参数指定。 */
-function stubRivalProvider(rank, source = 'user') {
-  const path = join(skillDir, OVERRIDDEN, 'SKILL.md')
+function createRivalProvider(name, rank, skillNames) {
   return {
-    name: `rival-${rank}`,
+    name,
     async list() {
-      return [
-        {
-          name: OVERRIDDEN,
-          description: '其他来源的同名技能。',
-          invocation: { modelInvocable: true, userInvocable: true },
-          source,
-          provider: `rival-${rank}`,
-          rank,
-          locator: { path },
-          resourceBase: { kind: 'directory', path: dirname(path) },
-          path,
-        },
-      ]
+      return skillNames.map((n) => ({
+        name: n,
+        description: `${name} version of ${n}`,
+        source: 'bundled',
+        provider: name,
+        rank,
+      }))
     },
     async get(candidate) {
       return {
         name: candidate.name,
         description: candidate.description,
-        invocation: candidate.invocation,
-        source: candidate.source,
-        provider: candidate.provider,
-        resourceBase: candidate.resourceBase,
-        path: candidate.path,
-        content: await readFile(candidate.locator.path, 'utf8'),
+        source: 'bundled',
+        provider: name,
+        content: `# ${candidate.name} from ${name}`,
       }
     },
   }
 }
 
-// --- 1. 只有本包 ---------------------------------------------------------
-{
-  const ctx = await freshRegistry()
-  ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
-  const all = await ctx.skills.list({ cwd: root })
-  check(state, '仅有本包：技能总数', all.length, 15)
-  check(state, '仅有本包：brainstorming 归属', all.find((s) => s.name === OVERRIDDEN)?.provider, 'superpowers')
-}
+const state = { failed: 0 }
+console.log('[check-priority] 开始自研桩同名优先级实测...')
 
-// --- 2. 各档位其他来源同名技能均不得抢走（100/300/500/600 > 本包 rank 10，均败）----------
-for (const rank of [100, 300, 500, 600]) {
-  const ctx = await freshRegistry()
-  ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
-  ctx.skills.registerProvider(() => stubRivalProvider(rank, rank === 600 ? 'bundled' : 'user'))
-  const all = await ctx.skills.list({ cwd: root })
-  const hit = all.find((s) => s.name === OVERRIDDEN)
-  check(state, `其他来源 rank ${rank}：本包胜出`, hit?.provider, 'superpowers')
-  check(state, `其他来源 rank ${rank}：不产生重名条目`, all.filter((s) => s.name === OVERRIDDEN).length, 1)
-  check(state, `其他来源 rank ${rank}：总数仍为 15`, all.length, 15)
-}
+await assertPriorityArbitration({
+  state,
+  suiteTitle: 'Mock 对照',
+  registerTargetFirst: async (ctx) => {
+    ctx.plugin(superpowers)
+    ctx.skills.registerProvider(() => createRivalProvider('bundled-skills', 600, [OVERRIDDEN]))
+  },
+  registerRivalFirst: async (ctx) => {
+    ctx.skills.registerProvider(() => createRivalProvider('bundled-skills', 600, [OVERRIDDEN]))
+    ctx.plugin(superpowers)
+  },
+  overriddenSkill: OVERRIDDEN,
+  untouchedSkill: UNTOUCHED,
+  expectedWinnerProvider: 'superpowers',
+})
 
-// --- 3. rank 小于本包（如 0）才可抢走；其余技能仍归本包（逐名裁决）---------
-{
-  const ctx = await freshRegistry()
-  ctx.plugin(superpowers, { providerName: 'superpowers', skillDir })
-  ctx.skills.registerProvider(() => stubRivalProvider(0))
-  const all = await ctx.skills.list({ cwd: root })
-  check(state, 'rank 0 小于 10：其他来源胜出', all.find((s) => s.name === OVERRIDDEN)?.provider, 'rival-0')
-  check(state, '逐名裁决：未被覆盖的技能仍在', all.find((s) => s.name === UNTOUCHED)?.provider, 'superpowers')
-}
-
-exitByFailed('插件优先级实测', state)
+exitByFailed('Mock 对照优先级实测', state)

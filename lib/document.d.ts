@@ -14,6 +14,11 @@ export interface SkillInvocationPolicy {
     modelInvocable: boolean;
     userInvocable: boolean;
 }
+export interface SpecificationTestResult {
+    name: string;
+    ok: boolean;
+    error?: string;
+}
 export interface SkillDocumentData {
     name: string;
     description: string;
@@ -40,6 +45,10 @@ export declare class SkillDocument {
      * 从内存中的原始 markdown 字符串直接解析（用于测试或动态构建）。
      */
     static fromString(raw: string, filePath?: string): SkillDocument;
+    /**
+     * 执行 SkillDocument 核心边界契约规范自检（接口即测试表面）。
+     */
+    static selfTest(): Promise<SpecificationTestResult[]>;
     /**
      * 映射为 DSH SkillCandidate 契约对象。
      */

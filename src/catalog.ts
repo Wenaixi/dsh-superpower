@@ -9,10 +9,11 @@
  * - Leverage: 同时支撑 SuperpowersProvider 高性能运行时与 verify.mjs 质检治理。
  */
 
-import { readdir, stat } from 'node:fs/promises'
+import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill'
-import { SkillDocument } from './document.js'
+import { SkillDocument, type SpecificationTestResult } from './document.js'
 
 export interface CatalogLogger {
   warn(msg: string): void
@@ -31,6 +32,14 @@ export interface CatalogEntry {
   skillPath: string
   document: SkillDocument
   nameDrift: boolean
+}
+
+export interface SpecificationReport {
+  total: number
+  passed: number
+  failed: number
+  results: SpecificationTestResult[]
+  ok: boolean
 }
 
 export interface CatalogIntegrityReport {
@@ -264,6 +273,69 @@ export class SkillCatalog {
     this.cachedCandidates = null // 快照失效，以便下一轮刷新
 
     return doc.toDefinition(providerName)
+  }
+
+  /**
+   * 执行 SkillCatalog 自身边界契约自检（排重与漂移探测）。
+   */
+  static async selfTest(): Promise<SpecificationTestResult[]> {
+    const results: SpecificationTestResult[] = []
+    const runCheck = async (name: string, fn: () => Promise<void>) => {
+      try {
+        await fn()
+        results.push({ name, ok: true })
+      } catch (err: unknown) {
+        results.push({ name, ok: false, error: (err as Error)?.message ?? String(err) })
+      }
+    }
+
+    await runCheck('目录排重', async () => {
+      const base = await mkdtemp(join(tmpdir(), 'sp-dup-'))
+      try {
+        const md = '---\nname: same-name\ndescription: d\n---\nbody'
+        await mkdir(join(base, 'alpha'))
+        await mkdir(join(base, 'bravo'))
+        await Promise.all([writeFile(join(base, 'alpha', 'SKILL.md'), md), writeFile(join(base, 'bravo', 'SKILL.md'), md)])
+        const cat = await SkillCatalog.fromDirectory(base)
+        if (cat.verifyIntegrity().duplicates.length !== 1) throw new Error('duplicates != 1')
+      } finally {
+        await rm(base, { recursive: true, force: true }).catch(() => {})
+      }
+    })
+
+    await runCheck('name drift', async () => {
+      const base = await mkdtemp(join(tmpdir(), 'sp-drift-'))
+      try {
+        await mkdir(join(base, 'dir-name'))
+        await writeFile(join(base, 'dir-name', 'SKILL.md'), '---\nname: other-name\ndescription: d\n---\nbody')
+        const cat = await SkillCatalog.fromDirectory(base)
+        if (!cat.verifyIntegrity().entries[0]?.nameDrift) throw new Error('nameDrift 未生效')
+      } finally {
+        await rm(base, { recursive: true, force: true }).catch(() => {})
+      }
+    })
+
+    return results
+  }
+
+  /**
+   * 执行完整的核心规范测试套件，返回聚合体检报告（测试表面即接口）。
+   */
+  static async verifySpecification(): Promise<SpecificationReport> {
+    const [docResults, catResults] = await Promise.all([
+      SkillDocument.selfTest(),
+      SkillCatalog.selfTest(),
+    ])
+    const results = [...docResults, ...catResults]
+    const passed = results.filter((r) => r.ok).length
+    const failed = results.length - passed
+    return {
+      total: results.length,
+      passed,
+      failed,
+      results,
+      ok: failed === 0,
+    }
   }
 
   /**

@@ -21,6 +21,12 @@ export interface SkillInvocationPolicy {
   userInvocable: boolean
 }
 
+export interface SpecificationTestResult {
+  name: string
+  ok: boolean
+  error?: string
+}
+
 export interface SkillDocumentData {
   name: string
   description: string
@@ -182,6 +188,59 @@ export class SkillDocument {
   static fromString(raw: string, filePath = 'SKILL.md'): SkillDocument {
     const extracted = extractFrontmatter(raw)
     return new SkillDocument(filePath, extracted)
+  }
+
+  /**
+   * 执行 SkillDocument 核心边界契约规范自检（接口即测试表面）。
+   */
+  static async selfTest(): Promise<SpecificationTestResult[]> {
+    const results: SpecificationTestResult[] = []
+    const runCheck = async (name: string, fn: () => void | Promise<void>) => {
+      try {
+        await fn()
+        results.push({ name, ok: true })
+      } catch (err: unknown) {
+        results.push({ name, ok: false, error: (err as Error)?.message ?? String(err) })
+      }
+    }
+
+    await runCheck('BOM 剥离', () => {
+      const d = SkillDocument.fromString('\uFEFF---\nname: bom-test\ndescription: d\n---\nbody')
+      if (d.name !== 'bom-test') throw new Error('BOM 未剥离: ' + JSON.stringify(d.name))
+    })
+
+    await runCheck('CRLF 归一', () => {
+      const d = SkillDocument.fromString('---\r\nname: crlf-test\r\ndescription: d\r\n---\r\nbody')
+      if (d.body.trim() !== 'body') throw new Error('CRLF 归一失败: ' + JSON.stringify(d.body))
+    })
+
+    await runCheck('kebab 校验', () => {
+      let threw: unknown = null
+      try { SkillDocument.fromString('---\nname: Not_Kebab\ndescription: d\n---\n') } catch (e) { threw = e }
+      if (!threw || !/kebab/.test(String((threw as Error)?.message))) throw new Error('未抛 kebab 错误: ' + String(threw))
+    })
+
+    await runCheck('缺 name 报错', () => {
+      let threw: unknown = null
+      try { SkillDocument.fromString('---\ndescription: d\n---\n') } catch (e) { threw = e }
+      if (!threw || !/name/.test(String((threw as Error)?.message))) throw new Error('未抛缺 name 错误: ' + String(threw))
+    })
+
+    await runCheck('缺 description 报错', () => {
+      let threw: unknown = null
+      try { SkillDocument.fromString('---\nname: x-test\n---\n') } catch (e) { threw = e }
+      if (!threw || !/description/.test(String((threw as Error)?.message))) throw new Error('未抛缺 description 错误: ' + String(threw))
+    })
+
+    await runCheck('abort 中止', async () => {
+      const ctrl = new AbortController()
+      ctrl.abort()
+      let threw: unknown = null
+      try { await SkillDocument.fromFile('non-existent-whatever.md', ctrl.signal) } catch (e) { threw = e }
+      if (!threw || (threw as Error).name !== 'AbortError') throw new Error('未抛 AbortError: ' + ((threw as Error)?.name ?? '无'))
+    })
+
+    return results
   }
 
   /**

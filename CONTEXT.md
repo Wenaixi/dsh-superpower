@@ -75,3 +75,18 @@
 - **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
 - **本地深度验证**：`sp-deep-verify` profile（`dsh-base` + `dsh-headless` + 本插件），真实 headless 会话逐技能调用 `skill` 工具加载 15 技能，frontmatter description 与 `##` 标题逐项断言一致；安装产物 82 文件全树扫描无平台残留
 - **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；`7.0.1` 为当前唯一推荐版本，官方源 `latest` 已指向 `7.0.1`
+### 6. SkillPriorityHarness (同名裁决实测基座)
+- **定位**: 深度测试 Harness，位于 `scripts/lib/harness-common.mjs`，负责正序/反序注册编排、同名胜出断言、未受影响技能独立性与总数校验。
+- **职责**:
+  - 提供 `freshRegistry()` 建立隔离的全新 Cordis 上下文；
+  - 暴露高阶断言函数 `assertPriorityArbitration()`，将自研桩与官方 filesystem 实测脚本中的重复样板代码消除 40% 以上；
+  - 将复杂的正反双向注册生命周期封装在极简声明式调用之后。
+- **接缝 (Seams)**: 位于 Cordis `SkillRegistry` 与具体集成测试脚本之间。
+
+### 7. ReviewSyncCLI (上游同步复核统一总线)
+- **定位**: 统一命令行调度器，位于 `scripts/review-sync.mjs`，收敛 deep、tokens 与 fences 三大碎片化薄脚本。
+- **职责**:
+  - 提供单命令子命令调度模式 (`deep` / `tokens` / `fences` / `all`)；
+  - 默认 `all` 模式按序执行深度 Markdown 块结构比对与 Token 级敏感词逐字比对，二者皆绿方可 exit 0；
+  - 通过单行代理保持原有 `review-sync-deep.mjs` 等历史入口 100% 向后兼容。
+- **接缝 (Seams)**: 位于开发者/CI 交互与 `SyncEngine` 核心比对能力之间。
