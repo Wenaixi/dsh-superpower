@@ -35,10 +35,11 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/cosmokit": "~1.8.5",
     "@deepseek-ai/dsh-skill": "0.2.0-rc.2",
     "@deepseek-ai/schemastery": "3.18.4",
-    "typescript": "^5.6.0",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
   },
   "license": "MIT",
   "repository": {
