@@ -33,7 +33,7 @@ dsh --profile web  # 进会话，技能自动可用
 本地开发或离线安装：
 
 ```bash
-git clone https://github.com/Wenaixi/dsh-superpower.git && cd dsh-superpower
+git clone https://github.com/Wenaixi/dsh-superpower && cd dsh-superpower
 pnpm install && pnpm build && node scripts/verify.mjs   # 15/15 PASS
 dsh plugin --profile web add ./                           # 本地路径安装
 pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz
