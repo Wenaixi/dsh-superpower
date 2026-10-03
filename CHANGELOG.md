@@ -6,15 +6,20 @@
 
 ## [7.2.0] - 2026-10-03
 
+### 修复
+
+- **三个批量按钮只作用于单侧（真机实测发现）**：「全部关闭」只写 `modelDisabled`、「恢复默认」只清 `userDisabled`，与按钮文案承诺的「两侧」不符；「恢复默认」尤其隐蔽——它清的是本来就空的一侧，用户侧残值被原样留下，而残值在 UI 上与「已开启」无法区分，只能靠翻配置文件发现。三个按钮现统一作用于两侧。另修正 `submit()` 的字段参数形态：批量路径改为数组，单个开关的调用点随之改为传单元素数组。
+
 ### 新增
 
-- **技能开关面板（UI 逐个管控 15 个技能）**：在 DSH Web GUI 插件管理页中 `@wenaixi/dsh-superpower` 卡片的详情页，为本包 15 个技能各提供两个开关：「模型可调用」与「用户可调用」。关闭模型侧后该技能不再进入模型的可用技能目录且 `skill` 工具调用被拒；关闭用户侧后不再出现在斜杠命令补全与命令行技能清单中。面板另提供全部开启 / 全部关闭 / 恢复默认三个批量操作、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 的只读标注以便排查同名覆盖。
+- **技能开关面板（UI 逐个管控 15 个技能）**：在 DSH Web GUI 插件管理页中 `@wenaixi/dsh-superpower` 卡片的详情页，为本包 15 个技能各提供两个开关：「模型可调用」与「用户可调用」。关闭模型侧后该技能不再进入模型的可用技能目录且 `skill` 工具调用被拒；关闭用户侧后不再出现在斜杠命令补全与命令行技能清单中。面板另提供全部开启 / 全部关闭 / 恢复默认三个批量操作（均同时作用于两侧）、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 的只读标注以便排查同名覆盖。
 - **本包升级为双面插件**：新增 `src/client.js`（手写 CJS factory，经 `scripts/build-client.mjs` 原样复制到 `lib/client.js`）、`exports["./client"]` 与 `dsh.client` 声明。纯终端 profile 不加载浏览器半侧，宿主侧行为不变。
 - **技能开关状态深度模块**（`src/switches.ts`）：封装两个以技能名为键的禁言表的 volatile 解包与 `SkillInvocationPolicy` 覆盖，内建 `selfTest()` 边界自检并随 `SkillCatalog.verifySpecification()` 进入质量门禁。
 - **开关状态落进 profile 配置**：`Config` 新增 `modelDisabled` 与 `userDisabled` 两个 `volatile` 字典字段，写入 profile 的 `cordis.patch.yml`。开关经官方 `ctx.configForms` 通道读写，带乐观并发栅栏；宿主收到 `loader/volatile-update` 后刷新注册表缓存并广播 `skills/change`，模型侧下一轮即可看到新目录。技能仍保留在注册表中并继续占同名裁决权，与在 `SKILL.md` 写 `disable-model-invocation` 语义完全一致。
 - **端到端实测脚本**（`scripts/check-skill-switches.mjs`）：在真实 `SkillRegistry` 上验证默认全开、禁言表生效且不误伤他人、运行中改开关后目录立即刷新三组断言，并接入 `pnpm verify`。
 - **客户端静态清单漂移校验器**（`scripts/lib/client-manifest.mjs`）：构建时逐项比对 `src/client.js` 内联的技能清单与 `skills/` 目录的真实编目，名称、数量、顺序或描述任一不一致即构建失败，守住「`skills/` 是唯一事实来源」。
 - **门禁扩充**：新增客户端产物检查（`node --check`、官方 CJS factory 形态、顶层无 ESM 语法）与「客户端 `SETTINGS_NAMESPACE` 与 `cordis.patch.yml` 条目 id 逐字一致」断言，覆盖三类无报错静默失效。
+- **浏览器端验证脚本**（`scripts/browser/`）：`verify-switch-ui.py` 在真机 Web UI 中点开插件卡片、逐个拨开关、点批量按钮与搜索过滤，并回读 `cordis.patch.yml` 确认落盘；`verify-model-perception.py` 做四阶段闭环，用宿主真实 `SkillRegistry` 复核两侧可见性并逐行比对 UI 显示与宿主目录。地址与路径均由命令行传入，不硬编码本机环境。
 
 ### 变更
 

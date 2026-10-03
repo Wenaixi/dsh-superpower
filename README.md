@@ -82,7 +82,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 | 模型可调用 | 该技能不再进入模型的可用技能目录，`skill` 工具调用也会被拒绝 |
 | 用户可调用 | 该技能不再出现在斜杠命令补全与命令行技能清单中 |
 
-面板还提供全部开启、全部关闭、恢复默认三个批量操作，以及按名称或描述过滤的搜索框。页头标注了本包的 `provider`、`rank` 与 `source`，便于排查同名覆盖。
+面板还提供全部开启、全部关闭、恢复默认三个批量操作，以及按名称或描述过滤的搜索框。页头标注了本包的 `provider`、`rank` 与 `source`，便于排查同名覆盖。三个批量按钮都作用于**两侧**：全部关闭会让这 15 个技能既不被模型看到、也不能由用户手动调用。
 
 - **立即生效**：拨动后宿主刷新技能目录，模型的下一轮对话即可看到新的可用技能；当前进行中的这一轮不受影响。
 - **落盘位置**：profile 的 `cordis.patch.yml`，随 profile 一起被备份与迁移，重装插件不丢状态。
@@ -121,6 +121,33 @@ node scripts/review-sync.mjs
 
 dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
+
+### 浏览器端验证（可选，需本机 dsh 与 Python playwright）
+
+两个脚本只做验证、不依赖仓库产物，全部路径与地址从命令行传入：
+
+| 脚本 | 验证内容 |
+|---|---|
+| `scripts/browser/verify-switch-ui.py` | 真机 Web UI 里点开插件卡片详情页，逐个拨开关、点三个批量按钮、搜索过滤，并回读 `cordis.patch.yml` 确认落盘 |
+| `scripts/browser/verify-model-perception.py` | 四阶段闭环：UI 写入后用宿主真实 `SkillRegistry` 复核两侧可见性，并逐行比对 UI 显示与宿主目录 |
+
+```bash
+# 1. 起一个装了本插件的 profile 的 Web 服务，记下启动日志里的 token
+dsh --profile <profile> --no-open --port 3199
+
+# 2. 面板全量操作
+python scripts/browser/verify-switch-ui.py \
+  http://127.0.0.1:3199 <token> .verify-shots <profile>/cordis.patch.yml .verify-shots/expected.json
+
+# 3. UI 与宿主的四阶段闭环
+python scripts/browser/verify-model-perception.py \
+  http://127.0.0.1:3199 <token> <profile 目录> <profile>/cordis.patch.yml .verify-shots
+```
+
+> `expected.json` 是 15 个技能名的数组，用于断言 UI 行序与 `skills/` 目录一致：
+> `node -e "import('./lib/superpowers.js').then(async m=>{const c=await m.SkillCatalog.fromDirectory('skills');require('fs').writeFileSync('expected.json',JSON.stringify(c.verifyIntegrity().entries.map(e=>e.document.name)))})"`。
+>
+> 截图落在 `.verify-shots/`（已在 `.gitignore` 中）。
 
 ## 目录
 
