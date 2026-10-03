@@ -403,6 +403,30 @@ export class SkillContractChecker {
       record(sourceRel, true, '样式注入契约齐全')
     }
 
+    // (4.5) 界面文案必须全部经 t() 取词。面板 UI 的 i18n 是硬契约：渲染路径一旦
+    //       出现硬编码的裸标签字符串，界面语言切换时该处便成为单语孤岛且无任何报错，
+    //       只能靠静态断言挡住。技能目录（SKILL_CATALOG）与样式字符串属数据与样式，
+    //       不在本断言范围内。
+    const i18nIssues = []
+    const bareMetaLabel = /spSwMetaItem' }, '[a-zA-Z]+'/.exec(source)
+    if (bareMetaLabel !== null) {
+      i18nIssues.push('meta 区存在未走 t() 的硬编码标签 ' + bareMetaLabel[0])
+    }
+    for (const key of ['provider', 'rank', 'source']) {
+      if (!source.includes("t('" + key + "')")) {
+        i18nIssues.push("meta 区缺少 t('" + key + "') 取词调用")
+      }
+      const declared = (source.match(new RegExp(key + ": '", 'g')) || []).length
+      if (declared < 2) {
+        i18nIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declared + ' 处）')
+      }
+    }
+    if (i18nIssues.length > 0) {
+      record(sourceRel, false, i18nIssues.join('；'))
+    } else {
+      record(sourceRel, true, '界面文案全部经 t() 取词')
+    }
+
     // (5) 图标与卡片元数据契约。dsh-app-boot 的 readPluginMeta 在 iconOf 抛错时
     //     只把错误塞进 meta.error，插件仍算「已安装」，但卡片标题描述图标三者全空，
     //     安装与启动日志都不会报——故只能静态断言。

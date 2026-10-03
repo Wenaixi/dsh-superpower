@@ -164,7 +164,7 @@ src/switches.ts     # 技能开关：禁言表解包与 invocation 覆盖，内�
 src/client.js       # 浏览器半侧：插件卡片详情页的技能开关面板，手写 CJS factory
 skills/             # 15 个技能正文与资源
 lib/                # 已提交的构建产物，GitHub 直装免构建
-locale/             # 插件卡片的标题与描述（中英）
+locale/             # 插件卡片的标题与描述（中英）；面板 UI 经官方 locale 注册表双语切换
 icon.png            # 插件卡片、README 顶部、GitHub 头像共用
 scripts/            # 门禁、同名裁决实测、开关实测、上游同步复核、浏览器验证
 scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 skills/ 目录一致
