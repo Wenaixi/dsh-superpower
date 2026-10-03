@@ -43,3 +43,6 @@ junit.xml
 tmp/
 temp/
 .cache/
+
+# 浏览器验证产物（截图与本地产出，不入库）
+.verify-shots/
