@@ -89,6 +89,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 - 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
 - 状态写在 profile 的 `cordis.patch.yml` 里，跟着 profile 一起备份迁移，重装插件不丢。
 - 只影响本包这 15 个技能，不碰官方和第三方插件提供的技能。
+- 语言边界：技能名与描述固定中文；面板 UI 文案跟随宿主界面语言（设置里切换语言即生效）。
 
 ## 使用
 
@@ -179,6 +180,8 @@ scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 sk
 `v7.1.1` 修复官方 filesystem 同名实测脚本在 pnpm isolated 布局下定位不到 `@deepseek-ai/dsh-skill-filesystem` 的问题。
 
 `v7.2.0` 加入技能开关面板，插件升级为双面形态（宿主侧注册技能，浏览器侧渲染开关面板），并补上图标与插件卡片元数据。
+
+`v7.2.1` 固化面板语言边界：技能内容（名称与描述）固定中文不做技能级翻译；面板 UI 文案（标题、按钮、提示、meta 标签）全部并入 `zh`/`en` 词典、经官方 locale 注册表随宿主界面语言切换。底部 `provider`/`rank`/`source` 三个标注不再硬编码英文。
 
 完整变更见 [CHANGELOG.md](./CHANGELOG.md)。
 

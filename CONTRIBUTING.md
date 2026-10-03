@@ -6,6 +6,7 @@
 
 - **同步上游**：v7.0.0 起技能名与目录回归上游命名（无 `superpower-` 前缀），整批同步了上游 `v6.4.2`。之后上游出新版本，按需 cherry-pick 合入并记进 `CHANGELOG.md`。
 - **中文化**：`skills/**/SKILL.md` 与辅助文档保持简体中文，代码、命令、路径、变量名不译。
+- **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串；技能名与描述固定中文，不做技能级翻译。
 - **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 的硬规则——`inject` 声明依赖、`Schemastery Config` 配默认值、副作用一律包在 `ctx.effect` 里、`waterfall` 记得调 `next()`。
 - **失败要响亮**：frontmatter 非法时只跳过那一个技能并 `warn`，不静默吞错。
 
@@ -43,7 +44,7 @@ dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 pnpm install
 pnpm build          # tsc -p tsconfig.build.json
 pnpm typecheck      # tsc --noEmit
-node scripts/verify.mjs                      # 契约门禁：伴生脚本 / 边界自检 / 符号扫描 / 图标与卡片元数据
+node scripts/verify.mjs                      # 契约门禁：伴生脚本 / 边界自检 / 符号扫描 / 图标与卡片元数据 / UI i18n 取词
 node scripts/check-skill-switches.mjs         # 技能开关端到端实测（真实 SkillRegistry）
 node scripts/check-same-name-priority.mjs    # 同名裁决实测一（自研桩，无外部依赖）
 node scripts/check-same-name-priority-fs.mjs # 同名裁决实测二（加载官方 filesystem）
