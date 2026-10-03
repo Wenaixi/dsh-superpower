@@ -8,11 +8,12 @@
 
 ### 修复
 
+- **面板样式从未注入 DOM（真机实测发现）**：`src/client.js` 定义了 `CSS` 常量并在每个类名上写全了 `--dsw-*` 令牌，但没有任何代码把这段 CSS 塞进 `<head>`——类名全部形同虚设，面板实际渲染的是浏览器默认样式（16px 正文、无行高、无分隔线、元信息挤成一坨），且不报任何错。现按官方契约注入 `style[data-plugin-css]` 标签，宿主卸载插件时一并回收。门禁新增三条断言（必须 `createElement('style')` + `head.appendChild` + 带 `data-plugin-css` 标记，且禁止引用 `--dsw-static-*` 原始色板），已用「删掉注入」与「引入 static 色板」两种破坏实测证明可失败。
 - **三个批量按钮只作用于单侧（真机实测发现）**：「全部关闭」只写 `modelDisabled`、「恢复默认」只清 `userDisabled`，与按钮文案承诺的「两侧」不符；「恢复默认」尤其隐蔽——它清的是本来就空的一侧，用户侧残值被原样留下，而残值在 UI 上与「已开启」无法区分，只能靠翻配置文件发现。三个按钮现统一作用于两侧。另修正 `submit()` 的字段参数形态：批量路径改为数组，单个开关的调用点随之改为传单元素数组。
 
 ### 新增
 
-- **技能开关面板（UI 逐个管控 15 个技能）**：在 DSH Web GUI 插件管理页中 `@wenaixi/dsh-superpower` 卡片的详情页，为本包 15 个技能各提供两个开关：「模型可调用」与「用户可调用」。关闭模型侧后该技能不再进入模型的可用技能目录且 `skill` 工具调用被拒；关闭用户侧后不再出现在斜杠命令补全与命令行技能清单中。面板另提供全部开启 / 全部关闭 / 恢复默认三个批量操作（均同时作用于两侧）、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 的只读标注以便排查同名覆盖。
+- **技能开关面板（UI 逐个管控 15 个技能）**：在 DSH Web GUI 插件管理页中 `@wenaixi/dsh-superpower` 卡片的详情页，为本包 15 个技能各提供两个开关：「模型可调用」与「用户可调用」。关闭模型侧后该技能不再进入模型的可用技能目录且 `skill` 工具调用被拒；关闭用户侧后不再出现在斜杠命令补全与命令行技能清单中。面板另提供全部开启 / 全部关闭 / 恢复默认三个批量操作（均同时作用于两侧）、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 的只读标注以便排查同名覆盖。视觉全部取自 DSH 语义令牌（`--dsw-alias-*` 颜色、`--dsw-font-*` 字阶、`--dsw-radius-*` 圆角），行分隔用 `.item + .item { border-top: 0.5px solid var(--dsw-alias-border-l2) }` 相邻兄弟选择器，布局照官方设置表单的字段排版（12px 上下留白、标签在左开关在右），深浅色随 `body[data-ds-dark-theme]` 自动切换。
 - **本包升级为双面插件**：新增 `src/client.js`（手写 CJS factory，经 `scripts/build-client.mjs` 原样复制到 `lib/client.js`）、`exports["./client"]` 与 `dsh.client` 声明。纯终端 profile 不加载浏览器半侧，宿主侧行为不变。
 - **技能开关状态深度模块**（`src/switches.ts`）：封装两个以技能名为键的禁言表的 volatile 解包与 `SkillInvocationPolicy` 覆盖，内建 `selfTest()` 边界自检并随 `SkillCatalog.verifySpecification()` 进入质量门禁。
 - **开关状态落进 profile 配置**：`Config` 新增 `modelDisabled` 与 `userDisabled` 两个 `volatile` 字典字段，写入 profile 的 `cordis.patch.yml`。开关经官方 `ctx.configForms` 通道读写，带乐观并发栅栏；宿主收到 `loader/volatile-update` 后刷新注册表缓存并广播 `skills/change`，模型侧下一轮即可看到新目录。技能仍保留在注册表中并继续占同名裁决权，与在 `SKILL.md` 写 `disable-model-invocation` 语义完全一致。
