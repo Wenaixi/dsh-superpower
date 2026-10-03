@@ -380,6 +380,28 @@ export class SkillContractChecker {
       record(patchRel, true)
     }
 
+    // (4) 样式必须真注入 DOM。CSS 字符串本身通过全部语法与形态检查时，
+    //     漏注入的唯一症状就是「类名存在但一条规则都不生效」，且不报任何错；
+    //     只有断言 createElement('style') + appendChild(head) 才能挡住它。
+    const styleIssues = []
+    if (!/document\.createElement\(\s*'style'\s*\)/.test(source)) {
+      styleIssues.push("缺少 document.createElement('style')")
+    }
+    if (!/document\.head\.appendChild\(/.test(source)) {
+      styleIssues.push('缺少 document.head.appendChild')
+    }
+    if (!/data-plugin-css/.test(source) && !/dataset\.pluginCss/.test(source)) {
+      styleIssues.push('缺少 data-plugin-css 标记（宿主据此回收样式）')
+    }
+    if (/--dsw-static-/.test(source)) {
+      styleIssues.push('样式引用了 --dsw-static-* 原始色板，将与主题脱钩')
+    }
+    if (styleIssues.length > 0) {
+      record(sourceRel, false, styleIssues.join('；'))
+    } else {
+      record(sourceRel, true, '样式注入契约齐全')
+    }
+
     return results
   }
 
