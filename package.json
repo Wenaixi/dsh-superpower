@@ -8,6 +8,8 @@
   "files": [
     "lib/",
     "skills/",
+    "locale/",
+    "icon.png",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
@@ -84,6 +86,8 @@
       "default": "./lib/superpowers.js"
     },
     "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
     "./package.json": "./package.json"
-  }
+  },
+  "icon": "./icon.png"
 }

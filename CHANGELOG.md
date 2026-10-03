@@ -1,31 +1,33 @@
 # 更新日志
 
-本文件记录 `dsh-superpower` 的所有值得关注的变更。**v6.3.1 起本仓库脱离上游 [obra/superpowers](https://github.com/obra/superpowers) 独立演进**；**v7.0.0 起回归上游命名并整批同步上游 v6.4.2**（技能名去掉 `superpower-` 前缀，与上游保持一致）。同步上游新特性时按需 cherry-pick 并记录于此。
+v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步上游 v6.4.2。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
 ## [7.2.0] - 2026-10-03
 
 ### 修复
 
-- **面板样式从未注入 DOM（真机实测发现）**：`src/client.js` 定义了 `CSS` 常量并在每个类名上写全了 `--dsw-*` 令牌，但没有任何代码把这段 CSS 塞进 `<head>`——类名全部形同虚设，面板实际渲染的是浏览器默认样式（16px 正文、无行高、无分隔线、元信息挤成一坨），且不报任何错。现按官方契约注入 `style[data-plugin-css]` 标签，宿主卸载插件时一并回收。门禁新增三条断言（必须 `createElement('style')` + `head.appendChild` + 带 `data-plugin-css` 标记，且禁止引用 `--dsw-static-*` 原始色板），已用「删掉注入」与「引入 static 色板」两种破坏实测证明可失败。
-- **三个批量按钮只作用于单侧（真机实测发现）**：「全部关闭」只写 `modelDisabled`、「恢复默认」只清 `userDisabled`，与按钮文案承诺的「两侧」不符；「恢复默认」尤其隐蔽——它清的是本来就空的一侧，用户侧残值被原样留下，而残值在 UI 上与「已开启」无法区分，只能靠翻配置文件发现。三个按钮现统一作用于两侧。另修正 `submit()` 的字段参数形态：批量路径改为数组，单个开关的调用点随之改为传单元素数组。
+- **面板样式从未注入 DOM（真机实测发现）**：`src/client.js` 里定义了 `CSS` 常量、每个类名都写全了 `--dsw-*` 令牌，却没有任何代码把这段 CSS 塞进 `<head>`，类名等于没写，面板渲染出来是浏览器默认样式（16px 正文、无行高、无分隔线、元信息挤成一坨），而且不报任何错。现按官方契约注入 `style[data-plugin-css]` 标签，宿主卸载插件时一并回收。门禁补了三条断言：必须出现 `createElement('style')`、`head.appendChild` 与 `data-plugin-css` 标记，且禁止引用 `--dsw-static-*` 原始色板。已用「删掉注入」和「引入 static 色板」两种破坏实测，确认这三条会真的失败。
+- **三个批量按钮只作用于单侧（真机实测发现）**：「全部关闭」只写 `modelDisabled`，「恢复默认」只清 `userDisabled`，跟按钮文案承诺的「两侧」对不上。「恢复默认」这条尤其隐蔽：它清的是本来就空的一侧，用户侧残值原样留着，而残值在 UI 上跟「已开启」长得一模一样，只能翻配置文件才发现。三个按钮现统一作用于两侧。顺带修正 `submit()` 的字段参数形态——批量路径改成数组，两个单开关调用点漏改，静默变成「把字符串丢给 `for...of`」，点击无报错、UI 不动、配置零写入。
 
 ### 新增
 
-- **技能开关面板（UI 逐个管控 15 个技能）**：在 DSH Web GUI 插件管理页中 `@wenaixi/dsh-superpower` 卡片的详情页，为本包 15 个技能各提供两个开关：「模型可调用」与「用户可调用」。关闭模型侧后该技能不再进入模型的可用技能目录且 `skill` 工具调用被拒；关闭用户侧后不再出现在斜杠命令补全与命令行技能清单中。面板另提供全部开启 / 全部关闭 / 恢复默认三个批量操作（均同时作用于两侧）、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 的只读标注以便排查同名覆盖。视觉全部取自 DSH 语义令牌（`--dsw-alias-*` 颜色、`--dsw-font-*` 字阶、`--dsw-radius-*` 圆角），行分隔用 `.item + .item { border-top: 0.5px solid var(--dsw-alias-border-l2) }` 相邻兄弟选择器，布局照官方设置表单的字段排版（12px 上下留白、标签在左开关在右），深浅色随 `body[data-ds-dark-theme]` 自动切换。
+- **技能开关面板**：DSH Web GUI 插件管理页里 `@wenaixi/dsh-superpower` 卡片的详情页，本包 15 个技能各有两个开关。关掉模型侧，该技能不再进入模型的可用技能目录，`skill` 工具调用也被拒；关掉用户侧，它不再出现在斜杠命令补全与命令行技能清单里。面板另有全部开启 / 全部关闭 / 恢复默认三个批量操作（都同时作用于两侧）、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 三个只读标注供排查同名覆盖。配色、字阶、圆角全部取自 DSH 语义令牌，行分隔用 `.item + .item { border-top: 0.5px solid var(--dsw-alias-border-l2) }` 相邻兄弟选择器，布局照官方设置表单的字段排版（12px 上下留白、标签在左开关在右），深浅色随 `body[data-ds-dark-theme]` 自动切换。
 - **本包升级为双面插件**：新增 `src/client.js`（手写 CJS factory，经 `scripts/build-client.mjs` 原样复制到 `lib/client.js`）、`exports["./client"]` 与 `dsh.client` 声明。纯终端 profile 不加载浏览器半侧，宿主侧行为不变。
+- **图标与插件卡片元数据**：新增 `icon.png`（肌肉手臂实心剪影，配色沿用 DSH 官方插件图标的 `#67C7FE → #3F77D8` 渐变，浅色深色底都可读）作为 `package.json#icon`；新增 `locale/en.json` 与 `locale/zh.json` 提供卡片标题与描述的中英文本。这两者都需要 `exports` 放行 `./package.json` 与 `./locale/*.json`——漏了会导致卡片只剩包名，而 `dsh-app-boot` 的 `readPluginMeta` 把这类错误塞进 `meta.error` 后就吞掉，安装与启动日志都看不到。README 顶部与 GitHub 头像复用同一个 `icon.png`。
 - **技能开关状态深度模块**（`src/switches.ts`）：封装两个以技能名为键的禁言表的 volatile 解包与 `SkillInvocationPolicy` 覆盖，内建 `selfTest()` 边界自检并随 `SkillCatalog.verifySpecification()` 进入质量门禁。
 - **开关状态落进 profile 配置**：`Config` 新增 `modelDisabled` 与 `userDisabled` 两个 `volatile` 字典字段，写入 profile 的 `cordis.patch.yml`。开关经官方 `ctx.configForms` 通道读写，带乐观并发栅栏；宿主收到 `loader/volatile-update` 后刷新注册表缓存并广播 `skills/change`，模型侧下一轮即可看到新目录。技能仍保留在注册表中并继续占同名裁决权，与在 `SKILL.md` 写 `disable-model-invocation` 语义完全一致。
 - **端到端实测脚本**（`scripts/check-skill-switches.mjs`）：在真实 `SkillRegistry` 上验证默认全开、禁言表生效且不误伤他人、运行中改开关后目录立即刷新三组断言，并接入 `pnpm verify`。
 - **客户端静态清单漂移校验器**（`scripts/lib/client-manifest.mjs`）：构建时逐项比对 `src/client.js` 内联的技能清单与 `skills/` 目录的真实编目，名称、数量、顺序或描述任一不一致即构建失败，守住「`skills/` 是唯一事实来源」。
-- **门禁扩充**：新增客户端产物检查（`node --check`、官方 CJS factory 形态、顶层无 ESM 语法）与「客户端 `SETTINGS_NAMESPACE` 与 `cordis.patch.yml` 条目 id 逐字一致」断言，覆盖三类无报错静默失效。
+- **门禁扩充**：客户端产物检查（`node --check`、官方 CJS factory 形态、顶层无 ESM 语法、样式真注入且不引用 static 色板）、「客户端 `SETTINGS_NAMESPACE` 与 `cordis.patch.yml` 条目 id 逐字一致」、以及图标与卡片元数据契约（icon 必须包内相对路径、格式合法、上限 256 KiB、`files` 已放行，`exports` 已放行 `./package.json` 与 `./locale/*.json`，两个 locale 文件都有 `meta.title` 与 `meta.description`）。这三类都是无报错静默失效，只能静态断言；每条都用破坏实测验证过会失败。
 - **浏览器端验证脚本**（`scripts/browser/`）：`verify-switch-ui.py` 在真机 Web UI 中点开插件卡片、逐个拨开关、点批量按钮与搜索过滤，并回读 `cordis.patch.yml` 确认落盘；`verify-model-perception.py` 做四阶段闭环，用宿主真实 `SkillRegistry` 复核两侧可见性并逐行比对 UI 显示与宿主目录。地址与路径均由命令行传入，不硬编码本机环境。
 
 ### 变更
 
 - `@deepseek-ai/schemastery` 的 peer 与 dev 约束提升至 `^3.18.4`：3.18.1 的类型声明不含 `.volatile()`，是本版开关字段的类型基础。
 - 新增开发依赖 `@deepseek-ai/cosmokit`（`~1.8.5`），供端到端实测脚本按宿主同构方式构造与更新 volatile 引用。
+- README 重写：去掉自述性说明与重复表述，命令块保持原样可复制，新增「卡片标题描述图标为空」这一常见故障的排查条目。
 
 ## [7.1.1] - 2026-10-02
 
@@ -37,16 +39,16 @@
 
 ### 新增
 
-- **提炼 `SkillCatalog` 深度模块**（`src/catalog.ts`）：封装技能目录扫描、mtime 变更探测、不可变快照复用（0 额外 I/O）、热重读自愈回写与名称漂移校验；对外仅暴露 `listCandidates` / `getDefinition` / `verifySpecification()` 三个高阶接口。
-- **提炼 `SkillDocument` 深度模块**（`src/document.ts`）：封装 UTF-8 BOM 消除、CRLF 归一化、YAML frontmatter 解析、调用策略校验与 `toCandidate` / `toDefinition` 契约转换，内建纯内存 `selfTest()` 边界测试表面。
-- **提炼 `SkillPriorityHarness` 测试基座**（`scripts/lib/harness-common.mjs`）：统一编排真实 Cordis 上下文隔离、正反顺序注册生命周期与胜出判定，两个同名裁决实测脚本借此精简超 40% 样板代码。
-- **收敛上游同步复核为统一命令行总线**（`scripts/review-sync.mjs`）：原 `review-sync-deep.mjs` / `-tokens.mjs` / `-fences.mjs` 三个碎片脚本转为轻量代理，`node scripts/review-sync.mjs` 一键完成双绿核查，100% 保持既有调用兼容。
-- **边界自检深度下沉至模块自身**：`SkillDocument.selfTest()` 与 `SkillCatalog.verifySpecification()` 使规范校验成为导出接口的一部分，`scripts/verify.mjs` 彻底纯化为声明式调度器，消灭外部临时目录与脚手架接缝。
-- **扩充伴生脚本健壮性自检**：全仓 10 个伴生脚本纳入跨平台 Shebang 与 LF 行尾健壮性检查。
+- **提炼 `SkillCatalog` 深度模块**（`src/catalog.ts`）：封装技能目录扫描、mtime 变更探测、不可变快照复用（0 额外 I/O）、热重读自愈回写与名称漂移校验；对外只暴露 `listCandidates` / `getDefinition` / `verifySpecification()` 三个接口。
+- **提炼 `SkillDocument` 深度模块**（`src/document.ts`）：封装 BOM 消除、CRLF 归一化、YAML frontmatter 解析、调用策略校验与 `toCandidate` / `toDefinition` 契约转换，内建 `selfTest()` 边界自检。
+- **提炼 `SkillPriorityHarness` 测试基座**（`scripts/lib/harness-common.mjs`）：统一编排真实 Cordis 上下文隔离、正反顺序注册与胜出判定，两个同名裁决实测脚本借此精简超 40% 样板代码。
+- **收敛上游同步复核为统一命令行总线**（`scripts/review-sync.mjs`）：`review-sync-deep.mjs` / `-tokens.mjs` / `-fences.mjs` 三个碎片脚本转为轻量代理，`node scripts/review-sync.mjs` 一键双绿，原有调用方式保持可用。
+- **边界自检下沉至模块自身**：`SkillDocument.selfTest()` 与 `SkillCatalog.verifySpecification()` 把规范校验变成导出接口的一部分，`scripts/verify.mjs` 随之退化为纯声明式调度器，不再需要外部临时目录与脚手架。
+- **扩充伴生脚本健壮性自检**：全仓 10 个伴生脚本纳入 Shebang 与 LF 行尾的跨平台检查。
 
 ### 修复
 
-- **发布流水线幂等保护**（`release.yml`）：tag 重推或 workflow 重跑时，`npm view` 命中已发布版本即跳过 publish，避免假红。显式指定 `--registry https://registry.npmjs.org`，修复 runner 镜像覆盖导致的 publish 静默失败。
+- **发布流水线幂等保护**（`release.yml`）：tag 重推或 workflow 重跑时，`npm view` 命中已发布版本即跳过 publish，避免假红。同时显式指定 `--registry https://registry.npmjs.org`，修掉 runner 镜像覆盖导致 publish 静默失败的问题。
 
 ### 实机验证
 

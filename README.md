@@ -4,24 +4,19 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 
-[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 专属移植版 — 15 个技能注入 `ctx.skills`，开箱即用，全中文，**仅支持 DSH (DeepSeek Harness) 平台**，不提供其它 AI 宿主适配。
+<img src="./icon.png" alt="@wenaixi/dsh-superpower" width="128" height="128">
+
+[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 移植版。15 个技能注入 `ctx.skills`，装上就能用，正文全中文。
 
 ## 安装
 
-> 以主工作台 `web` 为例，其它 profile 改 `--profile` 后名字即可。均走 `dsh.bundle`，零构建、零白名单。
-
-> **前置**：`Node >=20`、`pnpm >=11`、`dsh`（`npm i -g @deepseek-ai/dsh`）。
->
-> pnpm 版本说明：DSH 官方设计面向 pnpm 11+（`nodeLinker: isolated` 符号链接隔离 +
-> `allowBuilds` 构建审批）。pnpm 10.x 在规模较大的 profile 上处理依赖图时会触发
-> `FATAL ERROR: invalid array length` 而崩溃（与机器内存无关，8 GB 堆仍崩），
-> 遇到该报错请先升级 pnpm。
+需要 Node 20 以上、pnpm 11 以上，以及 dsh 本体（`npm i -g @deepseek-ai/dsh`）。下面以 `web` profile 为例，换个 profile 名字即可。
 
 ```bash
-# A — npm（推荐，自动安装最新）
+# A — npm（推荐，自动装最新）
 dsh plugin --profile web add @wenaixi/dsh-superpower
 
-# B — GitHub 直装（无视镜像延迟）
+# B — GitHub 直装（绕过镜像延迟）
 dsh plugin --profile web add github:Wenaixi/dsh-superpower
 
 # 验证
@@ -31,89 +26,96 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # 进会话，技能自动可用
 ```
 
-> 如需锁定版本，在包名后追加 `@<version>`（如 `@wenaixi/dsh-superpower@7.0.1`）或 `#v7.0.1`（GitHub 形式）。
->
-> > 旧名 `dsh-superpower`（无 scope）已废弃并 `npm deprecate`，请改用 `@wenaixi/dsh-superpower`。
+要锁版本就在包名后加 `@<version>`（`@wenaixi/dsh-superpower@7.2.0`）或 `#v7.2.0`。
 
-其它：
+旧包名 `dsh-superpower`（不带 scope）已经废弃并 `npm deprecate`，请换成带 scope 的。
+
+本地开发或离线安装：
 
 ```bash
 git clone https://github.com/Wenaixi/dsh-superpower.git && cd dsh-superpower
 pnpm install && pnpm build && node scripts/verify.mjs   # 15/15 PASS
 dsh plugin --profile web add ./                           # 本地路径安装
-pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz  # 离线 tarball
+pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz
 
-# 更新 / 卸载（同样自动取最新）
+# 更新 / 卸载
 dsh plugin --profile web add @wenaixi/dsh-superpower
 dsh plugin --profile web remove @wenaixi/dsh-superpower
 ```
 
 ## 是什么
 
-强制性方法论而非可选建议：先设计 → 计划切片 → TDD → 系统化调试 → 评审集成。随 `dsh.bundle` 安装/卸载，不污染用户目录，HMR 自动重建。
+一套强制的工程方法论，模型不按顺序走就会做错：先设计，再把计划切成可校验的小步，然后测试驱动，调试时先找根因，收尾前必须跑验证命令。装在 `dsh.bundle` 里，不往用户目录里写东西，卸载干净，HMR 会自动重建。
 
 ## 包含技能
 
-| 技能 | 触发时机 |
+| 技能 | 什么时候用 |
 |---|---|
-| `using-superpowers` | 任意会话起点（1% 原则） |
-| `brainstorming` | 新功能前，Spike / Bounded / Architectural 分级 |
-| `writing-plans` | 设计获批后，切"一项可校验结果的动作"任务 |
-| `using-git-worktrees` | 隔离分支 |
-| `executing-plans` / `subagent-driven-development` | 按计划执行，前者内联整跑一次终审，后者每任务一 subagent + 两阶段评审 |
-| `dispatching-parallel-agents` | 并行分发 |
-| `test-driven-development` | RED-GREEN-REFACTOR |
-| `systematic-debugging` / `verification-before-completion` | 调试闭环 |
-| `requesting-code-review` / `receiving-code-review` | 评审 |
-| `diagnosing-superpowers` | 会话出问题后定位根因（`path:line` 证据） |
-| `finishing-a-development-branch` | 集成 |
-| `writing-skills` | 写新技能 |
+| `using-superpowers` | 每次会话开头，先查有没有该用的技能 |
+| `brainstorming` | 新功能动手前，把需求和设计问清楚 |
+| `writing-plans` | 设计定了，拆成一项一项能验证的任务 |
+| `using-git-worktrees` | 需要和当前工作区隔离 |
+| `executing-plans` | 在当前会话里亲自把计划跑完 |
+| `subagent-driven-development` | 计划里有多件独立的事，交给 subagent 分头做 |
+| `dispatching-parallel-agents` | 两件以上互不依赖的事并行分发 |
+| `test-driven-development` | 先写测试再写实现 |
+| `systematic-debugging` | 出了 bug，先定位根因再改 |
+| `verification-before-completion` | 说「完成」之前必须跑验证命令 |
+| `requesting-code-review` | 任务做完、发 PR 前求评审 |
+| `receiving-code-review` | 收到评审意见，先技术核实再改 |
+| `diagnosing-superpowers` | 会话出问题或成本异常时定位原因 |
+| `finishing-a-development-branch` | 决定合并、发 PR 还是留着分支 |
+| `writing-skills` | 新建或改技能 |
 
-映射：`Bash→pwsh`、`Read/Write→fs` 等见 `skills/using-superpowers/references/dsh-tools.md`。
+工具映射（`Bash` 到 `pwsh`、`Read/Write` 到 `fs` 等）在 `skills/using-superpowers/references/dsh-tools.md`。
 
-> **同名技能优先（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 rank 10 小于 `dsh-skill-filesystem` 的项目/用户根（100–500）与官方内置 bundled（600），因此与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills` 等）或官方 bundled 技能均由本包胜出，本插件技能唯一生效。
+### 同名技能谁生效
+
+官方注册表在同层重名时按 `rank` 从小到大裁决。本包 rank 是 10，比 `dsh-skill-filesystem` 的项目级和用户级（100–500）以及官方内置 bundled（600）都小，所以只要有同名技能，本包这份生效，不会有两套规则打架。
 
 ## 技能开关
 
-在 DSH Web GUI 插件管理页中打开 `@wenaixi/dsh-superpower` 卡片的详情页，本包 15 个技能各有两个开关：
+插件管理页里点开 `@wenaixi/dsh-superpower` 卡片，详情页底部就是开关面板。每个技能两个开关：
 
-| 开关 | 关闭后 |
+| 开关 | 关掉之后 |
 |---|---|
-| 模型可调用 | 该技能不再进入模型的可用技能目录，`skill` 工具调用也会被拒绝 |
-| 用户可调用 | 该技能不再出现在斜杠命令补全与命令行技能清单中 |
+| 模型可调用 | 技能不再出现在模型的可用技能目录里，`skill` 工具调用也会被拒 |
+| 用户可调用 | 技能不再出现在斜杠命令补全和命令行技能清单里 |
 
-面板还提供全部开启、全部关闭、恢复默认三个批量操作，以及按名称或描述过滤的搜索框。页头标注了本包的 `provider`、`rank` 与 `source`，便于排查同名覆盖。三个批量按钮都作用于**两侧**：全部关闭会让这 15 个技能既不被模型看到、也不能由用户手动调用。
+面板上方还有全部开启、全部关闭、恢复默认三个批量操作和一个搜索框。三个批量按钮都同时作用于两侧，所以「全部关闭」会让这 15 个技能既不被模型看到，你也没法手动调用。
 
-- **立即生效**：拨动后宿主刷新技能目录，模型的下一轮对话即可看到新的可用技能；当前进行中的这一轮不受影响。
-- **落盘位置**：profile 的 `cordis.patch.yml`，随 profile 一起被备份与迁移，重装插件不丢状态。
-- **作用域**：只影响本包的 15 个技能，不触碰官方或第三方插件提供的技能。
+页头标着本包的 `provider`、`rank`、`source`，排查同名覆盖时用得上。
+
+- 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
+- 状态写在 profile 的 `cordis.patch.yml` 里，跟着 profile 一起备份迁移，重装插件不丢。
+- 只影响本包这 15 个技能，不碰官方和第三方插件提供的技能。
 
 ## 使用
 
 ```
-“帮我做 XXX”  → brainstorming → writing-plans → subagent-driven-development
-“修这个缺陷”  → systematic-debugging
-“帮我评审”    → requesting-code-review
-“刚才会话出问题了” → diagnosing-superpowers
+「帮我做 XXX」  → brainstorming → writing-plans → subagent-driven-development
+「修这个缺陷」  → systematic-debugging
+「帮我评审」    → requesting-code-review
+「刚才会话出问题了」 → diagnosing-superpowers
 ```
 
-校验：`await ctx.skills.list({cwd})` 应有 15 条 `provider: superpowers`。
+校验：`await ctx.skills.list({cwd})` 应该返回 15 条 `provider: superpowers`。
 
 ## 开发
 
 ```bash
 pnpm install && pnpm build && pnpm typecheck && node scripts/verify.mjs
 
-# 同名优先实测一：自研桩对照（无外部依赖，任何环境可跑）
+# 同名优先实测一：自研桩对照，无外部依赖，任何环境可跑
 node scripts/check-same-name-priority.mjs
 
 # 同名优先实测二：加载官方 @deepseek-ai/dsh-skill-filesystem 做同层实测
 #   该包不在 profile 的直接依赖里，脚本会依次尝试 profile 入口、pnpm store
 #   内 .pnpm 真实目录、全局 dsh 本体三处候选路径。
-#   若本机确实没有 dsh（如纯 CI 环境），用上面的自研桩脚本完成等价验证。
+#   本机没装 dsh（比如纯 CI）就用上面的自研桩脚本做等价验证。
 node scripts/check-same-name-priority-fs.mjs
 
-# 技能开关端到端实测（真实 SkillRegistry：默认全开 / 禁言生效 / 热失效闭环）
+# 技能开关端到端实测：真实 SkillRegistry 上验证默认全开、禁言生效、热失效闭环
 node scripts/check-skill-switches.mjs
 
 # 上游同步全量复核（deep + tokens 双绿）
@@ -122,14 +124,14 @@ node scripts/review-sync.mjs
 dsh --profile web --dump-config  # 断言 "# == @wenaixi/dsh-superpower"
 ```
 
-### 浏览器端验证（可选，需本机 dsh 与 Python playwright）
+### 浏览器端验证
 
-两个脚本只做验证、不依赖仓库产物，全部路径与地址从命令行传入：
+可选，需要本机装好 dsh 和 Python 的 playwright。两个脚本只做验证，地址和路径都从命令行传：
 
-| 脚本 | 验证内容 |
+| 脚本 | 验什么 |
 |---|---|
-| `scripts/browser/verify-switch-ui.py` | 真机 Web UI 里点开插件卡片详情页，逐个拨开关、点三个批量按钮、搜索过滤，并回读 `cordis.patch.yml` 确认落盘 |
-| `scripts/browser/verify-model-perception.py` | 四阶段闭环：UI 写入后用宿主真实 `SkillRegistry` 复核两侧可见性，并逐行比对 UI 显示与宿主目录 |
+| `scripts/browser/verify-switch-ui.py` | 真机 Web UI 里点开插件卡片，逐个拨开关、点批量按钮、搜索过滤，再回读 `cordis.patch.yml` 确认落盘 |
+| `scripts/browser/verify-model-perception.py` | 四阶段闭环：UI 写完用宿主真实 `SkillRegistry` 复核两侧可见性，并逐行比对 UI 显示与宿主目录 |
 
 ```bash
 # 1. 起一个装了本插件的 profile 的 Web 服务，记下启动日志里的 token
@@ -144,49 +146,57 @@ python scripts/browser/verify-model-perception.py \
   http://127.0.0.1:3199 <token> <profile 目录> <profile>/cordis.patch.yml .verify-shots
 ```
 
-> `expected.json` 是 15 个技能名的数组，用于断言 UI 行序与 `skills/` 目录一致：
-> `node -e "import('./lib/superpowers.js').then(async m=>{const c=await m.SkillCatalog.fromDirectory('skills');require('fs').writeFileSync('expected.json',JSON.stringify(c.verifyIntegrity().entries.map(e=>e.document.name)))})"`。
->
-> 截图落在 `.verify-shots/`（已在 `.gitignore` 中）。
+`expected.json` 是 15 个技能名的数组，用来断言 UI 行序和 `skills/` 目录一致：
+
+```bash
+node -e "import('./lib/superpowers.js').then(async m=>{const c=await m.SkillCatalog.fromDirectory('skills');require('fs').writeFileSync('expected.json',JSON.stringify(c.verifyIntegrity().entries.map(e=>e.document.name)))})"
+```
+
+截图落在 `.verify-shots/`，已在 `.gitignore` 里。
 
 ## 目录
 
 ```
-src/superpowers.ts  # 插件入口与 SkillProvider rank 10（同名词条本包胜出）
+src/superpowers.ts  # 插件入口，SkillProvider rank 10
 src/catalog.ts      # SkillCatalog：技能编目、mtime 探测、快照复用、规范自检
 src/document.ts     # SkillDocument：frontmatter 解析、契约转换、内建 selfTest
-src/switches.ts     # 技能开关状态：禁言表解包与 invocation 覆盖，内建 selfTest
-src/client.js       # 浏览器半侧：插件卡片详情页的技能开关面板（手写 CJS factory）
-skills/             # 15 技能（v7.0.0 起无 superpower- 前缀）
-lib/                # 已提交的构建产物，GitHub 直装零构建
-scripts/            # verify 门禁、同名裁决实测、开关实测、上游同步复核
+src/switches.ts     # 技能开关：禁言表解包与 invocation 覆盖，内建 selfTest
+src/client.js       # 浏览器半侧：插件卡片详情页的技能开关面板，手写 CJS factory
+skills/             # 15 个技能正文与资源
+lib/                # 已提交的构建产物，GitHub 直装免构建
+locale/             # 插件卡片的标题与描述（中英）
+icon.png            # 插件卡片、README 顶部、GitHub 头像共用
+scripts/            # 门禁、同名裁决实测、开关实测、上游同步复核、浏览器验证
 scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 skills/ 目录一致
 ```
 
-版本：`v7.0.0` 起技能名回归上游命名（无 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；本插件技能优先级最高（rank 10），同名技能本包胜出。`v7.0.0` 起本插件为 **DSH 专属**，已移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层；`v7.0.1` 为修复版，重发干净 tarball（npm `7.0.0` 发布于专属化前、已废弃，勿使用）。详见 `CHANGELOG.md`。
+## 版本沿革
 
-`v7.1.0` 起深化深模块架构：新增 `SkillCatalog`（编目/快照/规范自检）与 `SkillDocument`
-（文档解析/契约转换）两个深度模块，边界自检下沉至模块自身；同名裁决实测脚本共用
-`SkillPriorityHarness` 基座并精简超 40% 样板代码；上游同步复核收敛为统一的
-`scripts/review-sync.mjs` 命令行总线。
-`v7.1.1` 修复官方 filesystem 同名实测脚本在 pnpm isolated 布局下无法定位
-`@deepseek-ai/dsh-skill-filesystem` 的问题（候选路径扩展至 pnpm store 与全局 dsh 本体）。
-`v7.2.0` 新增技能开关面板：本包升级为双面插件，在插件卡片详情页为 15 个技能各提供
-「模型可调用 / 用户可调用」两个开关，状态落在 profile 配置的 volatile 字段里并立即生效。
+`v7.0.0` 起技能名回归上游命名（去掉 `superpower-` 前缀）并整批同步上游 `obra/superpowers v6.4.2`；插件变成 DSH 专属，移除了 Claude Code、Codex、Gemini CLI 等其它宿主的兼容层。npm 上的 `7.0.0` 发布在专属化改造之前，已废弃。
+
+`v7.1.0` 提炼 `SkillCatalog` 与 `SkillDocument` 两个深度模块，把边界自检下沉进模块自身。
+
+`v7.1.1` 修复官方 filesystem 同名实测脚本在 pnpm isolated 布局下定位不到 `@deepseek-ai/dsh-skill-filesystem` 的问题。
+
+`v7.2.0` 加入技能开关面板，插件升级为双面形态（宿主侧注册技能，浏览器侧渲染开关面板），并补上图标与插件卡片元数据。
+
+完整变更见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 常见问题
 
-404/镜像延迟请改用 GitHub 形式或 `--registry https://registry.npmjs.org`（官方源已是最新）；白名单不需要；`latest` 可用 `npm view @wenaixi/dsh-superpower --registry https://registry.npmjs.org` 查看。
+**装完 404 或者版本不对？** 换 GitHub 形式安装，或者加 `--registry https://registry.npmjs.org` 走官方源。不需要配置白名单。查最新版本用 `npm view @wenaixi/dsh-superpower --registry https://registry.npmjs.org`。
+
+**卡片标题、描述或图标是空的？** 根因通常是 `package.json` 的 `exports` 没放行 `./package.json` 和 `./locale/*.json`，或者 `icon` 指向了包外的绝对路径。`node scripts/verify.mjs` 会把这两类问题连同 `files` 是否放行图标一起断言掉。
 
 ## 协议
 
-MIT，与上游 [obra/superpowers](https://github.com/obra/superpowers) 保持一致。详见 [`LICENSE`](./LICENSE)。
+MIT，与上游 [obra/superpowers](https://github.com/obra/superpowers) 一致。详见 [LICENSE](./LICENSE)。
 
 ## 贡献
 
-欢迎提交 Issue / PR。详见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。
+Issue 和 PR 都欢迎。详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 致谢
 
 - 上游作者 [Jesse Vincent](https://blog.fsck.com) 与 [Prime Radiant](https://primeradiant.com)
-- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 `dsh-skill` 三角色架构
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的三角色插件架构

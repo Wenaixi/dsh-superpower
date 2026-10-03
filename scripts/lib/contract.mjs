@@ -8,6 +8,7 @@
  * 4. 全仓无 Emoji / 图形状态符号硬扫描
  * 5. Visual Companion 随包后台脚本（start-server.js / helper.js）语法与健壮性自检
  * 6. 契约守卫可失败自检（证明规则真实生效）
+ * 7. 客户端产物形态、样式注入与图标/卡片元数据契约
  *
  * 核心架构：
  * - Depth: 隐藏复杂的引用抽取、正则匹配、AST/语法校验与白名单判定，对外暴露统一自检方法；
@@ -17,8 +18,8 @@
  */
 
 import { readdir, readFile, stat } from 'node:fs/promises'
-import { readFileSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { dirname, extname, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 export class SkillContractChecker {
@@ -400,6 +401,74 @@ export class SkillContractChecker {
       record(sourceRel, false, styleIssues.join('；'))
     } else {
       record(sourceRel, true, '样式注入契约齐全')
+    }
+
+    // (5) 图标与卡片元数据契约。dsh-app-boot 的 readPluginMeta 在 iconOf 抛错时
+    //     只把错误塞进 meta.error，插件仍算「已安装」，但卡片标题描述图标三者全空，
+    //     安装与启动日志都不会报——故只能静态断言。
+    const manifestRel = 'package.json'
+    let manifest
+    try {
+      manifest = JSON.parse(readFileSync(join(this.rootDir, manifestRel), 'utf8'))
+    } catch (err) {
+      record(manifestRel, false, '解析失败: ' + (err?.message ?? String(err)))
+      return results
+    }
+
+    const metaIssues = []
+    const icon = typeof manifest.icon === 'string' ? manifest.icon : ''
+    const lowerExt = extname(icon).toLowerCase()
+    if (icon === '') {
+      metaIssues.push('未声明 icon')
+    } else if (/^[A-Za-z][A-Za-z\d+.-]*:/.test(icon) || icon.startsWith('/') || /^[A-Za-z]:/.test(icon)) {
+      metaIssues.push('icon 必须是包内相对路径，当前 ' + icon)
+    } else if (!['.svg', '.png', '.jpg', '.jpeg', '.webp'].includes(lowerExt)) {
+      metaIssues.push('icon 格式须为 SVG/PNG/JPEG/WebP，当前 ' + icon)
+    } else if (!existsSync(join(this.rootDir, icon))) {
+      metaIssues.push('icon 文件缺失 ' + icon)
+    } else if (statSync(join(this.rootDir, icon)).size > 256 * 1024) {
+      metaIssues.push('icon 超过 256 KiB 上限')
+    } else {
+      // files 里的条目不带 "./" 前缀，而 manifest.icon 通常写 "./icon.png"，
+      // 直接字符串比较会误判，故统一去掉前缀后再比。
+      const strip = (value) => value.replace(/^\.\//, '').replace(/\\/g, '/')
+      const iconPath = strip(icon)
+      const dirPath = iconPath.slice(0, iconPath.lastIndexOf('/') + 1)
+      const allowed = (manifest.files ?? []).map((entry) => strip(String(entry)))
+      if (!allowed.some((entry) => entry === iconPath || entry === dirPath)) {
+        metaIssues.push('files 未放行 ' + icon + '，打包后图标会缺失')
+      }
+    }
+    const manifestExports = manifest.exports ?? {}
+    if (!manifestExports['./package.json']) {
+      metaIssues.push("exports 未放行 './package.json'，卡片元数据读取会被拒")
+    }
+    if (!manifestExports['./locale/*.json']) {
+      metaIssues.push("exports 未放行 './locale/*.json'，本地化标题描述读不到")
+    }
+    for (const locale of ['en.json', 'zh.json']) {
+      const localeRel = 'locale/' + locale
+      if (!existsSync(join(this.rootDir, localeRel))) {
+        metaIssues.push('缺少 ' + localeRel)
+        continue
+      }
+      let parsed
+      try {
+        parsed = JSON.parse(readFileSync(join(this.rootDir, localeRel), 'utf8'))
+      } catch (err) {
+        metaIssues.push(localeRel + ' 解析失败: ' + (err?.message ?? String(err)))
+        continue
+      }
+      for (const field of ['title', 'description']) {
+        if (typeof parsed.meta?.[field] !== 'string' || parsed.meta[field].trim() === '') {
+          metaIssues.push(localeRel + ' 缺少 meta.' + field)
+        }
+      }
+    }
+    if (metaIssues.length > 0) {
+      record(manifestRel, false, metaIssues.join('；'))
+    } else {
+      record(manifestRel, true, '图标与卡片元数据契约齐全')
     }
 
     return results
