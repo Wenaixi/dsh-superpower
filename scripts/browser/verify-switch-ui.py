@@ -85,6 +85,32 @@ with sync_playwright() as pw:
         print(f'      （{label} {limit_ms}ms 内未稳定，返回末帧）', flush=True)
         return last
 
+    def wait_idle(limit_ms=60000):
+        """等所有开关解除禁用。
+
+        settle 只看 aria-checked：写入期间开关值可能已达目标态而 pending 仍在清，
+        此时开关是 disabled，el.click() 静默无效且无任何报错。
+        """
+        waited = 0
+        while waited < limit_ms:
+            if page.evaluate(
+                '() => Array.from(document.querySelectorAll(\'li[class*="spSwItem"] [role="switch"]\'))'
+                '.every((el) => el.getAttribute("aria-disabled") !== "true" && el.disabled !== true)'
+            ):
+                return waited
+            page.wait_for_timeout(1000); waited += 1000
+        return -1
+
+    def click_switch(skill, side):
+        wait_idle()
+        page.query_selector(f'li[class*="spSwItem"]:has-text("{skill}")') \
+            .query_selector_all('[role="switch"]')[side].evaluate(CLICK)
+        page.wait_for_timeout(2500)
+
+    def click_batch(text):
+        wait_idle()
+        page.get_by_text(text, exact=True).first.evaluate(CLICK)
+
     all_on = lambda rows: all(r['modelOn'] and r['userOn'] for r in rows)
 
     page.goto(f'{URL}/?token={TOKEN}', wait_until='commit', timeout=30000)
@@ -114,21 +140,22 @@ with sync_playwright() as pw:
        page.evaluate('() => document.querySelectorAll(\'li[class*="spSwItem"] [role="switch"]\').length') == 30)
     ok('详情页标题显示版本号', 'v7.2.0' in body)
     ok('面板标题为「技能开关」', '技能开关' in body)
+    meta = page.inner_text('[class*="spSwMeta"]')
     ok('元信息三项齐全',
-       all(k in body for k in ('provider: superpowers', 'rank: 10', 'source: bundled')))
+       all(k in meta for k in ('provider', 'superpowers', 'rank', '10', 'source', 'bundled')), meta)
     ok('三个批量按钮齐全', all(t in body for t in ('全部开启', '全部关闭', '恢复默认')))
     page.screenshot(path=f'{OUT}/04-panel.png', full_page=True)
 
     # 基线归零
-    page.get_by_text('恢复默认', exact=True).first.evaluate(CLICK)
+    click_batch('恢复默认')
     base = settle('恢复默认到基线', all_on)
     ok('基线状态两侧全开', all_on(base),
        'modelOn=' + str(sum(1 for r in base if r['modelOn'])) + ' userOn=' + str(sum(1 for r in base if r['userOn'])))
 
     # 单技能模型侧
-    row = page.query_selector('li[class*="spSwItem"]:has-text("brainstorming")')
-    ok('定位到 brainstorming 行', row is not None)
-    row.query_selector_all('[role="switch"]')[0].evaluate(CLICK)
+    ok('定位到 brainstorming 行',
+       page.query_selector('li[class*="spSwItem"]:has-text("brainstorming")') is not None)
+    click_switch('brainstorming', 0)
     after = settle('单个模型开关', lambda r: not next(x for x in r if x['name'] == 'brainstorming')['modelOn'])
     bb = next(x for x in after if x['name'] == 'brainstorming')
     ok('单个模型开关只关模型侧', not bb['modelOn'] and bb['userOn'], str(bb))
@@ -140,29 +167,28 @@ with sync_playwright() as pw:
        'modelDisabled' in patch and 'brainstorming' in patch, ' '.join(patch.split())[-130:])
 
     # 单技能用户侧
-    row = page.query_selector('li[class*="spSwItem"]:has-text("writing-plans")')
-    row.query_selector_all('[role="switch"]')[1].evaluate(CLICK)
+    click_switch('writing-plans', 1)
     after = settle('单个用户开关', lambda r: not next(x for x in r if x['name'] == 'writing-plans')['userOn'])
     wp = next(x for x in after if x['name'] == 'writing-plans')
     ok('单个用户开关只关用户侧', not wp['userOn'] and wp['modelOn'], str(wp))
     page.screenshot(path=f'{OUT}/06-toggle-user.png', full_page=True)
 
     # 恢复默认必须两侧同时归位
-    page.get_by_text('恢复默认', exact=True).first.evaluate(CLICK)
+    click_batch('恢复默认')
     after = settle('恢复默认', all_on)
     ok('恢复默认后两侧同时归位', all_on(after),
        'modelOn=' + str(sum(1 for r in after if r['modelOn'])) + ' userOn=' + str(sum(1 for r in after if r['userOn'])))
     page.screenshot(path=f'{OUT}/07-restored.png', full_page=True)
 
     # 全部关闭（两侧）
-    page.get_by_text('全部关闭', exact=True).first.evaluate(CLICK)
+    click_batch('全部关闭')
     after = settle('全部关闭', lambda r: all(not x['modelOn'] and not x['userOn'] for x in r))
     ok('全部关闭后两侧全关', all(not r['modelOn'] and not r['userOn'] for r in after),
        str(sum(1 for r in after if not r['modelOn'])) + '/' + str(sum(1 for r in after if not r['userOn'])) + ' / ' + str(len(after)))
     page.screenshot(path=f'{OUT}/08-all-off.png', full_page=True)
 
     # 全部开启（两侧）
-    page.get_by_text('全部开启', exact=True).first.evaluate(CLICK)
+    click_batch('全部开启')
     after = settle('全部开启', all_on)
     ok('全部开启后两侧全开', all_on(after),
        'modelOn=' + str(sum(1 for r in after if r['modelOn'])) + ' userOn=' + str(sum(1 for r in after if r['userOn'])))
@@ -184,6 +210,11 @@ with sync_playwright() as pw:
     box.fill('')
     page.wait_for_timeout(2500)
     ok('清空搜索后恢复 15 行', len(probe()) == 15)
+
+    # 收尾：把配置归零，别把实验状态留在验证 profile 里
+    click_batch('恢复默认')
+    ok('收尾后两侧恢复全开',
+       settle('收尾恢复默认', all_on) is not None and all_on(probe()))
 
     patch = read_patch()
     print('=== cordis.patch.yml（验证收尾后）===', flush=True)
