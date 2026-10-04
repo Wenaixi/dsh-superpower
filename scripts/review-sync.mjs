@@ -40,12 +40,12 @@ export async function runReviewSync(argv = process.argv.slice(2)) {
 
   if (mode === 'deep') {
     const res = await engine.reviewDeep()
-    return (typeof res === 'number' ? res : (res?.ok ? 0 : 1))
+    return res?.ok ? 0 : 1
   }
 
   if (mode === 'tokens') {
     const res = await engine.reviewTokens()
-    return (typeof res === 'number' ? res : (res?.ok ? 0 : 1))
+    return res?.ok ? 0 : 1
   }
 
   if (mode === 'fences') {
@@ -58,7 +58,7 @@ export async function runReviewSync(argv = process.argv.slice(2)) {
     console.log('[review-sync] 正在启动全量同步复核 (deep + tokens)...\n')
     console.log('--- 阶段 1/2: 深度结构比对 (deep) ---')
     const deepRes = await engine.reviewDeep()
-    const deepOk = typeof deepRes === 'number' ? deepRes === 0 : deepRes?.ok
+    const deepOk = deepRes?.ok
     if (!deepOk) {
       console.error(`\n[review-sync] deep 阶段未通过 (fails: ${deepRes?.fails ?? 'unknown'})\n`)
       return 1
@@ -66,7 +66,7 @@ export async function runReviewSync(argv = process.argv.slice(2)) {
 
     console.log('\n--- 阶段 2/2: Token 级无损比对 (tokens) ---')
     const tokensRes = await engine.reviewTokens()
-    const tokensOk = typeof tokensRes === 'number' ? tokensRes === 0 : tokensRes?.ok
+    const tokensOk = tokensRes?.ok
     if (!tokensOk) {
       console.error(`\n[review-sync] tokens 阶段未通过 (issues: ${tokensRes?.issues?.length ?? 'unknown'})\n`)
       return 1
