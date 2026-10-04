@@ -107,12 +107,37 @@ export class SkillContractChecker {
     if (orphan.length !== 1 || orphan[0] !== 'b.md') throw new Error('orphan guard cannot fail')
 
     // 3. 裸调用识别自检
-    const bareRe = /`(?:..\/)?[w-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
+    const bareRe = /`(?:..\/)?[a-z0-9-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
     const bareSample = '请执行 `scripts/task-start PLAN_FILE 1`'
     const hit = [...bareSample.matchAll(bareRe)]
     if (hit.length !== 1 || !hit[0][0].includes('task-start')) throw new Error('bare-call guard cannot fail')
     const prefixed = '运行 `bash scripts/task-done PLAN_FILE 1 0`'
     if ([...prefixed.matchAll(bareRe)].length !== 0) throw new Error('prefixed call mis-flagged as bare')
+
+    // 盲区补钉 1：bareCallRe 分支一（技能名/scripts/... 与 ../技能名/scripts/...）必须命中
+    const branchOne = [
+      '执行 `subagent-driven-development/scripts/review-package`',
+      '执行 `../subagent-driven-development/scripts/sdd-workspace`',
+    ]
+    for (const sample of branchOne) {
+      if ([...sample.matchAll(bareRe)].length !== 1) throw new Error('bare-call branch-one missed: ' + sample)
+    }
+
+    // 盲区补钉 2：豁免清单与消费方引用的同一份（改错豁免集必须红）
+    if (!SkillContractChecker.BARE_CALL_EXEMPT.has('skills/writing-skills/SKILL.md')) {
+      throw new Error('BARE_CALL_EXEMPT 契约漂移')
+    }
+    if (!SkillContractChecker.SCRIPT_RESOURCE_EXEMPT.has('scripts/frame-template.html')) {
+      throw new Error('SCRIPT_RESOURCE_EXEMPT 契约漂移')
+    }
+
+    // 盲区补钉 3：tick-path 六前缀与 tick-bare 扩展名全集——只测过 references/ 与 .md
+    const tickPathScripts = '先读 `scripts/foo`'
+    const refsOfTickPath = SkillContractChecker.extractRefs(tickPathScripts)
+    if (!refsOfTickPath.includes('scripts/foo')) throw new Error('tick-path scripts/ 前缀未提取')
+    const tickBareSh = '再跑 `helper.sh`'
+    const refsOfBareSh = SkillContractChecker.extractRefs(tickBareSh)
+    if (!refsOfBareSh.includes('helper.sh')) throw new Error('tick-bare .sh 扩展名未提取')
   }
 
   // -------------------------------------------------------------------------
@@ -237,7 +262,7 @@ export class SkillContractChecker {
 
   async checkBareScriptCalls(dir = this.skillDir) {
     const bareCalls = []
-    const bareCallRe = /`(?:..\/)?[w-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
+    const bareCallRe = /`(?:..\/)?[a-z0-9-]+\/scripts\/[^`]*`|`scripts\/[^`]*`/g
 
     const walk = async (d) => {
       const list = await readdir(d, { withFileTypes: true })
