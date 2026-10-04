@@ -46,9 +46,9 @@
   - 双树并行加载与全文件扫描（全文件树与仅 .md 树）；
   - Markdown 代码块逐块分词、SkillDocument 解析与 Token 级无损比对；
   - 集中管理上游同步契约与白名单豁免矩阵（find-polluter.sh ASCII 化豁免、SDD 嵌套控制器小节标题数容差等）；
-  - 对外提供 `reviewDeep()`、`reviewTokens()`、`reviewFences()` 极简高内聚接口；
-  - 彻底收敛 `review-sync-deep`、`review-sync-tokens`、`review-sync-fences` 三大脚本为极简调度器，消除 70% 重复遍历与样板代码。
-- **接缝 (Seams)**: 位于上游检出与本地 skills/ 资产之间，将双树比对、AST/代码块切分、差异判定与格式化报告完全收敛在引擎内部。
+  - 对外提供 `reviewDeep()`、`reviewTokens()`、`reviewFences()` 结构化结果接口；引擎只计算并返回 diagnostics，不直接写控制台；
+  - 由 `review-sync*.mjs` 调度器消费结果并负责 CLI 报告与退出码，三大入口保持向后兼容。
+- **接缝 (Seams)**: 位于上游检出与本地 skills/ 资产之间，将双树比对与差异判定收敛在引擎内部，将报告输出留在 CLI seam。
 
 ### 7. SkillContractChecker (技能契约治理深度模块)
 - **定位**: 深度模块 (Deep Module)，位于 `scripts/lib/contract.mjs`，统一封装技能库内容契约治理。

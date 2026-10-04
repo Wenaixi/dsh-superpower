@@ -153,10 +153,10 @@ git add src/catalog.ts && git commit -m "fix(catalog): 快照失效判据升级�
 
 **（决策以核实报告为准，本任务为收尾记录，可能无代码改动）**
 
-- [ ] **步骤 1：候选 3（契约双源）决策**：按核实结论采取 做 / 不做，若做则在此展开实施步骤
-- [ ] **步骤 2：候选 4（豁免矩阵表驱动）决策**：按核实结论维持 Speculative 不做，记录决策日志
-- [ ] **步骤 3：附录观察项决策**：按核实结论处理被低估项（如 client-manifest 按索引比对脆弱点）
-- [ ] **步骤 4：提交（如无代码则跳过）**
+- [x] **步骤 1：候选 3（契约双源）决策**：保留 CJS factory 与单一复制产物，只补源码/产物一致性门禁和真实漂移回归测试
+- [x] **步骤 2：候选 4（豁免矩阵表驱动）决策**：维持 Speculative，不做表驱动重构；另将报告输出移出 SyncEngine，建立结构化结果 seam
+- [x] **步骤 3：附录观察项决策**：保留 client-manifest Map 比对，并补 src/lib 一致性门禁
+- [x] **步骤 4：提交**：`807c987`、`773ba11`
 
 ---
 
@@ -164,10 +164,10 @@ git add src/catalog.ts && git commit -m "fix(catalog): 快照失效判据升级�
 
 **文件：** `CLAUDE.md`、`CONTEXT.md`
 
-- [ ] **步骤 1：全量门禁**：`pnpm build && pnpm typecheck` + `verify.mjs` + 两个 check 脚本全部 Exit 0
-- [ ] **步骤 2：CLAUDE.md 决策日志**：追加 2026-10-04 条目（三键聚合指纹 / EXPECTED_SKILL_COUNT / required 清理 / 候选 4 维持 Speculative 的理由）
-- [ ] **步骤 3：CONTEXT.md**：更新 SkillCatalog 职责描述（指纹判据）与版本状态
-- [ ] **步骤 4：提交**
+- [x] **步骤 1：全量门禁**：`pnpm build`、`pnpm typecheck`、`verify.mjs`、两个 check 脚本、同步回归测试全部 Exit 0
+- [x] **步骤 2：CLAUDE.md 决策日志**：已记录五候选核实与 SyncEngine/client-manifest 改进
+- [x] **步骤 3：CONTEXT.md**：已更新 SyncEngine 的结构化 diagnostics 与 CLI 报告 seam
+- [x] **步骤 4：提交**：`807c987`、`773ba11`
 
 
 ---
@@ -181,7 +181,7 @@ git add src/catalog.ts && git commit -m "fix(catalog): 快照失效判据升级�
 | 任务 3：EXPECTED_SKILL_COUNT 魔法数收敛 | 完成（破坏实测：改 16 后 verify 与 check-switches 共 4 点红） | `e03e164` |
 | 任务 4：required 数组恒真/重复项清理 | 完成（17 项 -> 11 项，破坏实测 MISSING 可红） | `e03e164` |
 | 任务 5：候选 3 与候选 4 决策 | 候选 3 采最小统一（自检补盲，并揪出真实正则缺陷）；候选 4 维持 Speculative 不做 | `6ac3fdd` |
-| 任务 6：全量门禁与记忆库 | 完成（七路门禁 Exit 0） | `4ceb3d7` |
+| 任务 6：全量门禁与记忆库 | 完成（构建、类型、全量门禁、开关、优先级与新增回归测试 Exit 0） | `773ba11` |
 
 ### 核实阶段新增并落地的两项（计划外，来自子代理独立核实）
 
@@ -195,4 +195,4 @@ git add src/catalog.ts && git commit -m "fix(catalog): 快照失效判据升级�
 
 - 候选 2 的「验证面分裂」经核实**部分证伪**：判定已大部分委托给深度模块，脚本私有判定只有两处；「新增规则两处改」不成立（只对脚本级判定成立）。故不做 verifyReport 结构重构，只修三处靶点。
 - 候选 4「豁免矩阵表驱动」经核实维持 **Speculative**：矩阵 4 个版本零变更，表驱动行数反增且三阶段算法搬不进表。若未来矩阵每版本增减，先升级考察 getDisposition 收敛档。
-- 附录新增两项（client-manifest 索引耦合、手写配平器）经核实**升为高优先级**并已修复，超出了原报告的四个候选范围。
+- 附录新增两项（client-manifest 索引耦合、手写配平器）经核实**升为高优先级**并已修复，超出了原报告的四个候选范围。新增客户端产物漂移门禁与回归测试，防止 verify 在未构建时放过陈旧 lib/client.js。
