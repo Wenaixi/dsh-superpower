@@ -13,7 +13,7 @@
 import { resolveConfig } from '@deepseek-ai/cordis'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import { check, freshRegistry, exitByFailed } from './lib/harness-common.mjs'
-import superpowers from '../lib/superpowers.js'
+import superpowers, { EXPECTED_SKILL_COUNT } from '../lib/superpowers.js'
 
 const state = { failed: 0 }
 console.log('[check-switches] 开始技能开关端到端实测...')
@@ -51,7 +51,7 @@ async function loadPlugin(modelDisabled, userDisabled) {
 {
   const { ctx } = await loadPlugin({}, {})
   const snapshot = await ctx.skills.snapshot()
-  check(state, '[默认全开] 技能总数', snapshot.skills.length, 15)
+  check(state, '[默认全开] 技能总数', snapshot.skills.length, EXPECTED_SKILL_COUNT)
   check(
     state,
     '[默认全开] 全部模型可调用',
@@ -90,7 +90,7 @@ async function loadPlugin(modelDisabled, userDisabled) {
   )
 
   // 技能仍占注册表名额，只是不再对某一侧可见
-  check(state, '[禁言生效] 关闭的技能仍保留在注册表清单中', snapshot.skills.length, 15)
+  check(state, '[禁言生效] 关闭的技能仍保留在注册表清单中', snapshot.skills.length, EXPECTED_SKILL_COUNT)
 
   // get() 路径同样套用，否则模型目录消失但 skill 工具调用仍会成功
   const loaded = await ctx.skills.get('brainstorming')
@@ -126,7 +126,7 @@ async function loadPlugin(modelDisabled, userDisabled) {
     state,
     '[热失效] 改后技能总数不变',
     after.skills.length,
-    15,
+    EXPECTED_SKILL_COUNT,
   )
 }
 

@@ -9,7 +9,7 @@ import type { Context, Volatile } from '@deepseek-ai/cordis';
 import Schema from '@deepseek-ai/schemastery';
 import { SkillCatalog } from './catalog.js';
 import { SkillDocument } from './document.js';
-export { SkillCatalog, type SpecificationReport } from './catalog.js';
+export { SkillCatalog, EXPECTED_SKILL_COUNT, type SpecificationReport } from './catalog.js';
 export { SkillDocument, type SpecificationTestResult } from './document.js';
 export { SkillSwitches, applySwitches, readSwitches } from './switches.js';
 declare module '@deepseek-ai/cordis' {

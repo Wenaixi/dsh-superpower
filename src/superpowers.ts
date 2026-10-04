@@ -22,7 +22,7 @@ import { SkillDocument } from './document.js'
 import { applySwitches, readSwitches, type SkillSwitches } from './switches.js'
 
 // 具名导出深度模块，为验证治理与测试表面提供统一深度接口
-export { SkillCatalog, type SpecificationReport } from './catalog.js'
+export { SkillCatalog, EXPECTED_SKILL_COUNT, type SpecificationReport } from './catalog.js'
 export { SkillDocument, type SpecificationTestResult } from './document.js'
 export { SkillSwitches, applySwitches, readSwitches } from './switches.js'
 

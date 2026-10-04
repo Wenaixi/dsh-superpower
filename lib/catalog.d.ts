@@ -33,6 +33,26 @@ export interface SpecificationReport {
     results: SpecificationTestResult[];
     ok: boolean;
 }
+/**
+ * 目录变更指纹：scan 结束时一次性原子写入的三键聚合。
+ *
+ * 三键各自覆盖一类变更，缺一即产生「静默返回过期目录」的窗口：
+ * - dirMtimeMs：技能根目录自身的 mtime，覆盖根级条目的增删与直接子文件改写；
+ * - skillDirs：根级技能目录名集合，覆盖「先建目录、稍后才写 SKILL.md」的增量场景
+ *   （该场景不改根目录 mtime，历史上完全不可见）；
+ * - skillMdMtimes：每个技能目录下 SKILL.md 的 mtime（缺失记 null），覆盖正文编辑、
+ *   SKILL.md 删除与延迟创建——SKILL.md 位于子层，其任何变更对根目录 mtime 不可见。
+ */
+/**
+ * 本包默认打包的技能数量：verify.mjs 与 check-skill-switches.mjs 的断言唯一事实源。
+ * 新增/删除技能时必须同步修改此值，其余消费点一律经引用取用，禁止散落魔法数。
+ */
+export declare const EXPECTED_SKILL_COUNT = 15;
+export interface CatalogFingerprint {
+    dirMtimeMs: number;
+    skillDirs: string[];
+    skillMdMtimes: [string, number | null][];
+}
 export interface CatalogIntegrityReport {
     total: number;
     entries: CatalogEntry[];
@@ -52,7 +72,7 @@ export declare class SkillCatalog {
     private readonly missingSkillMd;
     private readonly loadErrors;
     private cachedCandidates;
-    private lastScannedMtimeMs;
+    private fingerprint;
     private lastScanProviderName?;
     private lastScanRank?;
     constructor(skillDir: string);
@@ -65,7 +85,10 @@ export declare class SkillCatalog {
      */
     invalidate(): void;
     /**
-     * 探测目录是否发生变动。
+     * 探测目录是否发生变动：与 scan 记录的指纹逐键比对。
+     *
+     * 稳定场景只做 1 次根 stat + 1 次 readdir；仅当前两键都相同时才逐目录 stat SKILL.md。
+     * 不读任何文件内容，保留「未变动时零重复读盘」的初衷。
      */
     private isDirModified;
     /**

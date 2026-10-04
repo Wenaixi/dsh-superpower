@@ -14,7 +14,7 @@ import { mkdtemp, mkdir, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { SkillCatalog, SkillDocument } from '../lib/superpowers.js'
+import { SkillCatalog, SkillDocument, EXPECTED_SKILL_COUNT } from '../lib/superpowers.js'
 import { SkillContractChecker } from './lib/contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -57,11 +57,11 @@ for (const dup of report.duplicates) {
   ok = false
 }
 
-if (report.total !== 15) {
-  console.error(`[verify] expected 15 skills, found ${report.total}`)
+if (report.total !== EXPECTED_SKILL_COUNT) {
+  console.error(`[verify] expected ${EXPECTED_SKILL_COUNT} skills, found ${report.total}`)
   ok = false
 } else {
-  console.log('\n[verify] expected 15 skills, found 15 -> PASS\n')
+  console.log(`\n[verify] expected ${EXPECTED_SKILL_COUNT} skills, found ${report.total} -> PASS\n`)
 }
 
 // ---------------------------------------------------------------------------
@@ -183,12 +183,9 @@ if (symbolViolations.length === 0) {
 // 5. 核心关键文件存在性校验
 // ---------------------------------------------------------------------------
 
+// 存在性清单只保留真实增量价值：门禁脚本自身被误删时能红。
+// 技能路径交给第 1 段 missingSkillMd 检查；lib/*.js 由构建链保证；package.json 恒真。
 const required = [
-  'skills/using-superpowers/references/dsh-tools.md',
-  'skills/diagnosing-superpowers/SKILL.md',
-  'skills/brainstorming/SKILL.md',
-  'skills/test-driven-development/SKILL.md',
-  'skills/subagent-driven-development/SKILL.md',
   'scripts/check-same-name-priority.mjs',
   'scripts/lib/contract.mjs',
   'scripts/lib/sync-engine.mjs',
@@ -200,7 +197,6 @@ const required = [
   'scripts/build-client.mjs',
   'scripts/lib/client-manifest.mjs',
   'cordis.patch.yml',
-  'package.json',
 ]
 
 for (const f of required) {
