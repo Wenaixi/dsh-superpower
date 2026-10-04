@@ -16,11 +16,15 @@ import { join } from 'node:path'
 import { SkillCatalog } from '../../lib/superpowers.js'
 
 const CATALOG_MARKER = 'const SKILL_CATALOG ='
-const BACKSLASH = 92
-const BACKTICK = 96
 
 /**
- * 从 src/client.js 源码中提取 SKILL_CATALOG 数组字面量。
+ * 从 src/client.js 源码中提取 SKILL_CATALOG 数组字面量并求值。
+ *
+ * 提取不靠手写括号配平：SKILL_CATALOG 是模块级 const 声明，数组在同一条
+ * 语句内闭合；取声明后第一个 ']' 作为朴素边界，再用 new Function 求值并
+ * 断言 Array.isArray——求值失败即报错，任何边界误判都会在此暴露。
+ * 手写配平版本的单引号分支（char === ''）缺陷使字符串内方括号参与配平，
+ * 当前数据恰好无方括号而幸存，属于零守卫的隐藏陷阱，故移除。
  *
  * @param {string} source - src/client.js 全文
  * @returns {{ skills: Array } | { error: string }}
@@ -32,31 +36,9 @@ function extractCatalogLiteral(source) {
   const arrayStart = source.indexOf('[', markerIndex)
   if (arrayStart < 0) return { error: 'SKILL_CATALOG 声明后未找到数组字面量起始符' }
 
-  // 括号配平扫描：字符串字面量内的方括号不参与配平
-  let depth = 0
-  let quote = ''
-  let arrayEnd = -1
-  for (let i = arrayStart; i < source.length; i++) {
-    const char = source[i]
-    if (quote !== '') {
-      if (source.charCodeAt(i) === BACKSLASH) i++
-      else if (char === quote) quote = ''
-      continue
-    }
-    if (char === '"' || char === '' || char.charCodeAt(0) === BACKTICK) {
-      quote = char
-      continue
-    }
-    if (char === '[') depth++
-    else if (char === ']') {
-      depth--
-      if (depth === 0) {
-        arrayEnd = i
-        break
-      }
-    }
-  }
-  if (arrayEnd < 0) return { error: 'SKILL_CATALOG 数组字面量括号不配平' }
+  // 朴素边界：同一条声明语句内的首个 ']'。求值失败即判定不配平。
+  const arrayEnd = source.indexOf(']', arrayStart)
+  if (arrayEnd < 0) return { error: 'SKILL_CATALOG 数组字面量未闭合' }
 
   const literal = source.slice(arrayStart, arrayEnd + 1)
   try {
@@ -100,24 +82,25 @@ export async function assertClientManifest(rootDir) {
     issues.push('技能数量不一致：skills/ 目录 ' + actual.length + ' 个，客户端内联 ' + declared.length + ' 个')
   }
 
-  const shared = Math.max(declared.length, actual.length)
-  for (let i = 0; i < shared; i++) {
-    const client = declared[i]
-    const disk = actual[i]
-    if (client === undefined) {
-      issues.push('客户端清单缺少第 ' + (i + 1) + ' 项 ' + disk.name)
+  // 按 name 建 Map 比对，顺序无关：清单与磁盘的先后差异不报错，
+  // 只报真实的内容差异（缺技能 / 多技能 / 描述漂移）。
+  const diskByName = new Map(actual.map((skill) => [skill.name, skill]))
+  const declaredNames = new Set(declared.map((skill) => skill.name))
+
+  for (const name of declaredNames) {
+    const disk = diskByName.get(name)
+    if (!disk) {
+      issues.push('客户端清单多出技能 ' + name + '，skills/ 目录中不存在')
       continue
     }
-    if (disk === undefined) {
-      issues.push('客户端清单多出第 ' + (i + 1) + ' 项 ' + client.name + '，skills/ 目录中不存在')
-      continue
+    const client = declared.find((skill) => skill.name === name)
+    if (client && client.description !== disk.description) {
+      issues.push('技能 ' + name + ' 的描述与 SKILL.md 不一致，请同步客户端内联清单')
     }
-    if (client.name !== disk.name) {
-      issues.push('第 ' + (i + 1) + ' 项技能名不一致：客户端 ' + client.name + '，磁盘 ' + disk.name)
-      continue
-    }
-    if (client.description !== disk.description) {
-      issues.push('技能 ' + client.name + ' 的描述与 SKILL.md 不一致，请同步客户端内联清单')
+  }
+  for (const name of diskByName.keys()) {
+    if (!declaredNames.has(name)) {
+      issues.push('客户端清单缺少技能 ' + name)
     }
   }
 
