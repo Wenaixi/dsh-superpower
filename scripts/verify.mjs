@@ -16,6 +16,7 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { SkillCatalog, SkillDocument, EXPECTED_SKILL_COUNT } from '../lib/superpowers.js'
 import { SkillContractChecker } from './lib/contract.mjs'
+import { assertClientManifest } from './lib/client-manifest.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const skillDir = join(root, 'skills')
@@ -137,6 +138,14 @@ for (const cr of clientResults) {
 }
 const clientOk = clientResults.length > 0 && clientResults.every((cr) => cr.ok)
 console.log(`[verify] client-artifact check ${clientOk ? 'PASS' : 'FAIL'}\n`)
+
+console.log('[verify] client source/artifact consistency check')
+const clientManifest = await assertClientManifest(root)
+for (const issue of clientManifest.issues) {
+  console.error(`[verify] FAIL ${issue}`)
+  ok = false
+}
+console.log(`[verify] client source/artifact consistency ${clientManifest.issues.length === 0 ? 'PASS' : 'FAIL'}\n`)
 
 // ---------------------------------------------------------------------------
 // 3. 深度接口边界自检：由 SkillCatalog.verifySpecification() 提供自包含规范报告（接口即测试表面）

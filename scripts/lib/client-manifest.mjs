@@ -71,13 +71,24 @@ export async function assertClientManifest(rootDir) {
     return { skills: actual, issues: ['src/client.js 读取失败：' + (error?.message ?? String(error))] }
   }
 
+  let artifact
+  try {
+    artifact = await readFile(join(rootDir, 'lib', 'client.js'), 'utf8')
+  } catch (error) {
+    return { skills: actual, issues: ['lib/client.js 读取失败：' + (error?.message ?? String(error))] }
+  }
+
+  const issues = []
+  if (source !== artifact) {
+    issues.push('src/client.js 与 lib/client.js 不一致，请重新构建客户端产物')
+  }
+
   const extracted = extractCatalogLiteral(source)
   if ('error' in extracted) {
     return { skills: actual, issues: [extracted.error] }
   }
   const declared = extracted.skills
 
-  const issues = []
   if (declared.length !== actual.length) {
     issues.push('技能数量不一致：skills/ 目录 ' + actual.length + ' 个，客户端内联 ' + declared.length + ' 个')
   }
