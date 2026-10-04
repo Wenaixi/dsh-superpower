@@ -159,7 +159,7 @@ node -e "import('./lib/superpowers.js').then(async m=>{const c=await m.SkillCata
 
 ```
 src/superpowers.ts  # 插件入口，SkillProvider rank 10
-src/catalog.ts      # SkillCatalog：技能编目、mtime 探测、快照复用、规范自检
+src/catalog.ts      # SkillCatalog：技能编目、三键聚合指纹探测、快照复用、规范自检
 src/document.ts     # SkillDocument：frontmatter 解析、契约转换、内建 selfTest
 src/switches.ts     # 技能开关：禁言表解包与 invocation 覆盖，内建 selfTest
 src/client.js       # 浏览器半侧：插件卡片详情页的技能开关面板，手写 CJS factory
@@ -180,6 +180,8 @@ scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 sk
 `v7.1.1` 修复官方 filesystem 同名实测脚本在 pnpm isolated 布局下定位不到 `@deepseek-ai/dsh-skill-filesystem` 的问题。
 
 `v7.2.0` 加入技能开关面板，插件升级为双面形态（宿主侧注册技能，浏览器侧渲染开关面板），并补上图标与插件卡片元数据。
+
+`v7.3.0` 技能快照失效判据升级为三键聚合指纹（目录 mtime + 根级目录名集合 + 各 SKILL.md mtime），消除内容编辑与增量新建两类失明窗口；技能总数魔法数收敛为导出常量；裸调用守卫正则按真实数据域修正并补全自检盲区；客户端清单比对改按技能名建 Map。
 
 `v7.2.1` 固化面板语言边界：技能内容（名称与描述）固定中文不做技能级翻译；面板 UI 文案（标题、按钮、提示、meta 标签）全部并入 `zh`/`en` 词典、经官方 locale 注册表随宿主界面语言切换。底部 `provider`/`rank`/`source` 三个标注不再硬编码英文。
 
