@@ -12,7 +12,7 @@
   - 扫描文件系统中的技能目录，过滤隐藏文件与非技能目录；
   - 探测每个子目录下的 `SKILL.md` 文件存活性；
   - 委托 `SkillDocument` 解析文档，执行名称去重与名称漂移（Directory Name vs Frontmatter Name）校验；
-  - 维护版本化不可变快照 (`cachedCandidates`)，未发生变动时 0 额外磁盘 I/O；
+  - 维护版本化不可变快照 (`cachedCandidates`)，未发生变动时 0 额外磁盘 I/O（失效判据为三键聚合指纹：目录 mtime + 根级目录名集合 + 各 SKILL.md mtime，覆盖正文编辑与增量新建技能两类窗口）；
   - 在 `getDefinition` 热重读时自动回写内部内存映射，彻底消灭状态撕裂隔离缝；
   - 对外暴露极简的 `invalidate()` 接口，深度联动 Cordis `skills/change` 事件；
   - 对外提供 `verifyIntegrity()` 完整性体检接口，供测试脚本与治理流程复用。
