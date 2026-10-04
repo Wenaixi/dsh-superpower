@@ -87,6 +87,7 @@ export class SyncEngine {
    * 1. 深度复核：双树全文件比对、frontmatter 解析、代码块逐块比对与标题数验证。
    */
   async reviewDeep() {
+    const diagnostics = []
     const upFiles = await this.walkFullTree(this.upstreamDir)
     const loFiles = await this.walkFullTree(this.localDir)
     const rels = [...new Set([...upFiles, ...loFiles])]
@@ -103,16 +104,16 @@ export class SyncEngine {
 
       if (!loOk) {
         if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) {
-          console.log(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
+          diagnostics.push(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
           notes.push(rel)
           continue
         }
-        console.log(`FAIL [缺失] ${rel}（上游有，本地无）`)
+        diagnostics.push(`FAIL [缺失] ${rel}（上游有，本地无）`)
         fails++
         continue
       }
       if (!upOk) {
-        console.log(`INFO [本地新增] ${rel}`)
+        diagnostics.push(`INFO [本地新增] ${rel}`)
         notes.push(rel)
         continue
       }
@@ -124,7 +125,7 @@ export class SyncEngine {
 
       // 两树均存在但本地已按 DSH 专属化有意分叉 -> 跳过内容比对
       if (SyncEngine.DSH_DIVERGENCE_EXEMPT.has(rel)) {
-        console.log(`INFO [DSH专属分叉] ${rel}（本地已专属化改写，豁免）`)
+        diagnostics.push(`INFO [DSH专属分叉] ${rel}（本地已专属化改写，豁免）`)
         notes.push(rel)
         continue
       }
@@ -132,15 +133,15 @@ export class SyncEngine {
       // 非 md 文件比对
       if (!rel.endsWith('.md')) {
         if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) {
-          console.log(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
+          diagnostics.push(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
           notes.push(rel)
         } else if (!SyncEngine.NON_MD_EXEMPT.has(rel) && u !== l) {
-          console.log(`FAIL [非md不一致] ${rel}`)
+          diagnostics.push(`FAIL [非md不一致] ${rel}`)
           fails++
         } else if (!SyncEngine.NON_MD_EXEMPT.has(rel)) {
           passed++
         } else {
-          console.log(`INFO [非md豁免] ${rel}（符号契约 ASCII 化）`)
+          diagnostics.push(`INFO [非md豁免] ${rel}（符号契约 ASCII 化）`)
           passed++
         }
         continue
@@ -154,33 +155,33 @@ export class SyncEngine {
         try { dl = SkillDocument.fromString(l, rel) } catch { dl = undefined }
 
         if (!du || !dl) {
-          console.log(`FAIL [frontmatter非法] ${rel}: 上游 "${du ? '合法' : '非法'}" 本地 "${dl ? '合法' : '非法'}"`)
+          diagnostics.push(`FAIL [frontmatter非法] ${rel}: 上游 "${du ? '合法' : '非法'}" 本地 "${dl ? '合法' : '非法'}"`)
           fails++
           continue
         }
         if (du.name !== dl.name) {
-          console.log(`FAIL [frontmatter.name不一致] ${rel}: 上游 "${du.name}" 本地 "${dl.name}"`)
+          diagnostics.push(`FAIL [frontmatter.name不一致] ${rel}: 上游 "${du.name}" 本地 "${dl.name}"`)
           fails++
         }
         if (!/^Superpower Skill：/.test(dl.description)) {
-          console.log(`FAIL [description前缀缺失] ${rel}: "${dl.description.slice(0, 40)}"`)
+          diagnostics.push(`FAIL [description前缀缺失] ${rel}: "${dl.description.slice(0, 40)}"`)
           fails++
         } else if (!/[\u4e00-\u9fff]/.test(dl.description)) {
-          console.log(`FAIL [description未中文化] ${rel}`)
+          diagnostics.push(`FAIL [description未中文化] ${rel}`)
           fails++
         }
       }
 
       // 代码块逐块核验
       if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) {
-        console.log(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
+        diagnostics.push(`INFO [非DSH平台移除] ${rel}（本地已专属化，豁免）`)
         notes.push(rel)
         continue
       }
       const ub = splitBlocks(u)
       const lb = splitBlocks(l)
       if (ub.length !== lb.length) {
-        console.log(`FAIL [代码块数] ${rel}: ${ub.length} -> ${lb.length}`)
+        diagnostics.push(`FAIL [代码块数] ${rel}: ${ub.length} -> ${lb.length}`)
         fails++
       } else {
         for (let i = 0; i < ub.length; i++) {
@@ -188,7 +189,7 @@ export class SyncEngine {
           const a = ub[i].body.split('\n')
           const b = lb[i].body.split('\n')
           if (a.length !== b.length) {
-            console.log(`NOTE [块行数] ${rel} #${i + 1} (${ub[i].lang || '?'}): ${a.length} -> ${b.length}（中文换行差异，需人工复核）`)
+            diagnostics.push(`NOTE [块行数] ${rel} #${i + 1} (${ub[i].lang || '?'}): ${a.length} -> ${b.length}（中文换行差异，需人工复核）`)
             notes.push(`${rel} #${i + 1}`)
             continue
           }
@@ -198,9 +199,9 @@ export class SyncEngine {
             const [bb, bc] = splitComment(b[j])
             if (ab === bb && ac !== bc) continue
             if (hasCJK(b[j]) && !/^[\s|`\-#\d]/.test(b[j].trim()) && (ub[i].lang === 'dot' || ub[i].lang === '')) continue
-            console.log(`NOTE [块内容] ${rel} #${i + 1} (${ub[i].lang || '?'}) L${j + 1}`)
-            console.log(`    上游: ${a[j].slice(0, 160)}`)
-            console.log(`    本地: ${b[j].slice(0, 160)}`)
+            diagnostics.push(`NOTE [块内容] ${rel} #${i + 1} (${ub[i].lang || '?'}) L${j + 1}`)
+            diagnostics.push(`    上游: ${a[j].slice(0, 160)}`)
+            diagnostics.push(`    本地: ${b[j].slice(0, 160)}`)
             notes.push(`${rel} #${i + 1}`)
           }
         }
@@ -211,9 +212,9 @@ export class SyncEngine {
         const hu = this.extractHeadings(u)
         const hl = this.extractHeadings(l)
         if (SyncEngine.TITLE_EXEMPT.has(rel) && hl.length === hu.length + 1) {
-          console.log(`INFO [标题数豁免] ${rel}: ${hu.length} -> ${hl.length}（本地增补小节）`)
+          diagnostics.push(`INFO [标题数豁免] ${rel}: ${hu.length} -> ${hl.length}（本地增补小节）`)
         } else if (hu.length !== hl.length) {
-          console.log(`FAIL [标题数] ${rel}: ${hu.length} -> ${hl.length}`)
+          diagnostics.push(`FAIL [标题数] ${rel}: ${hu.length} -> ${hl.length}`)
           fails++
         }
       }
@@ -221,19 +222,20 @@ export class SyncEngine {
       passed++
     }
 
-    console.log(`\n==== 汇总 ====`)
-    console.log(`检查文件数: ${rels.length}（上游 ${upFiles.length} / 本地 ${loFiles.length}）`)
-    console.log(`FAIL: ${fails}  NOTE: ${notes.length}`)
-    console.log(`通过（含契约允许的本地化差异）: ${passed}`)
+    diagnostics.push(`\n==== 汇总 ====`)
+    diagnostics.push(`检查文件数: ${rels.length}（上游 ${upFiles.length} / 本地 ${loFiles.length}）`)
+    diagnostics.push(`FAIL: ${fails}  NOTE: ${notes.length}`)
+    diagnostics.push(`通过（含契约允许的本地化差异）: ${passed}`)
 
     return {
       totalFiles: rels.length,
       upstreamCount: upFiles.length,
       localCount: loFiles.length,
       fails,
-      notes: notes.length,
+      notes,
       passed,
       ok: fails === 0,
+      diagnostics,
     }
   }
 
@@ -241,6 +243,7 @@ export class SyncEngine {
    * 2. Token 级比对：确保代码块内的命令、参数、路径、环境变量在本地化后逐字保留。
    */
   async reviewTokens() {
+    const diagnostics = []
     const mdFiles = await walkMd(this.upstreamDir)
     const issues = []
     let scanned = 0
@@ -268,14 +271,15 @@ export class SyncEngine {
       }
     }
 
-    console.log(`已扫描文档: ${scanned}`)
-    console.log(issues.length ? '发现 token 缺失：' : 'token 级校验：全部通过（无缺失）')
-    for (const i of issues) console.log(' ', i)
+    diagnostics.push(`已扫描文档: ${scanned}`)
+    diagnostics.push(issues.length ? '发现 token 缺失：' : 'token 级校验：全部通过（无缺失）')
+    diagnostics.push(...issues.map((issue) => `  ${issue}`))
 
     return {
       scannedCount: scanned,
       issues,
       ok: issues.length === 0,
+      diagnostics,
     }
   }
 
@@ -284,34 +288,45 @@ export class SyncEngine {
    */
   async reviewFences(targets) {
     const resolvedTargets = targets && targets.length > 0 ? targets : await syncSkillsList(this.upstreamDir)
+    const diagnostics = []
+    const files = []
 
     for (const rel of resolvedTargets) {
       const upRaw = norm(await readFile(join(this.upstreamDir, rel), 'utf8'))
       const lRaw = norm(await readFile(join(this.localDir, rel), 'utf8'))
       const upB = splitBlocks(upRaw)
       const lB = splitBlocks(lRaw)
+      const blocks = []
 
-      console.log(`\n========== ${rel} ==========`)
-      if (upB.length !== lB.length) console.log(`  块数不同: 上游 ${upB.length} / 本地 ${lB.length}`)
+      diagnostics.push(`\n========== ${rel} ==========`)
+      if (upB.length !== lB.length) diagnostics.push(`  块数不同: 上游 ${upB.length} / 本地 ${lB.length}`)
 
       const n = Math.max(upB.length, lB.length)
       for (let i = 0; i < n; i++) {
-        const u = upB[i]?.body ?? ''
-        const l = lB[i]?.body ?? ''
-        if (u === l) continue
+        const upstream = (upB[i]?.body ?? '').replace(/\n$/, '')
+        const local = (lB[i]?.body ?? '').replace(/\n$/, '')
+        if (upstream === local) continue
 
-        console.log(`\n--- 代码块 #${i + 1} (lang ${upB[i]?.lang ?? '?'} -> ${lB[i]?.lang ?? '?'}) ---`)
-        const uLines = u.split('\n')
-        const lLines = l.split('\n')
+        blocks.push({
+          index: i + 1,
+          upstream,
+          local,
+          upstreamLang: upB[i]?.lang ?? '?',
+          localLang: lB[i]?.lang ?? '?',
+        })
+        diagnostics.push(`\n--- 代码块 #${i + 1} (lang ${upB[i]?.lang ?? '?'} -> ${lB[i]?.lang ?? '?'}) ---`)
+        const uLines = upstream.split('\n')
+        const lLines = local.split('\n')
         const max = Math.max(uLines.length, lLines.length)
         for (let j = 0; j < max; j++) {
           const a = uLines[j] ?? '<缺>'
           const b = lLines[j] ?? '<缺>'
-          if (a !== b) {
-            console.log(`  L${j + 1} 上游: ${a.slice(0, 150)}\n      本地: ${b.slice(0, 150)}`)
-          }
+          if (a !== b) diagnostics.push(`  L${j + 1} 上游: ${a.slice(0, 150)}\n      本地: ${b.slice(0, 150)}`)
         }
       }
+      files.push({ path: rel, upstreamBlocks: upB.length, localBlocks: lB.length, blocks })
     }
+
+    return { ok: true, files, diagnostics }
   }
 }

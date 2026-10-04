@@ -8,4 +8,6 @@ import { SyncEngine } from './lib/sync-engine.mjs'
 
 const targets = process.argv.slice(2)
 const engine = new SyncEngine()
-await engine.reviewFences(targets.length > 0 ? targets : undefined)
+const result = await engine.reviewFences(targets.length > 0 ? targets : undefined)
+for (const line of result.diagnostics) console.log(line)
+process.exitCode = result.ok ? 0 : 1
