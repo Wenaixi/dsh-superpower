@@ -12,19 +12,30 @@
 import { copyFileSync, mkdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { assertClientManifest } from './lib/client-manifest.mjs'
+import { assertClientManifest, checkSkillCatalogDrift } from './lib/client-manifest.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const source = join(root, 'src', 'client.js')
 const target = join(root, 'lib', 'client.js')
 
+/* 先产出再校验：产物与源是同一份内容的复制，二者是否同步是本脚本自己的职责，
+   把它当成门禁条件会形成「产物旧了 → 构建拒绝执行 → 永远无法重建」的死锁。
+   真正需要守住的是「内联清单与 skills/ 目录一致」，那一条与产物无关。 */
+mkdirSync(dirname(target), { recursive: true })
+copyFileSync(source, target)
+
 const { skills, issues } = await assertClientManifest(root)
 if (issues.length > 0) {
   for (const issue of issues) console.error('[build-client] ' + issue)
-  console.error('[build-client] FAIL: 客户端静态清单与 skills/ 目录不一致，未产出 lib/client.js')
+  console.error('[build-client] FAIL: 客户端静态清单与 skills/ 目录不一致')
   process.exit(1)
 }
 
-mkdirSync(dirname(target), { recursive: true })
-copyFileSync(source, target)
+const drift = await checkSkillCatalogDrift(root)
+if (drift.length > 0) {
+  for (const issue of drift) console.error('[build-client] ' + issue)
+  console.error('[build-client] FAIL: 客户端内联清单与 skills/ 目录存在漂移')
+  process.exit(1)
+}
+
 console.log('[build-client] OK ' + skills.length + ' skills -> lib/client.js')

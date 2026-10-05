@@ -58,11 +58,7 @@ function extractCatalogLiteral(source) {
  *   skills 为磁盘上的真实清单；issues 为空表示两侧一致
  */
 export async function assertClientManifest(rootDir) {
-  const catalog = await SkillCatalog.fromDirectory(join(rootDir, 'skills'))
-  const actual = catalog.verifyIntegrity().entries.map((entry) => ({
-    name: entry.document.name,
-    description: entry.document.description,
-  }))
+  const actual = await readDiskCatalog(rootDir)
 
   let source
   try {
@@ -83,12 +79,34 @@ export async function assertClientManifest(rootDir) {
     issues.push('src/client.js 与 lib/client.js 不一致，请重新构建客户端产物')
   }
 
-  const extracted = extractCatalogLiteral(source)
-  if ('error' in extracted) {
-    return { skills: actual, issues: [extracted.error] }
+  return { skills: actual, issues: issues.concat(await checkSkillCatalogDrift(rootDir)) }
+}
+
+/**
+ * 比对内联清单与 skills/ 目录的真实编目。
+ *
+ * 与 assertClientManifest 分开是必要的分工：前者是门禁，负责「产物同步 + 清单不漂移」
+ * 一起判；后者只管清单漂移，构建脚本在复制产物之前用它。把产物同步塞进构建的前置
+ * 条件会形成死锁——产物旧了就拒绝执行，于是永远无法重建。
+ *
+ * @param {string} rootDir - 仓库根目录
+ * @returns {Promise<string[]>} issues 为空表示两侧一致
+ */
+export async function checkSkillCatalogDrift(rootDir) {
+  const actual = await readDiskCatalog(rootDir)
+
+  let source
+  try {
+    source = await readFile(join(rootDir, 'src', 'client.js'), 'utf8')
+  } catch (error) {
+    return ['src/client.js 读取失败：' + (error?.message ?? String(error))]
   }
+
+  const extracted = extractCatalogLiteral(source)
+  if ('error' in extracted) return [extracted.error]
   const declared = extracted.skills
 
+  const issues = []
   if (declared.length !== actual.length) {
     issues.push('技能数量不一致：skills/ 目录 ' + actual.length + ' 个，客户端内联 ' + declared.length + ' 个')
   }
@@ -115,5 +133,19 @@ export async function assertClientManifest(rootDir) {
     }
   }
 
-  return { skills: actual, issues }
+  return issues
+}
+
+/**
+ * 读 skills/ 目录的真实编目。
+ *
+ * @param {string} rootDir - 仓库根目录
+ * @returns {Promise<Array<{ name: string, description: string }>>}
+ */
+async function readDiskCatalog(rootDir) {
+  const catalog = await SkillCatalog.fromDirectory(join(rootDir, 'skills'))
+  return catalog.verifyIntegrity().entries.map((entry) => ({
+    name: entry.document.name,
+    description: entry.document.description,
+  }))
 }
