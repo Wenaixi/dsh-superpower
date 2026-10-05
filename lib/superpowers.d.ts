@@ -26,8 +26,12 @@ export declare const Config: Schema<Config>;
 export interface Config {
     providerName: string;
     skillDir?: string;
-    modelDisabled: Volatile<Record<string, boolean>>;
-    userDisabled: Volatile<Record<string, boolean>>;
+    /** 唯一的开关写入目标：键为技能名，值为 true 时模型与用户两侧同时关闭 */
+    disabled: Volatile<Record<string, boolean>>;
+    /** 已废弃的历史禁言表，仅为读取旧值而保留 */
+    modelDisabled: Record<string, boolean>;
+    /** 已废弃的历史禁言表，仅为读取旧值而保留 */
+    userDisabled: Record<string, boolean>;
 }
 export declare const name = "superpowers";
 export declare const inject: readonly ["skills"];
