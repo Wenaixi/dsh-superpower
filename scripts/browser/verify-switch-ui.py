@@ -1,9 +1,9 @@
 """浏览器端端到端验证：真实点击技能开关并回读落盘配置。
 
 覆盖：
-1. 插件卡片详情页渲染 15 行 x 2 侧开关、元信息与三个批量按钮；
-2. 单技能两侧开关互不串扰，并回读 cordis.patch.yml 确认落盘；
-3. 全部开启 / 全部关闭 / 恢复默认 三个批量按钮各回到预期状态（恢复默认须两侧同时归位）；
+1. 插件卡片详情页渲染 15 行、每行一个开关、元信息与三个批量按钮；
+2. 单技能开关拨动后回读 cordis.patch.yml 确认落盘到 disabled 字段；
+3. 全部开启 / 全部关闭 / 恢复默认 三个批量按钮各回到预期状态；
 4. 搜索过滤与空态提示。
 
 两处关键写法：
@@ -27,17 +27,19 @@ def ok(label, cond, detail=''):
     print(('PASS  ' if cond else 'FAIL  ') + label + (('  ' + detail) if detail else ''), flush=True)
 
 CLICK = '(el) => el.click()'
+ROW = 'li[class*="spSwItem"]'
+SWITCH = ROW + ' [role="switch"]'
+DISABLED_SELECTOR = ROW + ' [role="switch"]'
 
 PROBE = """
 () => {
   const rows = [];
   for (const li of document.querySelectorAll('li[class*="spSwItem"]')) {
     const sw = li.querySelectorAll('[role="switch"]');
-    if (sw.length !== 2) continue;
+    if (sw.length !== 1) continue;
     rows.push({
       name: (li.querySelector('[class*="spSwName"]') || {}).innerText || '',
-      modelOn: sw[0].getAttribute('aria-checked') === 'true',
-      userOn: sw[1].getAttribute('aria-checked') === 'true',
+      on: sw[0].getAttribute('aria-checked') === 'true',
     });
   }
   return rows;
@@ -79,10 +81,10 @@ with sync_playwright() as pw:
             waited += 1500
             current = probe()
             if predicate(current) and current == last:
-                print(f'      （{label} 稳定于 {waited}ms）', flush=True)
+                print('      （%s 稳定于 %dms）' % (label, waited), flush=True)
                 return current
             last = current
-        print(f'      （{label} {limit_ms}ms 内未稳定，返回末帧）', flush=True)
+        print('      （%s %dms 内未稳定，返回末帧）' % (label, limit_ms), flush=True)
         return last
 
     def wait_idle(limit_ms=60000):
@@ -94,26 +96,26 @@ with sync_playwright() as pw:
         waited = 0
         while waited < limit_ms:
             if page.evaluate(
-                '() => Array.from(document.querySelectorAll(\'li[class*="spSwItem"] [role="switch"]\'))'
+                '() => Array.from(document.querySelectorAll(' + json.dumps(DISABLED_SELECTOR) + '))'
                 '.every((el) => el.getAttribute("aria-disabled") !== "true" && el.disabled !== true)'
             ):
                 return waited
             page.wait_for_timeout(1000); waited += 1000
         return -1
 
-    def click_switch(skill, side):
+    def click_switch(skill):
         wait_idle()
-        page.query_selector(f'li[class*="spSwItem"]:has-text("{skill}")') \
-            .query_selector_all('[role="switch"]')[side].evaluate(CLICK)
+        page.query_selector('%s:has-text("%s")' % (ROW, skill)) \
+            .query_selector('[role="switch"]').evaluate(CLICK)
         page.wait_for_timeout(2500)
 
     def click_batch(text):
         wait_idle()
         page.get_by_text(text, exact=True).first.evaluate(CLICK)
 
-    all_on = lambda rows: all(r['modelOn'] and r['userOn'] for r in rows)
+    all_on = lambda rows: all(r['on'] for r in rows)
 
-    page.goto(f'{URL}/?token={TOKEN}', wait_until='commit', timeout=30000)
+    page.goto('%s/?token=%s' % (URL, TOKEN), wait_until='commit', timeout=30000)
     page.wait_for_timeout(9000)
 
     dlg = page.query_selector('[role="dialog"]')
@@ -124,75 +126,70 @@ with sync_playwright() as pw:
 
     page.get_by_label('插件', exact=True).first.evaluate(CLICK)
     page.wait_for_timeout(6000)
-    page.screenshot(path=f'{OUT}/02-plugins.png')
+    page.screenshot(path='%s/02-plugins.png' % OUT)
 
     card = page.get_by_text('@wenaixi/dsh-superpower', exact=True).first
     ok('本包卡片出现在插件页', card.is_visible())
     card.evaluate(CLICK)
     page.wait_for_timeout(7000)
-    page.screenshot(path=f'{OUT}/03-detail.png', full_page=True)
+    page.screenshot(path='%s/03-detail.png' % OUT, full_page=True)
 
     body = page.inner_text('body')
     rows = probe()
-    ok('面板渲染 15 行技能', len(rows) == 15, f'实际 {len(rows)}')
+    ok('面板渲染 15 行技能', len(rows) == 15, '实际 %d' % len(rows))
     ok('技能名与 skills/ 目录逐字一致', [r['name'] for r in rows] == EXPECTED)
-    ok('面板开关总数 30（15 x 2 侧）',
-       page.evaluate('() => document.querySelectorAll(\'li[class*="spSwItem"] [role="switch"]\').length') == 30)
-    ok('详情页标题显示版本号', 'v7.2.0' in body)
+    ok('面板开关总数 15（每行一个）',
+       page.evaluate('() => document.querySelectorAll(' + json.dumps(SWITCH) + ').length') == 15)
+    ok('详情页标题显示版本号', 'v7.4.0' in body)
     ok('面板标题为「技能开关」', '技能开关' in body)
     meta = page.inner_text('[class*="spSwMeta"]')
     ok('元信息三项齐全',
        all(k in meta for k in ('provider', 'superpowers', 'rank', '10', 'source', 'bundled')), meta)
     ok('三个批量按钮齐全', all(t in body for t in ('全部开启', '全部关闭', '恢复默认')))
-    page.screenshot(path=f'{OUT}/04-panel.png', full_page=True)
+    page.screenshot(path='%s/04-panel.png' % OUT, full_page=True)
 
     # 基线归零
     click_batch('恢复默认')
     base = settle('恢复默认到基线', all_on)
-    ok('基线状态两侧全开', all_on(base),
-       'modelOn=' + str(sum(1 for r in base if r['modelOn'])) + ' userOn=' + str(sum(1 for r in base if r['userOn'])))
+    ok('基线状态全部开启', all_on(base),
+       'on=%d/%d' % (sum(1 for r in base if r['on']), len(base)))
 
-    # 单技能模型侧
+    # 单技能开关
     ok('定位到 brainstorming 行',
-       page.query_selector('li[class*="spSwItem"]:has-text("brainstorming")') is not None)
-    click_switch('brainstorming', 0)
-    after = settle('单个模型开关', lambda r: not next(x for x in r if x['name'] == 'brainstorming')['modelOn'])
+       page.query_selector('%s:has-text("brainstorming")' % ROW) is not None)
+    click_switch('brainstorming')
+    after = settle('单个开关', lambda r: not next(x for x in r if x['name'] == 'brainstorming')['on'])
     bb = next(x for x in after if x['name'] == 'brainstorming')
-    ok('单个模型开关只关模型侧', not bb['modelOn'] and bb['userOn'], str(bb))
+    ok('单个开关关闭后为关态', not bb['on'], str(bb))
     ok('面板无报错提示', not page.evaluate(
-        '() => document.querySelectorAll(\'[class*="spSwErr"]\').length'))
-    page.screenshot(path=f'{OUT}/05-toggle-model.png', full_page=True)
+        '() => document.querySelectorAll(' + json.dumps('[class*="spSwErr"]') + ').length'))
+    page.screenshot(path='%s/05-toggle.png' % OUT, full_page=True)
     patch = read_patch()
-    ok('配置已落盘 modelDisabled.brainstorming',
-       'modelDisabled' in patch and 'brainstorming' in patch, ' '.join(patch.split())[-130:])
+    ok('配置已落盘 disabled.brainstorming',
+       'disabled' in patch and 'brainstorming' in patch, ' '.join(patch.split())[-130:])
+    ok('旧的两张分侧表已被清空', 'modelDisabled' not in patch and 'userDisabled' not in patch,
+       ' '.join(patch.split())[-130:])
 
-    # 单技能用户侧
-    click_switch('writing-plans', 1)
-    after = settle('单个用户开关', lambda r: not next(x for x in r if x['name'] == 'writing-plans')['userOn'])
-    wp = next(x for x in after if x['name'] == 'writing-plans')
-    ok('单个用户开关只关用户侧', not wp['userOn'] and wp['modelOn'], str(wp))
-    page.screenshot(path=f'{OUT}/06-toggle-user.png', full_page=True)
-
-    # 恢复默认必须两侧同时归位
+    # 恢复默认
     click_batch('恢复默认')
     after = settle('恢复默认', all_on)
-    ok('恢复默认后两侧同时归位', all_on(after),
-       'modelOn=' + str(sum(1 for r in after if r['modelOn'])) + ' userOn=' + str(sum(1 for r in after if r['userOn'])))
-    page.screenshot(path=f'{OUT}/07-restored.png', full_page=True)
+    ok('恢复默认后全部回到开启', all_on(after),
+       'on=%d/%d' % (sum(1 for r in after if r['on']), len(after)))
+    page.screenshot(path='%s/06-restored.png' % OUT, full_page=True)
 
-    # 全部关闭（两侧）
+    # 全部关闭
     click_batch('全部关闭')
-    after = settle('全部关闭', lambda r: all(not x['modelOn'] and not x['userOn'] for x in r))
-    ok('全部关闭后两侧全关', all(not r['modelOn'] and not r['userOn'] for r in after),
-       str(sum(1 for r in after if not r['modelOn'])) + '/' + str(sum(1 for r in after if not r['userOn'])) + ' / ' + str(len(after)))
-    page.screenshot(path=f'{OUT}/08-all-off.png', full_page=True)
+    after = settle('全部关闭', lambda r: all(not x['on'] for x in r))
+    ok('全部关闭后全关', all(not r['on'] for r in after),
+       '%d/%d' % (sum(1 for r in after if not r['on']), len(after)))
+    page.screenshot(path='%s/07-all-off.png' % OUT, full_page=True)
 
-    # 全部开启（两侧）
+    # 全部开启
     click_batch('全部开启')
     after = settle('全部开启', all_on)
-    ok('全部开启后两侧全开', all_on(after),
-       'modelOn=' + str(sum(1 for r in after if r['modelOn'])) + ' userOn=' + str(sum(1 for r in after if r['userOn'])))
-    page.screenshot(path=f'{OUT}/09-all-on.png', full_page=True)
+    ok('全部开启后全开', all_on(after),
+       'on=%d/%d' % (sum(1 for r in after if r['on']), len(after)))
+    page.screenshot(path='%s/08-all-on.png' % OUT, full_page=True)
 
     # 搜索
     box = page.get_by_label('按名称或描述过滤技能').first
@@ -201,25 +198,25 @@ with sync_playwright() as pw:
     filtered = probe()
     ok('搜索过滤生效（debug 只剩 systematic-debugging）',
        [r['name'] for r in filtered] == ['systematic-debugging'], str([r['name'] for r in filtered]))
-    page.screenshot(path=f'{OUT}/10-search.png', full_page=True)
+    page.screenshot(path='%s/09-search.png' % OUT, full_page=True)
 
     box.fill('不存在的关键字xyz')
     page.wait_for_timeout(2500)
     ok('空结果显示提示文案', '没有匹配的技能' in page.inner_text('body'))
-    page.screenshot(path=f'{OUT}/11-empty.png', full_page=True)
+    page.screenshot(path='%s/10-empty.png' % OUT, full_page=True)
     box.fill('')
     page.wait_for_timeout(2500)
     ok('清空搜索后恢复 15 行', len(probe()) == 15)
 
     # 收尾：把配置归零，别把实验状态留在验证 profile 里
     click_batch('恢复默认')
-    ok('收尾后两侧恢复全开',
+    ok('收尾后恢复全开',
        settle('收尾恢复默认', all_on) is not None and all_on(probe()))
 
     patch = read_patch()
     print('=== cordis.patch.yml（验证收尾后）===', flush=True)
     print(patch, flush=True)
-    ok('收尾后配置里两侧禁言表为空', 'modelDisabled: {}' in patch and 'userDisabled: {}' in patch)
+    ok('收尾后禁言表为空', 'disabled: {}' in patch)
 
     ok('页面无 JS 运行时错误', len(errors) == 0, '; '.join(errors[:3]))
     browser.close()
