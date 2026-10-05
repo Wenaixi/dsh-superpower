@@ -6,9 +6,10 @@
  * 2. 资源引用契约与孤儿文件判定（两遍扫描，白名单豁免）
  * 3. 随包脚本裸调用守卫（必须带 bash/node 等前缀）
  * 4. 全仓无 Emoji / 图形状态符号硬扫描
- * 5. Visual Companion 随包后台脚本（start-server.js / helper.js）语法与健壮性自检
+ * 5. 随包 shell 脚本的 Shebang 与行尾自检
  * 6. 契约守卫可失败自检（证明规则真实生效）
- * 7. 客户端产物形态、样式注入与图标/卡片元数据契约
+ * 7. 客户端产物形态、单开关契约、样式注入与图标/卡片元数据契约
+ * 8. 技能正文不得复活自建 HTTP 服务（可视化走宿主官方文档预览）
  *
  * 核心架构：
  * - Depth: 隐藏复杂的引用抽取、正则匹配、AST/语法校验与白名单判定，对外暴露统一自检方法；
@@ -53,8 +54,10 @@ export class SkillContractChecker {
   static HOST_DOCS = new Set(['SKILL.md', 'AGENTS.md', 'CLAUDE.md', 'TODO.md', 'README.md'])
   static RESOURCE_SUBS = ['references', 'prompts', 'templates', 'scripts', 'examples', '']
 
-  static SCRIPT_RESOURCE_EXEMPT = new Set(['scripts/frame-template.html', 'scripts/helper.js'])
   static BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md'])
+
+  /** 技能正文里禁止再出现的自建服务痕迹：可视化已改走宿主官方文档预览。 */
+  static FORBIDDEN_SERVICE_MARKERS = ['start-server.sh', 'stop-server.sh', 'server.cjs', 'helper.js']
 
   static SYMBOL_PATTERN = /[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF\u2B50-\u2B55\u{1F300}-\u{1FAFF}]/u
 
@@ -127,8 +130,8 @@ export class SkillContractChecker {
     if (!SkillContractChecker.BARE_CALL_EXEMPT.has('skills/writing-skills/SKILL.md')) {
       throw new Error('BARE_CALL_EXEMPT 契约漂移')
     }
-    if (!SkillContractChecker.SCRIPT_RESOURCE_EXEMPT.has('scripts/frame-template.html')) {
-      throw new Error('SCRIPT_RESOURCE_EXEMPT 契约漂移')
+    if (!SkillContractChecker.FORBIDDEN_SERVICE_MARKERS.includes('server.cjs')) {
+      throw new Error('FORBIDDEN_SERVICE_MARKERS 契约漂移')
     }
 
     // 盲区补钉 3：tick-path 六前缀与 tick-bare 扩展名全集——只测过 references/ 与 .md
@@ -277,8 +280,6 @@ export class SkillContractChecker {
           const content = await readFile(full, 'utf8')
           const stripped = content.replace(/```[\s\S]*?```/g, '')
           for (const m of [...stripped.matchAll(bareCallRe)]) {
-            const targetPath = m[0].replace(/`/g, '')
-            if (SkillContractChecker.SCRIPT_RESOURCE_EXEMPT.has(targetPath)) continue
             bareCalls.push({ file: relPath, call: m[0] })
           }
         }
@@ -520,21 +521,82 @@ export class SkillContractChecker {
       record(manifestRel, true, '图标与卡片元数据契约齐全')
     }
 
+    // (6) 单开关契约。v7.4.0 起每个技能只有一个开关，旧的两张分侧表只作为
+    //     一次性 unset 的目标保留在 LEGACY_FIELDS 里。面板若悄悄恢复双开关，
+    //     用户会看到两列语义重叠的开关，而模型侧行为不变——只有静态断言挡得住。
+    const switchIssues = []
+    // 只查渲染路径与写入路径之外的整份产物：LEGACY_FIELDS 里的名字是必须的。
+    const legacyDeclared = (source.match(/var[ ]+LEGACY_FIELDS[ ]*=[ ]*\[[^\]]*\]/s) ?? [''])[0]
+    const withoutLegacyList = source.replace(legacyDeclared, '')
+    if (/['"]modelDisabled['"]/.test(withoutLegacyList) || /['"]userDisabled['"]/.test(withoutLegacyList)) {
+      switchIssues.push('客户端出现 modelDisabled/userDisabled 的直接引用，应统一走 LEGACY_FIELDS')
+    }
+    if (source.includes('spSwToggles')) {
+      switchIssues.push('客户端仍保留双开关布局类名 spSwToggles')
+    }
+    for (const key of ['invocable', 'invocableHint']) {
+      if (!source.includes("t('" + key + "')")) {
+        switchIssues.push("单开关界面缺少 t('" + key + "') 取词调用")
+      }
+      const declaredCount = (source.match(new RegExp(key + ": '", 'g')) || []).length
+      if (declaredCount < 2) {
+        switchIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declaredCount + ' 处）')
+      }
+    }
+    if (switchIssues.length > 0) {
+      record(sourceRel, false, switchIssues.join('；'))
+    } else {
+      record(sourceRel, true, '单开关契约齐全')
+    }
+
     return results
   }
 
   // -------------------------------------------------------------------------
-  // 6. Visual Companion 后台脚本健全性自检（闭合候选 2 测试表面）
+  // 7. 技能正文不得复活自建 HTTP 服务
   // -------------------------------------------------------------------------
 
-    checkCompanionScripts() {
-    const jsScripts = [
-      'skills/brainstorming/scripts/server.cjs',
-      'skills/brainstorming/scripts/helper.js',
-    ]
+  /**
+   * 扫描技能正文，报告仍引用已删除的随包服务脚本之处。
+   *
+   * 可视化协作已改走宿主官方文档预览通道（DSH 的 documentPreviews 内置
+   * html/htm，渲染为隔离 iframe）。自建 http 服务带来的是端口、会话密钥、
+   * 重连与 WebSocket 四套生命周期，且在客户端 bundle 纯度与安全上都要单独解释。
+   *
+   * @returns {Promise<Array<{ file: string, marker: string }>>} 违例清单，为空表示通过
+   */
+  async checkNoSelfHostedService() {
+    const hits = []
+    const walk = async (dir) => {
+      const list = await readdir(dir, { withFileTypes: true })
+      for (const item of list) {
+        if (item.name.startsWith('.')) continue
+        const full = join(dir, item.name)
+        if (item.isDirectory()) {
+          await walk(full)
+        } else if (item.name.endsWith('.md')) {
+          const content = await readFile(full, 'utf8')
+          for (const marker of SkillContractChecker.FORBIDDEN_SERVICE_MARKERS) {
+            if (content.includes(marker)) {
+              hits.push({
+                file: relative(this.rootDir, full).replace(/\\/g, '/'),
+                marker,
+              })
+            }
+          }
+        }
+      }
+    }
+    await walk(this.skillDir)
+    return hits
+  }
+
+  // -------------------------------------------------------------------------
+  // 6. 随包 shell 脚本的 Shebang 与行尾健壮性自检
+  // -------------------------------------------------------------------------
+
+    checkBundledShellScripts() {
     const shellScripts = [
-      'skills/brainstorming/scripts/start-server.sh',
-      'skills/brainstorming/scripts/stop-server.sh',
       'skills/executing-plans/scripts/task-start',
       'skills/executing-plans/scripts/task-done',
       'skills/subagent-driven-development/scripts/task-brief',
@@ -544,29 +606,10 @@ export class SkillContractChecker {
     ]
     const results = []
 
-    // (1) JS 伴生脚本 AST 语法自检
-    for (const scriptRel of jsScripts) {
-      const fullPath = join(this.rootDir, scriptRel)
-      const check = spawnSync(process.execPath, ['--check', fullPath], { encoding: 'utf8' })
-      if (check.status !== 0) {
-        results.push({
-          file: scriptRel,
-          ok: false,
-          error: check.stderr.trim() || 'syntax check failed',
-        })
-      } else {
-        results.push({
-          file: scriptRel,
-          ok: true,
-        })
-      }
-    }
-
-    // (2) Shell 伴生脚本 Shebang 与换行符健壮性自检
     for (const scriptRel of shellScripts) {
       const fullPath = join(this.rootDir, scriptRel)
       try {
-        const raw = readFileSync ? readFileSync(fullPath, 'utf8') : require('node:fs').readFileSync(fullPath, 'utf8')
+        const raw = readFileSync(fullPath, 'utf8')
         // 校验 Shebang 头
         if (!raw.startsWith('#!/')) {
           results.push({

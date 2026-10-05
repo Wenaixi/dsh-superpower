@@ -3,11 +3,11 @@
  *
  * 统筹调度：
  * 1. SkillCatalog 编目与目录健康度校验（15 技能、无重名、无漂移）
- * 2. SkillContractChecker 契约检查（死链、资源引用、孤儿文件、脚本调用守卫）
- * 3. Visual Companion 随包脚本语法与健全性检查
- * 4. SkillDocument / SkillCatalog 核心边界自检
- * 5. 全仓无 Emoji / 图形状态符号硬扫描
- * 6. 核心依赖文件存在性断言
+ * 2. SkillContractChecker 契约检查（死链、资源引用、孤儿文件、脚本调用守卫、
+ *    随包 shell 脚本健全性、自建服务禁令）
+ * 3. SkillDocument / SkillCatalog 核心边界自检
+ * 4. 全仓无 Emoji / 图形状态符号硬扫描
+ * 5. 核心依赖文件存在性断言
  */
 
 import { mkdtemp, mkdir, rm, stat, writeFile } from 'node:fs/promises'
@@ -110,20 +110,29 @@ for (const bc of bareCalls) {
 console.log(`[verify] bundled-script-call check ${bareCalls.length === 0 ? 'PASS' : 'FAIL: ' + bareCalls.length + ' bare call(s)'}\n`)
 if (bareCalls.length > 0) ok = false
 
-// (2.4) Visual Companion 随包脚本健全性自检（闭合候选 2 测试表面）
-console.log('[verify] companion-scripts syntax check')
-const companionResults = contract.checkCompanionScripts()
-let companionOk = true
-for (const cr of companionResults) {
-  if (cr.ok) {
-    console.log(`[verify]   OK ${cr.file}`)
+// (2.4) 随包 shell 脚本的 Shebang 与行尾自检
+console.log('[verify] bundled-shell-scripts check')
+const shellResults = contract.checkBundledShellScripts()
+let shellOk = true
+for (const sr of shellResults) {
+  if (sr.ok) {
+    console.log(`[verify]   OK ${sr.file}`)
   } else {
-    console.error(`[verify]   FAIL ${cr.file}: ${cr.error}`)
-    companionOk = false
+    console.error(`[verify]   FAIL ${sr.file}: ${sr.error}`)
+    shellOk = false
     ok = false
   }
 }
-console.log(`[verify] companion-scripts check ${companionOk ? 'PASS' : 'FAIL'}\n`)
+console.log(`[verify] bundled-shell-scripts check ${shellOk ? 'PASS' : 'FAIL'}\n`)
+
+// (2.45) 技能正文不得复活自建 HTTP 服务（可视化已走宿主官方文档预览）
+console.log('[verify] self-hosted-service check')
+const serviceHits = await contract.checkNoSelfHostedService()
+for (const hit of serviceHits) {
+  console.error(`[verify] SELF-HOSTED SERVICE ${hit.file} 仍引用 ${hit.marker}`)
+}
+console.log(`[verify] self-hosted-service check ${serviceHits.length === 0 ? 'PASS' : 'FAIL'}\n`)
+if (serviceHits.length > 0) ok = false
 
 // (2.5) 客户端半侧产物形态与命名空间一致性（语法、CJS factory、patch id 对齐）
 console.log('[verify] client-artifact check')
