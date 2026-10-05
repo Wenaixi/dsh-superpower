@@ -1,12 +1,12 @@
 # 可视化辅助指南
 
-基于浏览器的可视化头脑风暴辅助工具，用于展示原型、图表和选项。
+基于 DSH 官方文档预览的头脑风暴辅助工具，用于展示原型、图表和选项。
 
 ## 何时使用
 
 按问题逐个判断，而非按会话判断。判断标准：**用户看图是否比看文字更易理解？**
 
-**内容本身是可视化的场景，适合使用浏览器：**
+**内容本身是可视化的场景，适合用浏览器预览：**
 
 - **界面原型** — 线框图、布局、导航结构、组件设计
 - **架构图** — 系统组件、数据流、关系图谱
@@ -16,252 +16,109 @@
 
 **内容为文本或表格的场景，适合使用终端：**
 
-- **需求与范围问题** — “X 是什么意思？”，“哪些功能在范围内？”
+- **需求与范围问题** — 「这是什么意思？」，「哪些功能在范围内？」
 - **概念性的 A/B/C 选择** — 在文字描述的方案之间做选择
 - **权衡清单** — 优缺点、对比表格
 - **技术决策** — API 设计、数据建模、架构方案选型
 - **澄清性问题** — 任何答案是文字而非视觉偏好的问题
 
-一个*关于*界面主题的问题并不自动等同于可视化问题。“你想要哪种向导？”是概念性问题——使用终端。“这些向导布局中哪一个更合适？”是可视化问题——使用浏览器。
+一个*关于*界面主题的问题并不自动等同于可视化问题。「你想要哪种向导？」是概念性问题——使用终端。「这些向导布局中哪一个更合适？」是可视化问题——使用浏览器预览。
 
 ## 工作原理
 
-服务器监听目录中的 HTML 文件，并将最新的文件提供给浏览器。你将 HTML 内容写入 `screen_dir`，用户在浏览器中即可看到，并可点击选择选项。选择结果会记录到 `state_dir/events`，你在下一轮对话中读取即可。
+你把 HTML 写入工作区的一个约定目录，DSH 的文档预览面板读取并渲染它。用户在浏览器侧的文档栏打开该文件即见画面。
 
-**内容片段与完整文档：** 如果你的 HTML 文件以 `<!DOCTYPE` 或 `<html` 开头，服务器将原样提供（仅注入辅助脚本）。否则，服务器会自动将你的内容包裹到框架模板中——添加页头、CSS 主题、连接状态及所有交互基础设施。**默认编写内容片段。** 仅在需要完全控制页面时才编写完整文档。
+**选择结果不会自动回传给你。** 预览是一个隔离的 iframe 文档，它无法把你的选择送达会话。所以：让用户在终端里回答。绝不要声称读到了用户在预览里的点击。
 
-## 启动会话
+## 写文件
 
-```bash
-# 在用户批准 companion 后启动。--open 会在首屏自动打开其浏览器；
-# --project-dir 持久化原型并支持同端口重启。
-bash scripts/start-server.sh --project-dir /path/to/project --open
+把每一页 HTML 写成一个自包含的完整文档。三条硬要求：
 
-# Returns: {"type":"server-started","port":52341,
-#           "url":"http://localhost:52341/?key=ab12…",
-#           "screen_dir":"/path/to/project/.superpowers/brainstorm/12345-1706000000/content",
-#           "state_dir":"/path/to/project/.superpowers/brainstorm/12345-1706000000/state"}
+1. **完整文档。** 官方预览不做内容包裹，不提供任何现成 CSS 类。
+   `<div class="options">` 在这里没有任何含义，页面上什么都不会出现。
+2. **自包含。** 不引用外部相对路径的 CSS 或脚本——相对依赖只在交互预览
+   开关打开时才被打包。写单文件最稳。
+3. **不依赖 iframe 外的能力。** 预览文档与宿主页面不共享上下文，
+   `window.parent` 拿不到任何东西。
+
+### 最小示例
+
+```html
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>布局方案</title>
+<style>
+  body { font: 15px/1.7 system-ui, sans-serif; margin: 0; padding: 40px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .subtitle { margin: 0 0 32px; color: #5b616e; }
+  .cards { display: flex; gap: 20px; flex-wrap: wrap; }
+  .card { flex: 1 1 280px; border: 1px solid #dfe2e8; border-radius: 10px; padding: 20px; }
+  .card h3 { margin: 0 0 8px; font-size: 16px; }
+  .card p { margin: 0; color: #5b616e; }
+</style>
+</head>
+<body>
+  <h1>哪种布局更合适？</h1>
+  <p class="subtitle">请考虑可读性与视觉层级</p>
+  <div class="cards">
+    <div class="card">
+      <h3>A 单列</h3>
+      <p>阅读体验最好，信息密度最低</p>
+    </div>
+    <div class="card">
+      <h3>B 两列</h3>
+      <p>空间利用率高，需要额外样式约束</p>
+    </div>
+  </div>
+</body>
+</html>
 ```
 
-保存响应中的 `screen_dir` 和 `state_dir`。使用 `--open` 时，浏览器会在你推送首屏时自动打开——你无需让用户手动打开，但仍需分享 URL 作为备用方案（无头/远程环境无法自动打开）。
+深色环境下把配色换成跟随 `prefers-color-scheme`，或直接用中性灰阶。
 
-**URL 中包含会话密钥（`?key=…`）。** 服务器会拒绝任何不带该密钥的请求，因此务必向用户提供 `url` 字段中的**完整** URL——不要去除查询字符串，也不要只给裸的 `http://host:port`。该密钥用于控制 HTTP 和 WebSocket 访问，防止随意的浏览器标签页或同一网络中的其他机器读取页面或注入事件。首次加载后，浏览器会通过 Cookie 记住该密钥，因此重新加载和访问 `/files/*` 资源时无需重复携带。
+## 目录与命名
 
-**查找连接信息：** 服务器会将启动时的 JSON 写入 `$STATE_DIR/server-info`。如果你在后台启动了服务器且未捕获标准输出，可读取该文件以获取 URL 和端口。使用 `--project-dir` 时，请在 `<project>/.superpowers/brainstorm/` 下查找会话目录。
+约定目录：项目根下的 `.superpowers/brainstorm/`。会话结束后由你自行删除。
 
-**注意：** 将项目根目录作为 `--project-dir` 传入，这样原型会持久化到 `.superpowers/brainstorm/` 并在服务器重启后依然保留。若不传，文件会写入 `/tmp` 并被清理。如果 `.gitignore` 中尚未包含 `.superpowers/`，请提醒用户添加。
+- 使用语义化名称：`platform.html`、`visual-style.html`、`layout.html`
+- 不要复用文件名——每次迭代写一个新文件，`layout-v2.html`、`layout-v3.html`
+- 用户打开的是他指定的那一个文件；改完告诉他新文件名
 
-**在 DSH 中启动服务器：**
-
-```bash
-# 在 DSH 中使用 pwsh（Windows 首选）或 bash 工具，传入 run_in_background: true
-bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
-```
-
-服务器必须在后台持续运行并跨越 turn。在 DSH 工具调用中使用 `run_in_background: true`，然后在下一轮读取 `$STATE_DIR/server-info` 以获取 URL 和端口。
-
-如果 URL 在你的浏览器中无法访问（在远程/容器化环境中很常见），请绑定非回环地址：
-
-```bash
-bash scripts/start-server.sh \
-  --project-dir /path/to/project \
-  --host 0.0.0.0 \
-  --url-host localhost
-```
-
-使用 `--url-host` 控制返回的 URL JSON 中显示的主机名。
+若项目的 `.gitignore` 尚未包含 `.superpowers/`，提醒用户添加。
 
 ## 循环流程
 
-1. **检查服务器是否存活**，然后**向 `screen_dir` 写入 HTML 新文件**：
-   - **必须：在引用 URL 或推送页面前确认服务器存活。** 检查 `$STATE_DIR/server-info` 是否存在且 `$STATE_DIR/server-stopped` 是否不存在。如果已关闭，请使用**相同的 `--project-dir`** 通过 `start-server.sh` 重启——它会复用同一端口，用户的已打开标签页会自动重连（服务器宕机期间会显示“已暂停”遮罩），无需发送新 URL。服务器在空闲 4 小时后自动退出（可通过 `--idle-timeout-minutes` 配置）。
-   - 使用语义化文件名：`platform.html`、`visual-style.html`、`layout.html`
-   - **不要复用文件名**——每个页面都使用全新文件
-   - 使用你的文件创建工具——**不要使用 cat/heredoc**（会在终端产生大量噪音）
-   - 服务器自动提供最新的文件
+1. **写入 HTML** 到约定目录，用文件工具创建，不要用 `cat`/heredoc（会在终端产生大量噪音）。
+2. **告知用户预期内容并结束本轮**：
+   - 提醒文件路径，以及如何在右侧文档栏打开它；
+   - 简要文字概括这一页在展示什么（例如「正在展示首页的 3 种布局方案」）；
+   - 请他们在终端里回答。措辞要让人知道在哪里回答。
+3. **读用户的终端回复**。这是唯一的选择回传通道。
+4. **迭代或推进** —— 若反馈改变了当前页面，写一个新版本文件。
+5. **回到终端时清场** —— 下一步不需要预览时，删除不再需要的 HTML 文件，
+   避免用户在文档栏看到早已解决的问题。
+6. 重复直至完成。
 
-2. **告知用户预期内容并结束本轮：**
-   - 提醒他们 URL（每一步都要，不只是第一步）
-   - 简要文字概括屏幕内容（例如：“正在展示首页的 3 种布局方案”）
-   - 请他们在终端中回应：“请查看后告诉我你的想法。如果愿意，可以点击选择一个选项。”
+## 逐题决策
 
-3. **在你的下一轮**——用户在终端回应后：
-   - 如果存在，读取 `$STATE_DIR/events`——其中包含用户在浏览器中的交互（点击、选择），以 JSON 行格式记录
-   - 将其与用户的终端文本合并，以获得完整信息
-   - 终端消息是主要反馈；`state_dir/events` 提供结构化的交互数据
+即使用户已接受预览，仍需针对每个问题决定是否值得画出来：
 
-4. **迭代或推进**——如果反馈改变了当前页面，写入新文件（例如 `layout-v2.html`）。仅在当前步骤已确认后再进入下一步。
+- **使用预览** 处理视觉内容——原型、线框、布局对比、架构图、并排视觉设计
+- **使用终端** 处理文本内容——需求问题、概念抉择、权衡清单、A/B/C/D 文本选项、范围决策
 
-5. **回到终端时卸载**——当下一步不需要浏览器时（例如澄清问题、权衡讨论），推送一个等待页面以清除过时内容：
-
-    ```html
-    <!-- filename: waiting.html (or waiting-2.html, etc.) -->
-    <div style="display:flex;align-items:center;justify-content:center;min-height:60vh">
-      <p class="subtitle">Continuing in terminal...</p>
-    </div>
-    ```
-
-    这样可避免用户在对话已推进后仍盯着已解决的选择。当下一个可视化问题出现时，像往常一样推送新的内容文件即可。
-
-6. 重复上述流程直至完成。
-
-## 编写内容片段
-
-只需编写页面内部的内容。服务器会自动将其包裹到框架模板中（页头、主题 CSS、连接状态及所有交互基础设施）。
-
-**最小示例：**
-
-```html
-<h2>Which layout works better?</h2>
-<p class="subtitle">Consider readability and visual hierarchy</p>
-
-<div class="options">
-  <div class="option" data-choice="a" onclick="toggleSelect(this)">
-    <div class="letter">A</div>
-    <div class="content">
-      <h3>Single Column</h3>
-      <p>Clean, focused reading experience</p>
-    </div>
-  </div>
-  <div class="option" data-choice="b" onclick="toggleSelect(this)">
-    <div class="letter">B</div>
-    <div class="content">
-      <h3>Two Column</h3>
-      <p>Sidebar navigation with main content</p>
-    </div>
-  </div>
-</div>
-```
-
-就是这样。无需 `<html>`、CSS 或 `<script>` 标签。服务器会提供所有这些。
-
-## 可用 CSS 类
-
-框架模板为你的内容提供以下 CSS 类：
-
-### 选项（A/B/C 选择）
-
-```html
-<div class="options">
-  <div class="option" data-choice="a" onclick="toggleSelect(this)">
-    <div class="letter">A</div>
-    <div class="content">
-      <h3>Title</h3>
-      <p>Description</p>
-    </div>
-  </div>
-</div>
-```
-
-**多选：** 在容器上添加 `data-multiselect` 以允许用户选择多个选项。每次点击都会切换项目的选中样式。
-
-```html
-<div class="options" data-multiselect>
-  <!-- same option markup — users can select/deselect multiple -->
-</div>
-```
-
-### 卡片（视觉设计）
-
-```html
-<div class="cards">
-  <div class="card" data-choice="design1" onclick="toggleSelect(this)">
-    <div class="card-image"><!-- mockup content --></div>
-    <div class="card-body">
-      <h3>Name</h3>
-      <p>Description</p>
-    </div>
-  </div>
-</div>
-```
-
-### 原型容器
-
-```html
-<div class="mockup">
-  <div class="mockup-header">Preview: Dashboard Layout</div>
-  <div class="mockup-body"><!-- your mockup HTML --></div>
-</div>
-```
-
-### 分栏视图（并排）
-
-```html
-<div class="split">
-  <div class="mockup"><!-- left --></div>
-  <div class="mockup"><!-- right --></div>
-</div>
-```
-
-### 优缺点
-
-```html
-<div class="pros-cons">
-  <div class="pros"><h4>Pros</h4><ul><li>Benefit</li></ul></div>
-  <div class="cons"><h4>Cons</h4><ul><li>Drawback</li></ul></div>
-</div>
-```
-
-### 模拟元素（线框图构建块）
-
-```html
-<div class="mock-nav">Logo | Home | About | Contact</div>
-<div style="display: flex;">
-  <div class="mock-sidebar">Navigation</div>
-  <div class="mock-content">Main content area</div>
-</div>
-<button class="mock-button">Action Button</button>
-<input class="mock-input" placeholder="Input field">
-<div class="placeholder">Placeholder area</div>
-```
-
-### 排版与区块
-
-- `h2` — 页面标题
-- `h3` — 区块标题
-- `.subtitle` — 标题下方的次级文本
-- `.section` — 带底部边距的内容块
-- `.label` — 小号大写标签文本
-
-## 浏览器事件格式
-
-当用户在浏览器中点击选项时，其交互会被记录到 `$STATE_DIR/events`（每行一个 JSON 对象）。当你推送新页面时，该文件会自动清空。
-
-```jsonl
-{"type":"click","choice":"a","text":"Option A - Simple Layout","timestamp":1706000101}
-{"type":"click","choice":"c","text":"Option C - Complex Grid","timestamp":1706000108}
-{"type":"click","choice":"b","text":"Option B - Hybrid","timestamp":1706000115}
-```
-
-完整的事件流展示了用户的探索路径——他们在确定前可能会点击多个选项。最后一个 `choice` 事件通常是最终选择，但点击模式可能揭示犹豫或偏好，值得进一步询问。
-
-如果 `$STATE_DIR/events` 不存在，说明用户未与浏览器交互——仅使用其终端文本即可。
+涉及 UI 话题的问题不一定是视觉问题。「在此上下文中 personality 指什么？」是概念问题——使用终端。「哪种向导布局更合适？」是视觉问题——使用预览。
 
 ## 设计建议
 
-- **根据问题匹配保真度**——布局问题用线框图，视觉打磨问题再做精细化
-- **在每页上说明问题**——“哪种布局更显专业？”而非仅仅“选一个”
-- **先迭代再推进**——如果反馈改变了当前页面，先写一个新版本
+- **按问题匹配保真度**——布局问题用线框图，视觉打磨问题再做精细化
+- **在每页上说明问题**——「哪种看起来更专业？」而非仅仅「选一个」
+- **先迭代再推进**——若反馈改变了当前页面，先写一个新版本
 - **每屏最多 2-4 个选项**
-- **在重要场景使用真实内容**——例如摄影作品集应使用真实图片（Unsplash）。占位内容会掩盖设计问题。
+- **在重要场景使用真实内容**——真实文案与真实配色比占位文本更能暴露问题
 - **保持原型简洁**——聚焦布局与结构，而非像素级完美
-
-## 文件命名
-
-- 使用语义化名称：`platform.html`、`visual-style.html`、`layout.html`
-- 不要复用文件名——每个页面必须是新文件
-- 迭代时：追加版本后缀，如 `layout-v2.html`、`layout-v3.html`
-- 服务器按修改时间提供最新的文件
 
 ## 清理
 
-```bash
-bash scripts/stop-server.sh $SESSION_DIR
-```
-
-如果会话使用了 `--project-dir`，原型文件会保留在 `.superpowers/brainstorm/` 中以便后续查阅。仅 `/tmp` 会话在停止时会被删除。
-
-## 参考
-
-- 框架模板（CSS 参考）：`scripts/frame-template.html`
-- 辅助脚本（客户端）：`scripts/helper.js`
+删除本次会话写下的所有 HTML 文件。若用了项目目录，提醒用户该目录已在 `.gitignore` 中。
