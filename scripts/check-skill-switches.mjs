@@ -191,4 +191,53 @@ async function loadPlugin(raw) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// 场景 6：语言偏好（language）驱动模型侧正文与描述，且不触碰开关 invocation
+// ---------------------------------------------------------------------------
+{
+  const { ctx: zhCtx } = await loadPlugin({})
+  const zhSkill = await zhCtx.skills.get('brainstorming')
+  check(
+    state,
+    '[语言偏好] 默认中文：描述以中文前缀开头',
+    typeof zhSkill?.description === 'string' && zhSkill.description.startsWith('Superpower Skill：'),
+    true,
+  )
+  check(
+    state,
+    '[语言偏好] 默认中文：正文为中文',
+    /[\u4e00-\u9fff]/.test(zhSkill?.content ?? ''),
+    true,
+  )
+
+  const { ctx: enCtx } = await loadPlugin({ language: 'en' })
+  const enSkill = await enCtx.skills.get('brainstorming')
+  check(
+    state,
+    '[语言偏好] language=en：描述以 Superpower Skill: 英文前缀开头',
+    typeof enSkill?.description === 'string' && enSkill.description.startsWith('Superpower Skill: '),
+    true,
+  )
+  check(
+    state,
+    '[语言偏好] language=en：正文为英文（正文来自 SKILL.en.md）',
+    /ALWAYS find root cause|creative work|Brainstorming/i.test(enSkill?.content ?? '') || !/[\u4e00-\u9fff]/.test(enSkill?.content ?? ''),
+    true,
+  )
+  check(
+    state,
+    '[语言偏好] language=en：开关 invocation 不受影响',
+    enSkill?.invocation.modelInvocable === true && enSkill?.invocation.userInvocable === true,
+    true,
+  )
+  const enSnapshot = await enCtx.skills.snapshot()
+  check(state, '[语言偏好] language=en：技能总数不变', enSnapshot.skills.length, EXPECTED_SKILL_COUNT)
+  check(
+    state,
+    '[语言偏好] language=en：目录描述全部为英文前缀',
+    enSnapshot.skills.every((skill) => skill.description.startsWith('Superpower Skill: ')),
+    true,
+  )
+}
+
 exitByFailed('技能开关端到端实测', state)

@@ -124,7 +124,10 @@ export async function checkSkillCatalogDrift(rootDir) {
     }
     const client = declared.find((skill) => skill.name === name)
     if (client && client.description !== disk.description) {
-      issues.push('技能 ' + name + ' 的描述与 SKILL.md 不一致，请同步客户端内联清单')
+      issues.push('技能 ' + name + ' 的中文描述与 SKILL.md 不一致，请同步客户端内联清单')
+    }
+    if (client && (client.descriptionEn ?? '') !== disk.descriptionEn) {
+      issues.push('技能 ' + name + ' 的英文描述与 SKILL.en.md 不一致，请同步客户端内联清单')
     }
   }
   for (const name of diskByName.keys()) {
@@ -147,5 +150,6 @@ async function readDiskCatalog(rootDir) {
   return catalog.verifyIntegrity().entries.map((entry) => ({
     name: entry.document.name,
     description: entry.document.description,
+    descriptionEn: entry.enDocument?.description ?? '',
   }))
 }

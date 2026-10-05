@@ -19,7 +19,7 @@ import { SkillDocument } from '../../lib/superpowers.js'
 export class SyncEngine {
   // 豁免白名单：内聚于引擎内部，外部调用方无需关心
   static NON_MD_EXEMPT = new Set(['systematic-debugging/find-polluter.sh'])
-  static TITLE_EXEMPT = new Set(['subagent-driven-development/SKILL.md'])
+  static TITLE_EXEMPT = new Set(['subagent-driven-development/SKILL.md', 'using-superpowers/SKILL.md'])
 
   // 已按 DSH 专属化移除的非 DSH 平台参考文档（上游有、本地无 -> 豁免为 INFO）
   static NON_DSH_PLATFORM_REFS = new Set([
@@ -32,6 +32,12 @@ export class SyncEngine {
     'using-superpowers/references/pi-tools.md',
     'writing-skills/examples/CLAUDE_MD_TESTING.md',
     'writing-skills/anthropic-best-practices.md',
+    // v7.4.0 起本地已删除 brainstorming 随包自建服务脚本（可视化改走宿主官方文档预览）
+    'brainstorming/scripts/frame-template.html',
+    'brainstorming/scripts/helper.js',
+    'brainstorming/scripts/server.cjs',
+    'brainstorming/scripts/start-server.sh',
+    'brainstorming/scripts/stop-server.sh',
   ])
 
   // 本插件 DSH 专属化中有意改写、与上游人为分叉的文件（两树均存在 -> 跳过内容比对，仅 INFO）
@@ -252,6 +258,7 @@ export class SyncEngine {
 
     for (const rel of mdFiles) {
       if (SyncEngine.NON_DSH_PLATFORM_REFS.has(rel)) continue
+      if (SyncEngine.DSH_DIVERGENCE_EXEMPT.has(rel)) continue
       let lRaw = ''
       try {
         lRaw = norm(await readFile(join(this.localDir, rel), 'utf8'))

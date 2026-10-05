@@ -134,6 +134,24 @@ for (const hit of serviceHits) {
 console.log(`[verify] self-hosted-service check ${serviceHits.length === 0 ? 'PASS' : 'FAIL'}\n`)
 if (serviceHits.length > 0) ok = false
 
+// (2.47) README 语言面契约
+console.log('[verify] readme-language check')
+const readmeIssues = contract.checkReadmeLanguage()
+for (const ri of readmeIssues) {
+  console.error('[verify] README ' + ri)
+}
+console.log('[verify] readme-language check ' + (readmeIssues.length === 0 ? 'PASS' : 'FAIL: ' + readmeIssues.length + ' issue(s)') + '\n')
+if (readmeIssues.length > 0) ok = false
+
+// (2.46) 中英配对契约：每个技能必须有 SKILL.en.md，英文描述带 Superpower Skill: 前缀且不含中文
+console.log('[verify] bilingual-pairing check')
+const bilingualIssues = await contract.checkBilingualPairing()
+for (const bi of bilingualIssues) {
+  console.error('[verify] BILINGUAL ' + bi)
+}
+console.log('[verify] bilingual-pairing check ' + (bilingualIssues.length === 0 ? 'PASS' : 'FAIL: ' + bilingualIssues.length + ' issue(s)') + '\n')
+if (bilingualIssues.length > 0) ok = false
+
 // (2.5) 客户端半侧产物形态与命名空间一致性（语法、CJS factory、patch id 对齐）
 console.log('[verify] client-artifact check')
 const clientResults = contract.checkClientArtifact()
