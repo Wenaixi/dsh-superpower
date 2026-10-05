@@ -32,6 +32,9 @@ window.__ModuleLoader__.load({
     var PROVIDER_NAME = 'superpowers';
     var PROVIDER_RANK = 10;
     var SKILL_SOURCE = 'bundled';
+    /* 面板所在的包版本。写死而非从宿主取：浏览器侧读不到 package.json，
+       而版本号正是排查「装的是哪一版、界面是不是这一版」时唯一能直接看到的东西。 */
+    var PACKAGE_VERSION = '7.4.1';
     var NS = 'dsh-superpower';
     var DISABLED_FIELD = 'disabled';
     /* v7.3.0 及之前的双侧禁言表。面板写入成功后会把它们 unset，
@@ -79,6 +82,7 @@ window.__ModuleLoader__.load({
       provider: '提供方',
       rank: '优先级',
       source: '来源',
+      build: '面板版本',
     };
 
     var en = {
@@ -97,6 +101,7 @@ window.__ModuleLoader__.load({
       hostUnavailable: 'The Host does not expose this bundle configuration channel; switches are unavailable',
       provider: 'Provider',
       rank: 'Priority',
+      build: 'Panel build',
       source: 'Source',
     };
 
@@ -265,7 +270,8 @@ window.__ModuleLoader__.load({
         h('ul', { className: 'spSwMeta' },
           h('li', { className: 'spSwMetaItem' }, t('provider'), h('code', null, PROVIDER_NAME)),
           h('li', { className: 'spSwMetaItem' }, t('rank'), h('code', null, String(PROVIDER_RANK))),
-          h('li', { className: 'spSwMetaItem' }, t('source'), h('code', null, SKILL_SOURCE))),
+          h('li', { className: 'spSwMetaItem' }, t('source'), h('code', null, SKILL_SOURCE)),
+          h('li', { className: 'spSwMetaItem' }, t('build'), h('code', null, PACKAGE_VERSION))),
         h('div', { className: 'spSwBar' },
           h(P.Button, {
             variant: 'outline',
