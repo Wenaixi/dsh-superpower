@@ -60,6 +60,12 @@ export const Config = Schema.object({
    */
   disabled: Schema.dict(Schema.boolean()).default({}).volatile(),
   /**
+   * 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。
+   * volatile 字段：面板可经 ConfigForm 通道写入，改后随 loader/volatile-update 事件
+   * 让 Provider 在下轮 list/get 读到新语言。
+   */
+  language: Schema.union(['zh', 'en']).default('zh').volatile(),
+  /**
    * 已废弃的模型侧禁言表，面板不再写入，只在迁移批里被 unset 清空。
    *
    * 必须留着声明，否则 profile 的 cordis.patch.yml 里的旧键会被 schema 丢弃，
@@ -92,6 +98,8 @@ interface VolatileRef<T> {
 export interface Config {
   providerName: string
   skillDir?: string
+  /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
+  language: Volatile<'zh' | 'en'>
   /** 唯一的开关写入目标：键为技能名，值为 true 时模型与用户两侧同时关闭 */
   disabled: Volatile<Record<string, boolean>>
   /** 已废弃的历史禁言表，面板不再写入，只在迁移批里被 unset 清空 */
@@ -166,6 +174,7 @@ class SuperpowersProvider implements SkillProvider {
     const candidates = await this.catalog.listCandidates(this.name, SUPERPOWERS_RANK, {
       signal: options.signal,
       logger: this.ctx.logger,
+      language: switches.language,
     })
     return candidates.map((candidate) => applySwitches(candidate, switches))
   }
@@ -174,6 +183,7 @@ class SuperpowersProvider implements SkillProvider {
     const definition = await this.catalog.getDefinition(candidate, this.name, {
       signal: options.signal,
       logger: this.ctx.logger,
+      language: this.currentSwitches().language,
     })
     // 加载路径同样套用：skill 工具在 get 之后二次校验 isModelInvocable，
     // 只改 list 的候选会让模型目录消失但工具调用仍成功，语义撕裂。

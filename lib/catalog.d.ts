@@ -24,6 +24,7 @@ export interface CatalogEntry {
     directoryName: string;
     skillPath: string;
     document: SkillDocument;
+    enDocument?: SkillDocument;
     nameDrift: boolean;
 }
 export interface SpecificationReport {
@@ -52,6 +53,8 @@ export interface CatalogFingerprint {
     dirMtimeMs: number;
     skillDirs: string[];
     skillMdMtimes: [string, number | null][];
+    /** 各技能目录下 SKILL.en.md 的 mtime（缺失记 null）：英文版正文编辑对中文文件不可见。 */
+    skillMdEnMtimes: [string, number | null][];
 }
 export interface CatalogIntegrityReport {
     total: number;
@@ -65,6 +68,7 @@ export interface CatalogIntegrityReport {
     ok: boolean;
 }
 export declare class SkillCatalog {
+    #private;
     readonly skillDir: string;
     private readonly entriesByName;
     private readonly entriesByDir;
@@ -75,6 +79,7 @@ export declare class SkillCatalog {
     private fingerprint;
     private lastScanProviderName?;
     private lastScanRank?;
+    private lastScanLanguage?;
     constructor(skillDir: string);
     /**
      * 从指定目录异步扫描并构建已预热的 SkillCatalog 深度实例。
@@ -99,12 +104,16 @@ export declare class SkillCatalog {
      * 映射当前有效技能为 DSH SkillCandidate 快照。
      * 自动按 mtime 评估有效性，未变动时直接复用不可变快照，零重复读盘。
      */
-    listCandidates(providerName: string, rank: number, options?: CatalogLookupOptions): Promise<readonly SkillCandidate[]>;
+    listCandidates(providerName: string, rank: number, options?: CatalogLookupOptions & {
+        language?: 'zh' | 'en';
+    }): Promise<readonly SkillCandidate[]>;
     /**
      * 根据候选技能的 locator 与名称解析出完整 SkillDefinition。
      * 优先命中内存缓存；若发生热重读，自动自愈更新回内存映射，消除状态撕裂缝隙。
      */
-    getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions): Promise<SkillDefinition | undefined>;
+    getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions & {
+        language?: 'zh' | 'en';
+    }): Promise<SkillDefinition | undefined>;
     /**
      * 执行 SkillCatalog 自身边界契约自检（排重与漂移探测）。
      */

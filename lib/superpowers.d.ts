@@ -26,6 +26,8 @@ export declare const Config: Schema<Config>;
 export interface Config {
     providerName: string;
     skillDir?: string;
+    /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
+    language: Volatile<'zh' | 'en'>;
     /** 唯一的开关写入目标：键为技能名，值为 true 时模型与用户两侧同时关闭 */
     disabled: Volatile<Record<string, boolean>>;
     /** 已废弃的历史禁言表，面板不再写入，只在迁移批里被 unset 清空 */

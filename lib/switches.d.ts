@@ -24,17 +24,9 @@ import type { SkillInvocationPolicy } from '@deepseek-ai/dsh-skill';
 export interface SkillSwitches {
     /** 关闭的技能名集合，映射为 modelInvocable = userInvocable = false。 */
     disabled: Record<string, boolean>;
+    /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
+    language: 'zh' | 'en';
 }
-/**
- * 读取禁言字典，兼容 volatile 引用与普通对象两种形态。
- *
- * 合并规则：disabled 非空时只认它（用户已经在新表上操作过，旧值即过期）；
- * disabled 为空时取两张旧表的并集——任一侧曾被关闭的技能都算关闭，
- * 这与升级前的效果一致，不会让已关闭的技能重新冒出来。
- *
- * @param config - 插件配置容器，通常为 apply 收到的 config 对象
- * @returns 已解包并浅拷贝的禁言字典；字段缺失或类型不符时为空字典
- */
 export declare function readSwitches(config: unknown): SkillSwitches;
 /**
  * 用禁言表覆盖一个技能条目的 invocation 策略，返回新对象且不修改入参。

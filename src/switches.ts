@@ -26,6 +26,8 @@ import type { SkillInvocationPolicy } from '@deepseek-ai/dsh-skill'
 export interface SkillSwitches {
   /** 关闭的技能名集合，映射为 modelInvocable = userInvocable = false。 */
   disabled: Record<string, boolean>
+  /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
+  language: 'zh' | 'en'
 }
 
 /** volatile 配置字段的最小形态：宿主注入的是 Volatile 引用，普通对象直读。 */
@@ -43,15 +45,26 @@ interface MaybeVolatile {
  * @param config - 插件配置容器，通常为 apply 收到的 config 对象
  * @returns 已解包并浅拷贝的禁言字典；字段缺失或类型不符时为空字典
  */
+function readLanguage(config: unknown): 'zh' | 'en' {
+  const source = (config ?? {}) as Record<string, unknown>
+  const raw = unwrapValue(source['language'])
+  return raw === 'en' ? 'en' : 'zh'
+}
+
+/** 解包单值 volatile 字段。 */
+function unwrapValue(value: unknown): unknown {
+  return typeof (value as MaybeVolatile | undefined)?.get === 'function' ? (value as MaybeVolatile).get!() : value
+}
+
 export function readSwitches(config: unknown): SkillSwitches {
   const source = (config ?? {}) as Record<string, unknown>
   const disabled = unwrapDictionary(source['disabled'])
-  if (Object.keys(disabled).length > 0) return { disabled }
+  if (Object.keys(disabled).length > 0) return { disabled, language: readLanguage(config) }
   const legacy = {
     ...unwrapDictionary(source['modelDisabled']),
     ...unwrapDictionary(source['userDisabled']),
   }
-  return { disabled: legacy }
+  return { disabled: legacy, language: readLanguage(config) }
 }
 
 /**
@@ -114,21 +127,21 @@ export const SkillSwitches = {
 
     await run('禁用时两侧同时关闭且入参不变', () => {
       const original = entry()
-      const out = applySwitches(original, { disabled: { 'switch-test': true } })
+      const out = applySwitches(original, { disabled: { 'switch-test': true }, language: 'zh' })
       if (out.invocation.modelInvocable !== false) throw new Error('modelInvocable 未被关闭')
       if (out.invocation.userInvocable !== false) throw new Error('userInvocable 未被关闭')
       if (original.invocation.modelInvocable !== true) throw new Error('入参被就地修改')
     })
 
     await run('字典缺项视为启用', () => {
-      const out = applySwitches(entry(), { disabled: {} })
+      const out = applySwitches(entry(), { disabled: {}, language: 'zh' })
       if (!out.invocation.modelInvocable || !out.invocation.userInvocable) {
         throw new Error('缺项被误判为禁用')
       }
     })
 
     await run('无关技能名不影响他人', () => {
-      const out = applySwitches(entry(), { disabled: { 'other-skill': true } })
+      const out = applySwitches(entry(), { disabled: { 'other-skill': true }, language: 'zh' })
       if (!out.invocation.modelInvocable) throw new Error('无关键误伤了本技能')
     })
 
@@ -141,6 +154,21 @@ export const SkillSwitches = {
       if (Object.keys(out.disabled).length !== 1 || out.disabled['switch-test'] !== true) {
         throw new Error('disabled 非空却仍读到了旧表的键')
       }
+    })
+
+    await run('默认语言为中文', () => {
+      const out = readSwitches({})
+      if (out.language !== 'zh') throw new Error('默认语言不是 zh: ' + out.language)
+    })
+
+    await run('language=en 时正确返回', () => {
+      const out = readSwitches({ language: 'en' })
+      if (out.language !== 'en') throw new Error('language 未读取为 en')
+    })
+
+    await run('language 不影响禁言表', () => {
+      const out = readSwitches({ language: 'en', disabled: { a: true } })
+      if (Object.keys(out.disabled).length !== 1) throw new Error('language 读取影响禁言表')
     })
 
     await run('新表为空时并入两张旧表', () => {
