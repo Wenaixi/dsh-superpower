@@ -7,6 +7,8 @@
 - **同步上游**：v7.0.0 起技能名与目录回归上游命名（无 `superpower-` 前缀），整批同步了上游 `v6.4.2`。之后上游出新版本，按需 cherry-pick 合入并记进 `CHANGELOG.md`。
 - **中文化**：`skills/**/SKILL.md` 与辅助文档保持简体中文，代码、命令、路径、变量名不译。
 - **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串；技能名与描述固定中文，不做技能级翻译。
+- **不引自建服务**：插件与技能正文不提供 HTTP / WebSocket 服务。可视化协作走宿主官方文档预览，配置写入走官方 `configForms` 通道。
+- **废弃字段保留声明**：`modelDisabled` / `userDisabled` 已废弃，但 schema 声明与 `.volatile()` 都要留着。去掉声明会让旧配置被 schema 丢弃，去掉 `.volatile()` 会让迁移批里的 `unset` 被宿主写入闸门拒绝。
 - **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 的硬规则——`inject` 声明依赖、`Schemastery Config` 配默认值、副作用一律包在 `ctx.effect` 里、`waterfall` 记得调 `next()`。
 - **失败要响亮**：frontmatter 非法时只跳过那一个技能并 `warn`，不静默吞错。
 
@@ -44,14 +46,36 @@ dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 pnpm install
 pnpm build          # tsc -p tsconfig.build.json
 pnpm typecheck      # tsc --noEmit
-node scripts/verify.mjs                      # 契约门禁：伴生脚本 / 边界自检 / 符号扫描 / 图标与卡片元数据 / UI i18n 取词
+node scripts/verify.mjs                      # 契约门禁：随包 shell 脚本 / 边界自检 / 符号扫描 / 自建服务禁令 / 图标与卡片元数据 / UI i18n 与单开关取词
 node scripts/check-skill-switches.mjs         # 技能开关端到端实测（真实 SkillRegistry）
 node scripts/check-same-name-priority.mjs    # 同名裁决实测一（自研桩，无外部依赖）
 node scripts/check-same-name-priority-fs.mjs # 同名裁决实测二（加载官方 filesystem）
-node scripts/review-sync.mjs                 # 上游同步全量复核（deep + tokens 双绿）
+node --test scripts/sync-engine.test.mjs      # 同步引擎的结构化结果契约
+node scripts/client-manifest.test.mjs        # 客户端清单漂移判定
+pnpm pack --dry-run                         # 打包清单
+node scripts/review-sync.mjs                 # 上游同步全量复核（deep + tokens 双绿，需 SP_UPSTREAM 指向上游 skills/ 目录）
 ```
 
 `verify.mjs` 打出 `ALL PASS`、两个同名裁决脚本与开关脚本都报「全部通过」，才算满足发布前置条件。
+
+### 静态门禁测不到的部分：隔离实例验收
+
+宿主的语义门禁只有真机能触发：Settings 的 volatile 路径校验、写入批次的原子性、客户端产物的长缓存与 rev。这三条一旦回归，静态断言与端到端脚本照样全绿，而真实拨一次开关就会失败。
+
+改动面板版式、配置字段或客户端产物后，开一个隔离实例（只装 `dsh-base` + `dsh-web-app` + 本插件）并跑一遍：
+
+```bash
+dsh <新实例名> --from-default-profile web
+dsh plugin --profile <新实例名> add file:<绝对路径>/wenaixi-dsh-superpower-<版本>.tgz
+dsh --profile <新实例名> --port 3199 --no-open   # 启动日志里是带 token 的鉴权 URL
+
+python scripts/browser/verify-switch-ui.py \
+  http://127.0.0.1:3199 <token> .verify-shots <实例目录>/cordis.patch.yml .verify-shots/expected.json
+python scripts/browser/verify-model-perception.py \
+  http://127.0.0.1:3199 <token> <实例目录> <实例目录>/cordis.patch.yml .verify-shots
+```
+
+两个脚本会真实点开关、回读 `cordis.patch.yml` 落盘、再用宿主真实 `SkillRegistry` 复核两侧可见性。热装与热更新另需人工确认：跑着实例时 `dsh plugin --profile <实例名> add <新 tarball>`，免重启看面板页头「面板版本」是否变化。
 
 ### 发布流程（tag 触发全自动流水线）
 
@@ -69,7 +93,7 @@ git status --short                 # 应无输出
 #    release.yml 靠这个标题切出段落生成 GitHub Release 正文
 
 # 4. 更新文档
-#    README.md 的版本沿革与常见问题、CLAUDE.md 的当前版本与决策日志
+#    README.md 的版本沿革与常见问题、CONTEXT.md 的当前版本、CLAUDE.md 的决策日志
 
 # 5. 提交并推送
 git add -A

@@ -185,6 +185,8 @@ scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 sk
 
 `v7.4.0` 每个技能从两个开关合并为一个，配置收敛到单张 `disabled` 表；brainstorming 的可视化协作改用 DSH 官方文档预览，不再随包附带 HTTP 服务脚本。
 
+`v7.4.1` 修复开关保存失败：`dsh-settings` 的写入闸门逐条校验 `op.path` 是否落在 volatile 节点下，两个旧字段去掉 `.volatile()` 会让整批 `mutate` 被拒，恢复标注即可；面板页头补「面板版本」标注。
+
 完整变更见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 常见问题
