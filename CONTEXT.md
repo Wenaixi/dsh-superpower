@@ -71,11 +71,11 @@
 
 ## 版本与发布状态
 
-- **当前版本**：`7.4.0`（2026-10-05；技能开关合并为单开关，可视化协作迁出自建 HTTP 服务）
+- **当前版本**：`7.4.1`（2026-10-06；修复 volatile 写入闸门导致开关保存失败，面板 meta 区补版本标注）
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
 - **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
 - **本地深度验证**：`sp-deep-verify` profile（`dsh-base` + `dsh-headless` + 本插件），真实 headless 会话逐技能调用 `skill` 工具加载 15 技能，frontmatter description 与 `##` 标题逐项断言一致；安装产物 82 文件全树扫描无平台残留
-- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，现由 `7.4.0` 取代
+- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，现由 `7.4.1` 取代
 ### 6. SkillPriorityHarness (同名裁决实测基座)
 - **定位**: 深度测试 Harness，位于 `scripts/lib/harness-common.mjs`，负责正序/反序注册编排、同名胜出断言、未受影响技能独立性与总数校验。
 - **职责**:

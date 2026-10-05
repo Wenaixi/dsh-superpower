@@ -4,6 +4,16 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.4.1] - 2026-10-06
+
+### 修复
+
+- **面板的每一次开关操作都报「保存失败」，配置零写入（真机实测发现）**：`dsh-settings` 的写入闸门逐条校验 `op.path` 是否落在某个 volatile 节点下，命中不了就抛 `Config field "modelDisabled" is not volatile` 并让整批 `mutate` 失败。7.4.0 把两个旧字段去掉 `.volatile()` 本意是「不再可写」，实际效果是它们变成非 volatile 节点，于是「主写入 `disabled` + 两条 `unset`」这一批里只要有 `unset` 指向旧字段就整批被拒。两个旧字段恢复 `.volatile()`：它们仍不会被面板写入（面板只发 `disabled` 与 `unset`），但能被 `unset` 合法清掉。
+
+### 新增
+
+- **面板 meta 区补「面板版本」标注**：浏览器侧读不到 `package.json`，界面却是判断「装的是哪一版、是不是这一版界面」的唯一现场。写死常量并在页头显示，版本与界面对不上时能一眼看出，不必翻产物。
+
 ## [7.4.0] - 2026-10-05
 
 ### 移除
