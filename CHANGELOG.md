@@ -4,6 +4,21 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.5.0] - 2026-10-06
+
+### 新增
+
+- **每个技能新增英文正文**：`skills/<name>/SKILL.en.md` 以 obra/superpowers v6.4.2 英文原版为底稿，做 DSH 专属化清理（去违禁符号、改写非 DSH 平台引用、补 DSH 专属小节），与中文 `SKILL.md` 并存；辅助 md 按「文件.en.md」后缀配对。
+- **面板语言切换**：每行新增「中文 / English」按钮（全局单一偏好 `language` volatile 字段），切换即改该技能的显示语言与模型加载正文语言；英文描述一律以 `Superpower Skill: ` 开头。
+- **README 双语**：README.md 改为默认英文，正文来自上游英文技能名/描述；中文版移入 README.zh.md，两份文档顶部互跳。
+
+### 变更
+
+- **模型侧随语言偏好供电**：`language` 偏好同时决定 `ctx.skills.list()` 的 description（模型目录）与 `ctx.skills.get()` 的 content（模型加载正文）；`loader/volatile-update` 事件热刷新现有闭环直接复用。
+- **门禁扩展**：contract.mjs 新增中英配对契约（每个技能必须有 SKILL.en.md、英文描述带前缀且不含中文）与 README 语言面断言；client-manifest 比对扩展为中文描述与英文描述双字段；check-skill-switches.mjs 新增语言偏好场景（默认中文、language=en 时正文与描述为英文且不影响开关）；verify-switch-ui.py 新增语言切换步（点 English、断言描述变英文、回读落盘、点中文恢复）。
+- **英文正文沿上游原貌**：脚本调用保留上游无 `bash` 前缀的形态与上游语义化示例（visual-companion.en.md 等）属英文版原貌，配对文件加入契约豁免清单。
+- **版本**：7.4.1 -> 7.5.0。
+
 ## [7.4.1] - 2026-10-06
 
 ### 修复
