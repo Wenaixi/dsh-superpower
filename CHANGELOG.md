@@ -4,6 +4,27 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.4.0] - 2026-10-05
+
+### 移除
+
+- **brainstorming 随包可视化服务（端口、会话密钥、WebSocket 重连四套生命周期）**：`skills/brainstorming/scripts/` 整目录删除，含 `server.cjs`、`start-server.sh`、`stop-server.sh`、`helper.js`、`frame-template.html`。宿主 `documentPreviews` 已内置 `html`/`htm` 预览并渲染为隔离 iframe，插件无再自建端口。**能力降级**：预览中的点击不再回传给 agent，选择结果必须回到终端回复里；`visual-companion.md` 与 `SKILL.md` 均显式写入这一约束。
+
+### 变更
+
+- **每个技能从两个开关合并为一个**：原先「模型可调用 / 用户可调用」两个语义重叠的开关合并为单个开关，关闭即 `modelInvocable` 与 `userInvocable` 同时为 `false`。面板行布局由双列网格改为标签在左、单开关在右；词典的 `modelInvocable`/`userInvocable` 与两条 hint 合并为 `invocable`/`invocableHint`，批量按钮提示里的「两侧」措辞一并收敛。
+- **开关状态收敛到单张禁言表**：新增 `disabled` volatile 字典作为唯一写入目标，`switchOps()` 把主写入与两条清理旧表的 `unset` 合进同一次 `mutate`——共享一个 revision 栅栏与一次持久化决策，不存在半迁移态。用户在面板做任何一次操作即完成收敛，之后 profile 只剩 `disabled` 一个字段。
+- **端到端实测改为单字段语义**：`check-skill-switches.mjs` 重写为五场景（默认全开、新表两侧同关且不误伤他人、旧表并集生效、新表非空时旧表失效、热失效后目录立即刷新）；两个浏览器脚本的探针由双列 `modelOn`/`userOn` 改为单列 `on`，并新增「旧的两张分侧表已被清空」断言。
+- **门禁覆盖两条新契约**：`checkCompanionScripts` 收缩为 `checkBundledShellScripts`（随包 JS 服务脚本已删除，只留 shell 脚本的 Shebang 与 CRLF 自检）；client-artifact 新增单开关断言；新增 `checkNoSelfHostedService` 断言技能正文不得出现 `start-server.sh` 等随包服务痕迹。三条均做过破坏实测。
+- **修复客户端构建死锁**：`build-client.mjs` 原先在复制产物之前调用 `assertClientManifest`，而后者把「`src` 与 `lib` 内容一致」也作为失败条件，产物一旦落后于源就拒绝执行，于是永远无法重建。改为先复制再校验，并从 `client-manifest.mjs` 拆出 `checkSkillCatalogDrift` 专管清单漂移。
+
+### 破坏性变更
+
+- **配置字段 `modelDisabled` 与 `userDisabled` 废弃**：两者去掉 `volatile()` 后不再可写，面板只写 `disabled`。schema 声明刻意保留，否则 profile 里的旧键会被直接丢弃、用户历史开关一次性消失；`readSwitches` 在 `disabled` 为空时取两旧表的并集，保证升级前的开关在用户第一次操作前继续生效。手动改过 `cordis.patch.yml` 的用户需要把值并入 `disabled`。
+
+### 修复
+
+- **单开关面板的样式注入与词典遗漏已由门禁钉死**：新增断言拒绝 `spSwToggles` 双列类名残留、拒绝绕过 `LEGACY_FIELDS` 直接引用旧字段，并要求 `invocable`/`invocableHint` 在 zh/en 双语同时声明。破坏实测时该断言确实变红。
 ## [7.3.0] - 2026-10-04
 
 ### 修复

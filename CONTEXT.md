@@ -57,7 +57,8 @@
   - 资源引用契约与孤儿文件判定（`checkResourceRefs`，两遍扫描收集，集中维护白名单）；
   - 随包脚本调用守卫（`checkBareScriptCalls`，正文调用 `scripts/*` 必须带解释器前缀）；
   - 全仓无 Emoji / 图形状态符号硬扫描（`checkSymbols`）；
-  - Visual Companion 随包后台脚本（`server.cjs`、`helper.js`）纯原生静态语法与健全性自检（`checkCompanionScripts`，闭合测试表面遗漏）；
+  - 随包 shell 脚本的 Shebang 与 CRLF 健壮性自检（`checkBundledShellScripts`）；
+  - 技能正文不得复活自建 HTTP 服务（`checkNoSelfHostedService`，可视化协作已改走宿主官方文档预览）；
   - 契约守卫真实可失败自检（`assertGuardCanFail`）。
 - **接缝 (Seams)**: 位于技能正文写作契约与物理文件/AST 结构之间，使测试表面与规则逻辑高度局部化，`verify.mjs` 成为无状态的轻量门禁编排器。
 
@@ -70,11 +71,11 @@
 
 ## 版本与发布状态
 
-- **当前版本**：`7.3.0`（2026-10-04；快照指纹升级与守卫修正）
+- **当前版本**：`7.4.0`（2026-10-05；技能开关合并为单开关，可视化协作迁出自建 HTTP 服务）
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
 - **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
 - **本地深度验证**：`sp-deep-verify` profile（`dsh-base` + `dsh-headless` + 本插件），真实 headless 会话逐技能调用 `skill` 工具加载 15 技能，frontmatter description 与 `##` 标题逐项断言一致；安装产物 82 文件全树扫描无平台残留
-- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，现已由 `7.3.0` 取代，官方源 `latest` 指向 `7.3.0`
+- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，现由 `7.4.0` 取代
 ### 6. SkillPriorityHarness (同名裁决实测基座)
 - **定位**: 深度测试 Harness，位于 `scripts/lib/harness-common.mjs`，负责正序/反序注册编排、同名胜出断言、未受影响技能独立性与总数校验。
 - **职责**:

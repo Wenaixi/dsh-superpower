@@ -75,21 +75,19 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 ## 技能开关
 
-插件管理页里点开 `@wenaixi/dsh-superpower` 卡片，详情页底部就是开关面板。每个技能两个开关：
+插件管理页里点开 `@wenaixi/dsh-superpower` 卡片，详情页底部就是开关面板。每个技能一个开关，关掉即两侧同时不可见：
 
-| 开关 | 关掉之后 |
-|---|---|
-| 模型可调用 | 技能不再出现在模型的可用技能目录里，`skill` 工具调用也会被拒 |
-| 用户可调用 | 技能不再出现在斜杠命令补全和命令行技能清单里 |
+- 模型不再在可用技能目录里看到它，`skill` 工具调用也会被拒；
+- 你也没法再从斜杠命令补全或命令行技能清单里调它。
 
-面板上方还有全部开启、全部关闭、恢复默认三个批量操作和一个搜索框。三个批量按钮都同时作用于两侧，所以「全部关闭」会让这 15 个技能既不被模型看到，你也没法手动调用。
-
-页头标着本包的 `provider`、`rank`、`source`，排查同名覆盖时用得上。
+面板上方还有全部开启、全部关闭、恢复默认三个批量操作和一个搜索框。页头标着本包的 `provider`、`rank`、`source`，排查同名覆盖时用得上。
 
 - 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
-- 状态写在 profile 的 `cordis.patch.yml` 里，跟着 profile 一起备份迁移，重装插件不丢。
+- 状态写在 profile 的 `cordis.patch.yml` 的 `disabled` 字段里，跟着 profile 一起备份迁移，重装插件不丢。
 - 只影响本包这 15 个技能，不碰官方和第三方插件提供的技能。
 - 语言边界：技能名与描述固定中文；面板 UI 文案跟随宿主界面语言（设置里切换语言即生效）。
+
+7.3.0 及更早版本用过两个开关（模型可调用 / 用户可调用），对应 `modelDisabled` 与 `userDisabled` 两张表。这两个字段已废弃：升级后旧值继续生效，你第一次拨动开关时它们会被清空，配置收敛到 `disabled` 一张表。
 
 ## 使用
 
@@ -162,13 +160,13 @@ src/superpowers.ts  # 插件入口，SkillProvider rank 10
 src/catalog.ts      # SkillCatalog：技能编目、三键聚合指纹探测、快照复用、规范自检
 src/document.ts     # SkillDocument：frontmatter 解析、契约转换、内建 selfTest
 src/switches.ts     # 技能开关：禁言表解包与 invocation 覆盖，内建 selfTest
-src/client.js       # 浏览器半侧：插件卡片详情页的技能开关面板，手写 CJS factory
+src/client.js       # 浏览器半侧：插件卡片详情页的单开关面板，手写 CJS factory
 skills/             # 15 个技能正文与资源
 lib/                # 已提交的构建产物，GitHub 直装免构建
 locale/             # 插件卡片的标题与描述（中英）；面板 UI 经官方 locale 注册表双语切换
 icon.png            # 插件卡片、README 顶部、GitHub 头像共用
 scripts/            # 门禁、同名裁决实测、开关实测、上游同步复核、浏览器验证
-scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 skills/ 目录一致
+scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 skills/ 目录一致
 ```
 
 ## 版本沿革
@@ -184,6 +182,8 @@ scripts/build-client.mjs      # 复制客户端产物前校验内联清单与 sk
 `v7.3.0` 技能快照失效判据升级为三键聚合指纹（目录 mtime + 根级目录名集合 + 各 SKILL.md mtime），消除内容编辑与增量新建两类失明窗口；技能总数魔法数收敛为导出常量；裸调用守卫正则按真实数据域修正并补全自检盲区；客户端清单比对改按技能名建 Map。
 
 `v7.2.1` 固化面板语言边界：技能内容（名称与描述）固定中文不做技能级翻译；面板 UI 文案（标题、按钮、提示、meta 标签）全部并入 `zh`/`en` 词典、经官方 locale 注册表随宿主界面语言切换。底部 `provider`/`rank`/`source` 三个标注不再硬编码英文。
+
+`v7.4.0` 每个技能从两个开关合并为一个，配置收敛到单张 `disabled` 表；brainstorming 的可视化协作改用 DSH 官方文档预览，不再随包附带 HTTP 服务脚本。
 
 完整变更见 [CHANGELOG.md](./CHANGELOG.md)。
 

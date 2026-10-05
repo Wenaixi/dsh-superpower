@@ -1,6 +1,6 @@
 {
   "name": "@wenaixi/dsh-superpower",
-  "version": "7.3.0",
+  "version": "7.4.0",
   "description": "obra/superpowers 的 DSH 移植版：15 个工程纪律技能注入 ctx.skills，含技能开关面板",
   "type": "module",
   "main": "lib/superpowers.js",
