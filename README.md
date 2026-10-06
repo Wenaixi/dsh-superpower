@@ -8,7 +8,7 @@
 
 <img src="./icon.png" alt="@wenaixi/dsh-superpower" width="128" height="128">
 
-A DSH port of [obra/superpowers](https://github.com/obra/superpowers). 15 skills are injected into `ctx.skills`. Each skill ships an English body and a Chinese body, and the panel switches between them.
+A DSH port of [obra/superpowers](https://github.com/obra/superpowers). 15 skills are injected into `ctx.skills`. Skill bodies are the official English originals; the panel switches each skill's name and description between Chinese and English.
 
 ## Install
 
@@ -49,7 +49,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 A prescriptive engineering methodology: design first, slice the plan into verifiable steps, drive with tests, find the root cause before fixing, and run verification commands before claiming completion. It ships as a `dsh.bundle`, writes nothing into your home directory, uninstalls cleanly, and rebuilds itself through HMR.
 
-Each skill exists twice on disk: `SKILL.md` (Chinese) and `SKILL.en.md` (English, taken from the upstream original). Which body the model loads is decided by the panel's language switch.
+Skill bodies are the upstream English originals (DSH-adapted: symbols, platform references, DSH-only sections). Each `SKILL.md` declares both an English `description` and a Chinese `description_zh`; the panel's language switch picks which one the model sees, without changing the body.
 
 ## Skills
 
@@ -82,7 +82,7 @@ The official registry arbitrates same-layer name collisions by ascending `rank`.
 Open the `@wenaixi/dsh-superpower` card in the plugin manager; the panel sits at the bottom of its detail page.
 
 - One switch per skill. Off means both sides lose it: the model no longer sees it in the available-skill catalog and `skill` tool calls are rejected; you can no longer reach it from slash-command completion or the CLI skill list.
-- `中文 / English` per skill switches the display language of that skill's name and description, and the language of the body the model loads. The English description always starts with `Superpower Skill: `. The choice is stored per skill.
+- `中文 / English` per skill switches the display language of that skill's name and description (English `description` vs Chinese `description_zh`). The body is always the English original. Both descriptions start with `Superpower Skill:` / `Superpower Skill：`. The choice is stored per skill.
 - The panel header also carries enable-all, disable-all, restore-defaults, and a search box. The head line shows this bundle's `provider`, `rank`, `source`, and panel build.
 - Changes take effect immediately; the running turn is unaffected and the next turn sees the new catalog and language.
 - State lives in the profile's `cordis.patch.yml` (`disabled` and `language` tables) and travels with the profile.
@@ -162,7 +162,7 @@ src/catalog.ts      # SkillCatalog: catalog, three-key fingerprint probe, snapsh
 src/document.ts     # SkillDocument: frontmatter parsing, contract mapping, built-in selfTest
 src/switches.ts     # skill switches and language preference, built-in selfTest
 src/client.js       # browser half: switch and language panel on the plugin card, hand-written CJS factory
-skills/             # 15 skills, each with a Chinese body and an English .en.md twin
+skills/             # 15 skills, English bodies, bilingual frontmatter descriptions
 lib/                # committed build artifacts so GitHub installs need no build
 locale/             # plugin card title and description (zh/en); panel UI follows the Host locale
 icon.png            # plugin card, README header, GitHub avatar
@@ -188,7 +188,7 @@ Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and 
 
 `v7.4.1` fixed switch saves failing: the `dsh-settings` write gate validates every `op.path` against a volatile node, and dropping `.volatile()` from the two legacy fields made the whole `mutate` batch fail; restoring the marker fixed it. The panel header gained a panel-build label.
 
-`v7.5.0` ships every skill with an English body (`SKILL.en.md`, taken from the upstream original and adapted for DSH) beside the Chinese one, adds a per-skill `中文 / English` switch to the panel, makes English descriptions always start with `Superpower Skill: `, routes the same language preference to the model-side catalog and body, and makes README.md English by default with a Chinese twin.
+`v7.5.1` makes skill bodies the official English originals (single `SKILL.md` per skill, DSH-adapted), keeps Chinese as the panel language via `description_zh`, so the language switch changes only the description the model sees. The `中文 / English` switch, the `Superpower Skill: ` prefixes, and the bilingual README remain.
 
 Full history in [CHANGELOG.md](./CHANGELOG.md).
 
