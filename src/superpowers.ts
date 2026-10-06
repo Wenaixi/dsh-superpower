@@ -64,7 +64,7 @@ export const Config = Schema.object({
    * volatile 字段：面板可经 ConfigForm 通道写入，改后随 loader/volatile-update 事件
    * 让 Provider 在下轮 list/get 读到新语言。
    */
-  language: Schema.union(['zh', 'en']).default('zh').volatile(),
+  language: Schema.union(['zh', 'en']).required(false).volatile(),
   /**
    * 已废弃的模型侧禁言表，面板不再写入，只在迁移批里被 unset 清空。
    *
@@ -98,8 +98,8 @@ interface VolatileRef<T> {
 export interface Config {
   providerName: string
   skillDir?: string
-  /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
-  language: Volatile<'zh' | 'en'>
+  /** 技能描述显示语言偏好：'zh'/'en' 显式固定；缺失（undefined）时跟随宿主界面语言。 */
+  language: Volatile<'zh' | 'en' | undefined>
   /** 唯一的开关写入目标：键为技能名，值为 true 时模型与用户两侧同时关闭 */
   disabled: Volatile<Record<string, boolean>>
   /** 已废弃的历史禁言表，面板不再写入，只在迁移批里被 unset 清空 */
@@ -148,6 +148,7 @@ class SuperpowersProvider implements SkillProvider {
   private readonly ctx: Context
   private readonly control: SkillProviderControl
   private readonly currentSwitches: () => SkillSwitches
+  private hostLanguageCache: 'zh' | 'en' | undefined
 
   constructor(ctx: Context, control: SkillProviderControl, config: Config) {
     assertNotRuntimeProvider(config.providerName)
@@ -161,12 +162,34 @@ class SuperpowersProvider implements SkillProvider {
   }
 
   /**
+   * 宿主界面语言：读 dsh-settings 的 locale 条目 preference（volatile）。
+   * settings 服务缺失（端到端 mock、纯 Registry 上下文）或 preference 缺省时返回 undefined，
+   * 由调用方回退到 zh。结果缓存，locale preference 变更经 loader/volatile-update 清空。
+   */
+  hostLanguage(): 'zh' | 'en' | undefined {
+    if (this.hostLanguageCache !== undefined) return this.hostLanguageCache
+    let locale: 'zh' | 'en' | undefined
+    try {
+      const forms = (this.ctx.get('settings')?.describe() ?? []) as { ns?: string; value?: unknown }[]
+      const entry = forms.find((d) => d.ns === 'locale')
+      const preference = (entry?.value as { preference?: unknown } | undefined)?.preference
+      locale = preference === 'en' ? 'en' : preference === 'zh' ? 'zh' : undefined
+    } catch {
+      locale = undefined
+    }
+    // ponytail: 结果缓存 + volatile-update 失效；describe 每次全量扫描，缓存避免每轮 list 重扫
+    this.hostLanguageCache = locale
+    return locale
+  }
+
+  /**
    * 让宿主注册表丢弃本 provider 的编目缓存并广播 skills/change，
    * 同时让本包自己的候选快照重算。缺任一方都会导致开关显示已更新而模型侧目录不变。
    */
   invalidate(): void {
     this.control.invalidate()
     this.catalog.invalidate()
+    this.hostLanguageCache = undefined
   }
 
   async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
@@ -174,7 +197,7 @@ class SuperpowersProvider implements SkillProvider {
     const candidates = await this.catalog.listCandidates(this.name, SUPERPOWERS_RANK, {
       signal: options.signal,
       logger: this.ctx.logger,
-      language: switches.language,
+      language: switches.language ?? this.hostLanguage(),
     })
     return candidates.map((candidate) => applySwitches(candidate, switches))
   }
@@ -183,7 +206,7 @@ class SuperpowersProvider implements SkillProvider {
     const definition = await this.catalog.getDefinition(candidate, this.name, {
       signal: options.signal,
       logger: this.ctx.logger,
-      language: this.currentSwitches().language,
+      language: this.currentSwitches().language ?? this.hostLanguage(),
     })
     // 加载路径同样套用：skill 工具在 get 之后二次校验 isModelInvocable，
     // 只改 list 的候选会让模型目录消失但工具调用仍成功，语义撕裂。

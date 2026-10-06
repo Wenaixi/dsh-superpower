@@ -26,8 +26,8 @@ import type { SkillInvocationPolicy } from '@deepseek-ai/dsh-skill'
 export interface SkillSwitches {
   /** 关闭的技能名集合，映射为 modelInvocable = userInvocable = false。 */
   disabled: Record<string, boolean>
-  /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
-  language: 'zh' | 'en'
+  /** 技能描述显示语言偏好：'zh'/'en' 显式固定；undefined 表示跟随宿主界面语言。 */
+  language: 'zh' | 'en' | undefined
 }
 
 /** volatile 配置字段的最小形态：宿主注入的是 Volatile 引用，普通对象直读。 */
@@ -45,10 +45,12 @@ interface MaybeVolatile {
  * @param config - 插件配置容器，通常为 apply 收到的 config 对象
  * @returns 已解包并浅拷贝的禁言字典；字段缺失或类型不符时为空字典
  */
-function readLanguage(config: unknown): 'zh' | 'en' {
+function readLanguage(config: unknown): 'zh' | 'en' | undefined {
   const source = (config ?? {}) as Record<string, unknown>
   const raw = unwrapValue(source['language'])
-  return raw === 'en' ? 'en' : 'zh'
+  if (raw === 'en') return 'en'
+  if (raw === 'zh') return 'zh'
+  return undefined
 }
 
 /** 解包单值 volatile 字段。 */
@@ -156,9 +158,9 @@ export const SkillSwitches = {
       }
     })
 
-    await run('默认语言为中文', () => {
+    await run('默认语言为 undefined（跟随宿主）', () => {
       const out = readSwitches({})
-      if (out.language !== 'zh') throw new Error('默认语言不是 zh: ' + out.language)
+      if (out.language !== undefined) throw new Error('默认语言应为 undefined: ' + out.language)
     })
 
     await run('language=en 时正确返回', () => {

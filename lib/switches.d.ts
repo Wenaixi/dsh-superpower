@@ -24,8 +24,8 @@ import type { SkillInvocationPolicy } from '@deepseek-ai/dsh-skill';
 export interface SkillSwitches {
     /** 关闭的技能名集合，映射为 modelInvocable = userInvocable = false。 */
     disabled: Record<string, boolean>;
-    /** 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。 */
-    language: 'zh' | 'en';
+    /** 技能描述显示语言偏好：'zh'/'en' 显式固定；undefined 表示跟随宿主界面语言。 */
+    language: 'zh' | 'en' | undefined;
 }
 export declare function readSwitches(config: unknown): SkillSwitches;
 /**
