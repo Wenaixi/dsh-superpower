@@ -34,7 +34,7 @@ window.__ModuleLoader__.load({
     var SKILL_SOURCE = 'bundled';
     /* 面板所在的包版本。写死而非从宿主取：浏览器侧读不到 package.json，
        而版本号正是排查「装的是哪一版、界面是不是这一版」时唯一能直接看到的东西。 */
-    var PACKAGE_VERSION = '7.5.5';
+    var PACKAGE_VERSION = '7.5.4';
     var NS = 'dsh-superpower';
     var DISABLED_FIELD = 'disabled';
     /* v7.3.0 及之前的双侧禁言表。面板写入成功后会把它们 unset，
@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
       rank: '优先级',
       source: '来源',
       build: '面板版本',
-      langTitle: '切换描述显示语言：中文 / English',
+      langTitle: '切换技能描述语言（中文 / English）。只影响用户与模型看到的技能描述，技能正文始终为英文原版。',
     };
 
     var en = {
@@ -104,7 +104,7 @@ window.__ModuleLoader__.load({
       rank: 'Priority',
       build: 'Panel build',
       source: 'Source',
-      langTitle: 'Switch description language: Chinese / English',
+      langTitle: 'Switch the skill description language (Chinese / English). Affects only the descriptions users and the model see; skill bodies stay the English originals.',
     };
 
     /* 官方样式注入契约：style[data-plugin-css="<包名>/<文件名>"]，宿主据此在
@@ -226,13 +226,10 @@ window.__ModuleLoader__.load({
      * props.actions 是本面板独占的写操作面。
      */
     function SkillSwitchPanel(props) {
+      var t = props.t;
       var form = props.actions.form;
       var state = props.useSwitches(function (value) { return value; });
       var hostActive = props.useLocaleActive(function (v) { return v && v.preference === 'en' ? 'en' : 'zh'; });
-      var language = readLanguage(state.value);
-      var effective = language === undefined ? hostActive : language;
-      /* 面板 UI 文案按生效语言选词典（宿主界面语言对技能面板不再生效，与语言按钮一致）。 */
-      var uiText = function (key) { return (effective === 'zh' ? zh : en)[key]; };
 
       var keywordState = React.useState('');
       var keyword = keywordState[0];
@@ -246,8 +243,8 @@ window.__ModuleLoader__.load({
 
       if (state.status !== 'ready') {
         return h('div', { className: 'spSw' },
-          h('h4', { className: 'spSwTitle' }, uiText('title')),
-          h('p', { className: 'spSwIntro' }, uiText('hostUnavailable')));
+          h('h4', { className: 'spSwTitle' }, t('title')),
+          h('p', { className: 'spSwIntro' }, t('hostUnavailable')));
       }
 
       var value = state.value || {};
@@ -284,76 +281,76 @@ window.__ModuleLoader__.load({
             h('p', { className: 'spSwDesc' }, skillText(skill)),
             failure ? h('p', { className: 'spSwErr', role: 'alert' }, failure) : null),
           h('div', { className: 'spSwSwitch' },
-            h('span', { className: 'spSwSwitchLabel' }, uiText('invocable')),
+            h('span', { className: 'spSwSwitchLabel' }, t('invocable')),
             h(P.Switch, {
               checked: on,
               disabled: busy,
-              label: uiText('invocable') + ' ' + skill.name,
-              title: uiText('invocableHint'),
+              label: t('invocable') + ' ' + skill.name,
+              title: t('invocableHint'),
               onChange: function (next) {
-                submit(form, uiText, [skill.name], next ? 'enable' : 'disable', setPending, setFailures);
+                submit(form, t, [skill.name], next ? 'enable' : 'disable', setPending, setFailures);
               },
             })));
       });
 
       return h('div', { className: 'spSw' },
-        h('h4', { className: 'spSwTitle' }, uiText('title')),
-        h('p', { className: 'spSwIntro' }, uiText('intro')),
+        h('h4', { className: 'spSwTitle' }, t('title')),
+        h('p', { className: 'spSwIntro' }, t('intro')),
         h('div', { className: 'spSwLangBar' },
           h('button', {
             className: 'spSwLangBtn',
             type: 'button',
             disabled: !writable,
-            title: uiText('langTitle'),
+            title: t('langTitle'),
             onClick: function () {
               var effective = language === undefined ? hostActive : language;
-              submit(form, uiText, ['language'], 'enable', setPending, setFailures,
+              submit(form, t, ['language'], 'enable', setPending, setFailures,
                 [{ op: 'set', path: [LANGUAGE_FIELD], value: effective === 'zh' ? 'en' : 'zh' }]);
             },
           }, (language === undefined ? hostActive : language) === 'zh' ? SP_LANG_EN : SP_LANG_ZH)),
         h('ul', { className: 'spSwMeta' },
-          h('li', { className: 'spSwMetaItem' }, uiText('provider'), h('code', null, PROVIDER_NAME)),
-          h('li', { className: 'spSwMetaItem' }, uiText('rank'), h('code', null, String(PROVIDER_RANK))),
-          h('li', { className: 'spSwMetaItem' }, uiText('source'), h('code', null, SKILL_SOURCE)),
-          h('li', { className: 'spSwMetaItem' }, uiText('build'), h('code', null, PACKAGE_VERSION))),
+          h('li', { className: 'spSwMetaItem' }, t('provider'), h('code', null, PROVIDER_NAME)),
+          h('li', { className: 'spSwMetaItem' }, t('rank'), h('code', null, String(PROVIDER_RANK))),
+          h('li', { className: 'spSwMetaItem' }, t('source'), h('code', null, SKILL_SOURCE)),
+          h('li', { className: 'spSwMetaItem' }, t('build'), h('code', null, PACKAGE_VERSION))),
         h('div', { className: 'spSwBar' },
           h(P.Button, {
             variant: 'outline',
             size: 'sm',
             disabled: !writable,
-            title: uiText('resetHint'),
+            title: t('resetHint'),
             onClick: function () {
-              submit(form, uiText, allNames, 'enable', setPending, setFailures);
+              submit(form, t, allNames, 'enable', setPending, setFailures);
             },
-          }, uiText('enableAll')),
+          }, t('enableAll')),
           h(P.Button, {
             variant: 'outline',
             size: 'sm',
             disabled: !writable,
-            title: uiText('disableAllHint'),
+            title: t('disableAllHint'),
             onClick: function () {
-              submit(form, uiText, allNames, 'disable', setPending, setFailures);
+              submit(form, t, allNames, 'disable', setPending, setFailures);
             },
-          }, uiText('disableAll')),
+          }, t('disableAll')),
           h(P.Button, {
             variant: 'ghost',
             size: 'sm',
             disabled: !writable,
-            title: uiText('resetHint'),
+            title: t('resetHint'),
             onClick: function () {
-              submit(form, uiText, allNames, 'enable', setPending, setFailures);
+              submit(form, t, allNames, 'enable', setPending, setFailures);
             },
-          }, uiText('resetAll')),
+          }, t('resetAll')),
           h(P.Input, {
             className: 'spSwSearch',
             type: 'search',
             value: keyword,
-            placeholder: uiText('search'),
-            'aria-label': uiText('search'),
+            placeholder: t('search'),
+            'aria-label': t('search'),
             onChange: function (event) { setKeyword(event.target.value); },
           })),
         shown.length === 0
-          ? h('p', { className: 'spSwEmpty' }, uiText('empty'))
+          ? h('p', { className: 'spSwEmpty' }, t('empty'))
           : h('ul', { className: 'spSwList' }, rows));
     }
 
