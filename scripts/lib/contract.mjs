@@ -546,8 +546,14 @@ export class SkillContractChecker {
     if (declaredTitle < 2) {
       i18nIssues.push('键 langTitle 未在 zh/en 两本字典同时声明（当前 ' + declaredTitle + ' 处）')
     }
+    if (!source.includes("className: 'spSwLangBar'")) {
+      i18nIssues.push('面板缺少顶部全局语言栏 spSwLangBar')
+    }
     if (!/h\('button', \{\s*className: 'spSwLangBtn'/.test(source)) {
       i18nIssues.push('面板缺少单个 spSwLangBtn 语言切换按钮')
+    }
+    if (/spSwItem[\s\S]{0,600}className: 'spSwLangBtn'/.test(source)) {
+      i18nIssues.push('语言按钮出现在技能行内，应上移到面板顶部全局一个')
     }
     if (/spSwLang[^B]|aria-pressed/.test(source)) {
       i18nIssues.push('存在双按钮语言切换形态（spSwLang 组 / aria-pressed），应改为单按钮')

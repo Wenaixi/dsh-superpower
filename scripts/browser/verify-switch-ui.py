@@ -37,11 +37,9 @@ PROBE = """
   for (const li of document.querySelectorAll('li[class*="spSwItem"]')) {
     const sw = li.querySelectorAll('[role="switch"]');
     if (sw.length !== 1) continue;
-    const btn = li.querySelector('[class*="spSwLangBtn"]');
     rows.push({
       name: (li.querySelector('[class*="spSwName"]') || {}).innerText || '',
       on: sw[0].getAttribute('aria-checked') === 'true',
-      lang: btn ? btn.innerText.trim() : '',
     });
   }
   return rows;
@@ -193,26 +191,27 @@ with sync_playwright() as pw:
        'on=%d/%d' % (sum(1 for r in after if r['on']), len(after)))
     page.screenshot(path='%s/08-all-on.png' % OUT, full_page=True)
 
-    # 语言切换：单按钮显示目标语言 -> 归一到中文 -> 点（文案 English）-> 描述变英文 -> 回读落盘 -> 再点（文案中文）-> 恢复
-    lang_btn = '[class*="spSwLangBtn"]'
+    # 语言切换：面板顶部一个全局按钮（intro 之下）——中文态显示 English，点击切英文，再点切回
+    lang_bar = '[class*="spSwLangBar"] [class*="spSwLangBtn"]'
     desc_sel = '[class*="spSwDesc"]'
-    # 若上次运行残留 language=en，先把语言归零到中文
+    row_btn = '[class*="spSwItem"] [class*="spSwLangBtn"]'
+    ok('每行不再有语言按钮', page.evaluate('() => document.querySelectorAll(' + json.dumps(row_btn) + ').length') == 0)
+    ok('顶部有且只有一个语言按钮', page.evaluate('() => document.querySelectorAll(' + json.dumps(lang_bar) + ').length') == 1)
+    # 若上次运行残留 language=en，先归零到中文
     desc_now = page.inner_text(desc_sel).strip()
     if 'Superpower Skill：' not in desc_now:
-        page.click(lang_btn, timeout=15000)
+        page.click(lang_bar, timeout=15000)
         settle('归零到中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
-    # 当前中文态：按钮文案应为 English
-    btn_text = page.inner_text(lang_btn).strip()
+    btn_text = page.inner_text(lang_bar).strip()
     ok('中文态按钮文案为 English', btn_text == 'English', btn_text)
-    page.click(lang_btn, timeout=15000)
+    page.click(lang_bar, timeout=15000)
     settle('语言切换后描述为英文', lambda _: 'Superpower Skill:' in page.inner_text(desc_sel), 30000)
     ok('语言切换后描述为英文', 'Superpower Skill:' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
     patch = read_patch()
     ok('语言偏好写入 cordis.patch.yml', 'language' in patch and 'en' in patch, ' '.join(patch.split())[-120:])
-    # 当前英文态：按钮文案应为中文
-    btn_text = page.inner_text(lang_btn).strip()
+    btn_text = page.inner_text(lang_bar).strip()
     ok('英文态按钮文案为中文', btn_text == '中文', btn_text)
-    page.click(lang_btn, timeout=15000)
+    page.click(lang_bar, timeout=15000)
     settle('语言切回中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
     ok('语言切回中文', 'Superpower Skill：' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
 
