@@ -267,6 +267,11 @@ export class SkillDocument {
    */
   toCandidate(providerName: string, rank: number, language?: 'zh' | 'en'): SkillCandidate {
     const dir = dirname(this.path)
+    const metadata = {
+      descriptionZh: this.descriptionZh,
+      descriptionEn: this.description,
+      ...(this.metadata ?? {}),
+    }
     return {
       name: this.name,
       description: this.descriptionFor(language),
@@ -278,7 +283,7 @@ export class SkillDocument {
       locator: { path: this.path, directory: dir },
       resourceBase: { kind: 'directory', path: dir },
       path: this.path,
-      ...(this.metadata ? { metadata: this.metadata } : {}),
+      metadata,
     } as SkillCandidate
   }
 
@@ -287,6 +292,11 @@ export class SkillDocument {
    */
   toDefinition(providerName: string, language?: 'zh' | 'en'): SkillDefinition {
     const dir = dirname(this.path)
+    const metadata = {
+      descriptionZh: this.descriptionZh,
+      descriptionEn: this.description,
+      ...(this.metadata ?? {}),
+    }
     return {
       name: this.name,
       description: this.descriptionFor(language),
@@ -296,7 +306,7 @@ export class SkillDocument {
       provider: providerName,
       resourceBase: { kind: 'directory', path: dir },
       path: this.path,
-      ...(this.metadata ? { metadata: this.metadata } : {}),
+      metadata,
       content: this.body.trim(),
     }
   }
