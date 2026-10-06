@@ -1,6 +1,6 @@
 {
   "name": "@wenaixi/dsh-superpower",
-  "version": "7.5.4",
+  "version": "7.5.5",
   "description": "obra/superpowers 的 DSH 移植版：15 个工程纪律技能（中英双语正文）注入 ctx.skills，含技能开关与语言切换面板",
   "type": "module",
   "main": "lib/superpowers.js",
