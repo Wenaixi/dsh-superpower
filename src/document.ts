@@ -140,6 +140,8 @@ export class SkillDocument {
   readonly path: string
   readonly name: string
   readonly description: string
+  /** 中文描述（frontmatter description_zh）；缺失时回退到 description。 */
+  readonly descriptionZh: string
   readonly whenToUse?: string
   readonly invocation: SkillInvocationPolicy
   readonly metadata?: Record<string, unknown>
@@ -165,6 +167,9 @@ export class SkillDocument {
       throw new Error(`skill "${skillName}" at "${filePath}" is missing required frontmatter field "description"`)
     }
     this.description = desc
+
+    const descZh = stringField(extracted.data, 'description_zh')
+    this.descriptionZh = descZh ?? desc
 
     this.whenToUse = stringField(extracted.data, 'whenToUse')
     this.invocation = parseInvocationPolicy(extracted.data)
@@ -251,13 +256,20 @@ export class SkillDocument {
   }
 
   /**
+   * 按语言偏好返回展示描述：zh 用 description_zh（缺省回退），其余（含 en）用 description。
+   */
+  descriptionFor(language?: 'zh' | 'en'): string {
+    return language === 'zh' ? this.descriptionZh : this.description
+  }
+
+  /**
    * 映射为 DSH SkillCandidate 契约对象。
    */
-  toCandidate(providerName: string, rank: number): SkillCandidate {
+  toCandidate(providerName: string, rank: number, language?: 'zh' | 'en'): SkillCandidate {
     const dir = dirname(this.path)
     return {
       name: this.name,
-      description: this.description,
+      description: this.descriptionFor(language),
       ...(this.whenToUse ? { whenToUse: this.whenToUse } : {}),
       invocation: this.invocation,
       source: 'bundled',
@@ -273,11 +285,11 @@ export class SkillDocument {
   /**
    * 映射为 DSH SkillDefinition 契约对象。
    */
-  toDefinition(providerName: string): SkillDefinition {
+  toDefinition(providerName: string, language?: 'zh' | 'en'): SkillDefinition {
     const dir = dirname(this.path)
     return {
       name: this.name,
-      description: this.description,
+      description: this.descriptionFor(language),
       ...(this.whenToUse ? { whenToUse: this.whenToUse } : {}),
       invocation: this.invocation,
       source: 'bundled',

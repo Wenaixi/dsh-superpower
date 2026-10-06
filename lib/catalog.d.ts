@@ -24,7 +24,6 @@ export interface CatalogEntry {
     directoryName: string;
     skillPath: string;
     document: SkillDocument;
-    enDocument?: SkillDocument;
     nameDrift: boolean;
 }
 export interface SpecificationReport {
@@ -53,8 +52,6 @@ export interface CatalogFingerprint {
     dirMtimeMs: number;
     skillDirs: string[];
     skillMdMtimes: [string, number | null][];
-    /** 各技能目录下 SKILL.en.md 的 mtime（缺失记 null）：英文版正文编辑对中文文件不可见。 */
-    skillMdEnMtimes: [string, number | null][];
 }
 export interface CatalogIntegrityReport {
     total: number;

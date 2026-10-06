@@ -31,6 +31,8 @@ export declare class SkillDocument {
     readonly path: string;
     readonly name: string;
     readonly description: string;
+    /** 中文描述（frontmatter description_zh）；缺失时回退到 description。 */
+    readonly descriptionZh: string;
     readonly whenToUse?: string;
     readonly invocation: SkillInvocationPolicy;
     readonly metadata?: Record<string, unknown>;
@@ -50,12 +52,16 @@ export declare class SkillDocument {
      */
     static selfTest(): Promise<SpecificationTestResult[]>;
     /**
+     * 按语言偏好返回展示描述：zh 用 description_zh（缺省回退），其余（含 en）用 description。
+     */
+    descriptionFor(language?: 'zh' | 'en'): string;
+    /**
      * 映射为 DSH SkillCandidate 契约对象。
      */
-    toCandidate(providerName: string, rank: number): SkillCandidate;
+    toCandidate(providerName: string, rank: number, language?: 'zh' | 'en'): SkillCandidate;
     /**
      * 映射为 DSH SkillDefinition 契约对象。
      */
-    toDefinition(providerName: string): SkillDefinition;
+    toDefinition(providerName: string, language?: 'zh' | 'en'): SkillDefinition;
 }
 //# sourceMappingURL=document.d.ts.map

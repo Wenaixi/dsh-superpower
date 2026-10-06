@@ -10,7 +10,6 @@
  */
 
 import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill'
@@ -33,7 +32,6 @@ export interface CatalogEntry {
   directoryName: string
   skillPath: string
   document: SkillDocument
-  enDocument?: SkillDocument
   nameDrift: boolean
 }
 
@@ -65,8 +63,6 @@ export interface CatalogFingerprint {
   dirMtimeMs: number
   skillDirs: string[]
   skillMdMtimes: [string, number | null][]
-  /** 各技能目录下 SKILL.en.md 的 mtime（缺失记 null）：英文版正文编辑对中文文件不可见。 */
-  skillMdEnMtimes: [string, number | null][]
 }
 
 export interface CatalogIntegrityReport {
@@ -150,11 +146,6 @@ export class SkillCatalog {
         const current = await this.#mtimeOrNull(join(this.skillDir, name, 'SKILL.md'))
         if (current !== mtimeMs) return true
       }
-      for (const [name, mtimeMs] of previous.skillMdEnMtimes) {
-        signal?.throwIfAborted()
-        const current = await this.#mtimeOrNull(join(this.skillDir, name, 'SKILL.en.md'))
-        if (current !== mtimeMs) return true
-      }
       return false
     } catch {
       return true
@@ -218,7 +209,6 @@ export class SkillCatalog {
 
     // SKILL.md 的 mtime 在下面的 stat 中本就要取，顺手留作指纹，不增加任何 I/O
     const skillMdMtimes = new Map<string, number | null>()
-    const skillMdEnMtimes = new Map<string, number | null>()
 
     for (const entry of sorted) {
       signal?.throwIfAborted()
@@ -255,22 +245,10 @@ export class SkillCatalog {
         logger?.warn(`[SkillCatalog] skill name "${doc.name}" != directory "${entry.name}" (using frontmatter)`)
       }
 
-      const enPath = join(this.skillDir, entry.name, 'SKILL.en.md')
-      skillMdEnMtimes.set(entry.name, await this.#mtimeOrNull(enPath))
-      let enDocument: SkillDocument | undefined
-      if (existsSync(enPath)) {
-        try {
-          enDocument = await SkillDocument.fromFile(enPath, signal)
-        } catch (err: unknown) {
-          logger?.warn(`[SkillCatalog] skip ${enPath}: parse failed — ${String((err as Error)?.message ?? err)}`)
-        }
-      }
-
       const catalogEntry: CatalogEntry = {
         directoryName: entry.name,
         skillPath,
         document: doc,
-        ...(enDocument ? { enDocument } : {}),
         nameDrift,
       }
 
@@ -284,7 +262,6 @@ export class SkillCatalog {
       dirMtimeMs: dirStat.mtimeMs,
       skillDirs: sorted.map((e) => e.name),
       skillMdMtimes: sorted.map((e) => [e.name, skillMdMtimes.get(e.name) ?? null]),
-      skillMdEnMtimes: sorted.map((e) => [e.name, skillMdEnMtimes.get(e.name) ?? null]),
     }
   }
 
@@ -308,17 +285,8 @@ export class SkillCatalog {
     if (needsScan) {
       await this.scan(options)
       const list: SkillCandidate[] = []
-      const useEn = options?.language === 'en'
       for (const entry of this.entriesByName.values()) {
-        const doc = useEn && entry.enDocument ? entry.enDocument : entry.document
-        const candidate = doc.toCandidate(providerName, rank)
-        // locator 恒指向中文 SKILL.md：它是这个技能的规范定位符，语言只决定 description/content
-        // 的取词。让 en 候选带 SKILL.en.md 路径会让后续 get() 在切回 zh 时按路径重读出英文正文。
-        list.push({
-          ...candidate,
-          locator: { path: entry.skillPath, directory: dirname(entry.skillPath) },
-          path: entry.skillPath,
-        } as SkillCandidate)
+        list.push(entry.document.toCandidate(providerName, rank, language))
       }
       this.cachedCandidates = Object.freeze(list)
       this.lastScanProviderName = providerName
@@ -335,22 +303,20 @@ export class SkillCatalog {
    */
   async getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions & { language?: 'zh' | 'en' }): Promise<SkillDefinition | undefined> {
     options?.signal?.throwIfAborted()
+    const language = options?.language === 'en' ? 'en' : 'zh'
     const locator = candidate.locator as { path: string; directory: string } | undefined
     if (!locator?.path) return undefined
 
     // 优先命中内存缓存
     const cached = this.entriesByName.get(candidate.name)
     if (cached && cached.skillPath === locator.path) {
-      const doc = options?.language === 'en' && cached.enDocument ? cached.enDocument : cached.document
-      return doc.toDefinition(providerName)
+      return cached.document.toDefinition(providerName, language)
     }
 
     // 若缓存未命中则重新从文件读取
-    const enPath = locator.path.replace(/SKILL\.md$/, 'SKILL.en.md')
-    const readPath = options?.language === 'en' && existsSync(enPath) ? enPath : locator.path
     let doc: SkillDocument
     try {
-      doc = await SkillDocument.fromFile(readPath, options?.signal)
+      doc = await SkillDocument.fromFile(locator.path, options?.signal)
     } catch (err: unknown) {
       if ((err as DOMException)?.name === 'AbortError') throw err
       const code = (err as NodeJS.ErrnoException)?.code
@@ -473,45 +439,44 @@ export class SkillCatalog {
       }
     })
 
-    await runCheck('english twin supplies en text', async () => {
-      const base = await mkdtemp(join(tmpdir(), 'sp-en-'))
+        await runCheck('双语描述按语言取词且正文恒英文', async () => {
+      const base = await mkdtemp(join(tmpdir(), 'sp-bi-'))
       try {
         await mkdir(join(base, 'demo'))
-        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: 中文描述\n---\n中文正文')
-        await writeFile(join(base, 'demo', 'SKILL.en.md'), '---\nname: demo\ndescription: "Superpower Skill: English description"\nmetadata:\n  language: en\n---\nEnglish body')
+        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: "Superpower Skill: English description"\ndescription_zh: 中文描述\n---\nEnglish body')
         const catalog = await SkillCatalog.fromDirectory(base)
         const zh = await catalog.listCandidates('probe', 10)
-        if (zh[0]?.description !== '中文描述') throw new Error('zh 描述不对: ' + zh[0]?.description)
+        if (zh[0]?.description !== '中文描述') throw new Error('默认 zh 描述不对: ' + zh[0]?.description)
         const en = await catalog.listCandidates('probe', 10, { language: 'en' })
         if (!en[0]?.description.startsWith('Superpower Skill: ')) throw new Error('en 描述未命中: ' + en[0]?.description)
         const def = await catalog.getDefinition(en[0], 'probe', { language: 'en' })
-        if (!def?.content.includes('English body')) throw new Error('en 正文未命中: ' + def?.content)
+        if (!def?.content.includes('English body')) throw new Error('正文未命中: ' + def?.content)
+        if (def?.description !== 'Superpower Skill: English description') throw new Error('getDefinition en 描述不对')
         const back = await catalog.getDefinition(en[0], 'probe', { language: 'zh' })
-        if (!back?.content.includes('中文正文')) throw new Error('zh 正文未命中')
+        if (back?.description !== '中文描述') throw new Error('getDefinition zh 描述不对')
       } finally {
         await rm(base, { recursive: true, force: true }).catch(() => {})
       }
     })
 
-    await runCheck('english twin edit triggers rescan', async () => {
-      const base = await mkdtemp(join(tmpdir(), 'sp-en-mtime-'))
+    await runCheck('描述变更触发重扫', async () => {
+      const base = await mkdtemp(join(tmpdir(), 'sp-bi2-'))
       try {
         await mkdir(join(base, 'demo'))
-        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: zh\n---\nbody')
-        await writeFile(join(base, 'demo', 'SKILL.en.md'), '---\nname: demo\ndescription: en-v1\n---\nbody')
+        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: en-v1\ndescription_zh: zh-v1\n---\nbody')
         const catalog = await SkillCatalog.fromDirectory(base)
-        const first = await catalog.listCandidates('probe', 10, { language: 'en' })
-        if (first[0]?.description !== 'en-v1') throw new Error('en 初值不对: ' + first[0]?.description)
+        const first = await catalog.listCandidates('probe', 10, { language: 'zh' })
+        if (first[0]?.description !== 'zh-v1') throw new Error('zh 初值不对: ' + first[0]?.description)
         await new Promise((r) => setTimeout(r, 25))
-        await writeFile(join(base, 'demo', 'SKILL.en.md'), '---\nname: demo\ndescription: en-v2\n---\nbody')
-        const second = await catalog.listCandidates('probe', 10, { language: 'en' })
-        if (second[0]?.description !== 'en-v2') throw new Error('en 文件编辑未触发重扫: ' + second[0]?.description)
+        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: en-v2\ndescription_zh: zh-v2\n---\nbody')
+        const second = await catalog.listCandidates('probe', 10, { language: 'zh' })
+        if (second[0]?.description !== 'zh-v2') throw new Error('描述编辑未触发重扫: ' + second[0]?.description)
       } finally {
         await rm(base, { recursive: true, force: true }).catch(() => {})
       }
     })
 
-    await runCheck('verifyIntegrity.ok 计入缺失 SKILL.md', async () => {
+await runCheck('verifyIntegrity.ok 计入缺失 SKILL.md', async () => {
       const base = await mkdtemp(join(tmpdir(), 'sp-ok-'))
       try {
         await mkdir(join(base, 'empty-dir'))
