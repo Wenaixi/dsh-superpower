@@ -46,6 +46,3 @@ temp/
 
 # 浏览器验证产物（截图与本地产出，不入库）
 .verify-shots/
-
-# 本地 ACL 维护临时目录
-.acl-repair/

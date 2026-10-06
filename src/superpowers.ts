@@ -194,13 +194,10 @@ class SuperpowersProvider implements SkillProvider {
 
   async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {
     const switches = this.currentSwitches()
-    // 模型侧描述恒英文：向宿主 ctx.skills 注入的候选描述始终为英文原版，
-    // 消除中文翻译对大模型意图识别与工具调用的干扰；人类侧描述由客户端面板自主渲染，
-    // 元数据 metadata.descriptionZh 亦保留中文。
     const candidates = await this.catalog.listCandidates(this.name, SUPERPOWERS_RANK, {
       signal: options.signal,
       logger: this.ctx.logger,
-      language: 'en',
+      language: switches.language ?? this.hostLanguage(),
     })
     return candidates.map((candidate) => applySwitches(candidate, switches))
   }
@@ -209,7 +206,7 @@ class SuperpowersProvider implements SkillProvider {
     const definition = await this.catalog.getDefinition(candidate, this.name, {
       signal: options.signal,
       logger: this.ctx.logger,
-      language: 'en',
+      language: this.currentSwitches().language ?? this.hostLanguage(),
     })
     // 加载路径同样套用：skill 工具在 get 之后二次校验 isModelInvocable，
     // 只改 list 的候选会让模型目录消失但工具调用仍成功，语义撕裂。

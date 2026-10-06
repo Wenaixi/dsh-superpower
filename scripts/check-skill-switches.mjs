@@ -192,30 +192,23 @@ async function loadPlugin(raw) {
 }
 
 // ---------------------------------------------------------------------------
-// 场景 6：模型侧描述恒英文，元数据保留中文通道，不触碰开关 invocation。
-//    注入宿主 ctx.skills 的描述始终为英文原版（消除对大模型意图识别的干扰）；
-//    metadata.descriptionZh 保留中文描述，供人类侧扩展消费；正文恒英文。
+// 场景 6：语言偏好（language）驱动模型侧描述，不触碰开关 invocation。
+//    mock 无 settings 服务（ctx.get('settings') 为 undefined），宿主语言回退 zh，
+//    故默认描述为中文前缀；language=en 时描述切英文；正文恒英文。
 // ---------------------------------------------------------------------------
 {
-  const { ctx: defaultCtx } = await loadPlugin({})
-  const defaultSkill = await defaultCtx.skills.get('brainstorming')
+  const { ctx: zhCtx } = await loadPlugin({})
+  const zhSkill = await zhCtx.skills.get('brainstorming')
   check(
     state,
-    '[语言解耦] 默认：模型侧描述恒为英文前缀',
-    typeof defaultSkill?.description === 'string' && defaultSkill.description.startsWith('Superpower Skill: '),
+    '[语言偏好] 默认：描述为中文前缀',
+    typeof zhSkill?.description === 'string' && zhSkill.description.startsWith('Superpower Skill：'),
     true,
   )
   check(
     state,
-    '[语言解耦] 默认：metadata 保留中文描述',
-    typeof defaultSkill?.metadata?.descriptionZh === 'string' &&
-      defaultSkill.metadata.descriptionZh.startsWith('Superpower Skill：'),
-    true,
-  )
-  check(
-    state,
-    '[语言解耦] 默认：正文恒为英文（SKILL.md 正文）',
-    !/[\u4e00-\u9fff]/.test(defaultSkill?.content ?? ''),
+    '[语言偏好] 默认：正文恒为英文（SKILL.md 正文）',
+    !/[\u4e00-\u9fff]/.test(zhSkill?.content ?? ''),
     true,
   )
 
@@ -223,27 +216,27 @@ async function loadPlugin(raw) {
   const enSkill = await enCtx.skills.get('brainstorming')
   check(
     state,
-    '[语言解耦] language=en：描述恒为英文前缀',
+    '[语言偏好] language=en：描述切为英文前缀',
     typeof enSkill?.description === 'string' && enSkill.description.startsWith('Superpower Skill: '),
     true,
   )
   check(
     state,
-    '[语言解耦] language=en：正文仍为英文',
+    '[语言偏好] language=en：正文仍为英文',
     !/[\u4e00-\u9fff]/.test(enSkill?.content ?? ''),
     true,
   )
   check(
     state,
-    '[语言解耦] 开关 invocation 不受影响',
+    '[语言偏好] 开关 invocation 不受影响',
     enSkill?.invocation.modelInvocable === true && enSkill?.invocation.userInvocable === true,
     true,
   )
   const enSnapshot = await enCtx.skills.snapshot()
-  check(state, '[语言解耦] language=en：技能总数不变', enSnapshot.skills.length, EXPECTED_SKILL_COUNT)
+  check(state, '[语言偏好] language=en：技能总数不变', enSnapshot.skills.length, EXPECTED_SKILL_COUNT)
   check(
     state,
-    '[语言解耦] 目录描述全部为英文前缀',
+    '[语言偏好] language=en：目录描述全部为英文前缀',
     enSnapshot.skills.every((skill) => skill.description.startsWith('Superpower Skill: ')),
     true,
   )
