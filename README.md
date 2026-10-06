@@ -38,7 +38,7 @@ Local development or offline install:
 
 ```bash
 git clone https://github.com/Wenaixi/dsh-superpower && cd dsh-superpower
-pnpm install && pnpm build && node scripts/verify.mjs   # ALL PASS
+pnpm install && pnpm build && node scripts/verify.mjs   # prints ALL PASS
 dsh plugin --profile web add ./                           # install from local path
 pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz
 
@@ -170,6 +170,11 @@ locale/             # plugin card title and description (zh/en); panel UI follow
 icon.png            # plugin card, README header, GitHub avatar
 scripts/            # gates, precedence runs, switch runs, upstream sync review, browser verification
 scripts/build-client.mjs      # copies the client artifact, then checks the inline catalog against skills/
+scripts/lib/contract.mjs         # skill content contract checks, all rules in one place
+scripts/lib/sync-engine.mjs      # upstream sync engine, returns structured diagnostics
+scripts/lib/harness-common.mjs   # shared skeleton for the two same-name arbitration runs
+scripts/lib/client-manifest.mjs  # inline catalog vs skills/ drift check
+scripts/lib/sync-common.mjs      # shared sync primitives: normalization, code fences, walk
 ```
 
 ## Changelog

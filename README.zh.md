@@ -30,7 +30,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # 进会话，技能自动可用
 ```
 
-要锁版本就在包名后加 `@<version>`（`@wenaixi/dsh-superpower@7.2.0`）或 `#v7.2.0`。
+要锁版本就在包名后加 `@<version>`（`@wenaixi/dsh-superpower@7.5.8`）或 `#v7.5.8`。
 
 旧包名 `dsh-superpower`（不带 scope）已经废弃并 `npm deprecate`，请换成带 scope 的。
 
@@ -38,7 +38,7 @@ dsh --profile web  # 进会话，技能自动可用
 
 ```bash
 git clone https://github.com/Wenaixi/dsh-superpower && cd dsh-superpower
-pnpm install && pnpm build && node scripts/verify.mjs   # 15/15 PASS
+pnpm install && pnpm build && node scripts/verify.mjs   # 末行打印 ALL PASS
 dsh plugin --profile web add ./                           # 本地路径安装
 pnpm pack && dsh plugin --profile web add ./wenaixi-dsh-superpower-*.tgz
 
@@ -49,7 +49,9 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 ## 是什么
 
-一套强制的工程方法论，模型不按顺序走就会做错：先设计，再把计划切成可校验的小步，然后测试驱动，调试时先找根因，收尾前必须跑验证命令。装在 `dsh.bundle` 里，不往用户目录里写东西，卸载干净，HMR 会自动重建。
+一套工程纪律：先设计，再把计划切成可校验的小步，然后测试驱动，调试时先找根因，收尾前必须跑验证命令。技能正文是上游英文原版，frontmatter 同时声明英文 `description` 与中文 `description_zh`，面板的语言开关只决定模型与用户看到哪一份描述，不改正文。
+
+装在 `dsh.bundle` 里，不往用户目录写东西，卸载干净，HMR 会自动重建。
 
 ## 包含技能
 
@@ -171,6 +173,11 @@ locale/             # 插件卡片的标题与描述（中英）；面板 UI 经
 icon.png            # 插件卡片、README 顶部、GitHub 头像共用
 scripts/            # 门禁、同名裁决实测、开关实测、上游同步复核、浏览器验证
 scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 skills/ 目录一致
+scripts/lib/contract.mjs         # 技能内容契约治理，规则全内聚在这一处
+scripts/lib/sync-engine.mjs      # 上游同步引擎，返回结构化 diagnostics
+scripts/lib/harness-common.mjs   # 两个同名裁决实测脚本的公共骨架
+scripts/lib/client-manifest.mjs  # 内联清单与 skills/ 的漂移判定
+scripts/lib/sync-common.mjs      # 同步复核共享原语：归一化、代码块切分、目录遍历
 ```
 
 ## 更新日志

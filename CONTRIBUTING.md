@@ -9,7 +9,7 @@
 - **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串。语言按钮只切技能描述与按钮自身文案，面板其余 UI 跟随宿主界面语言。
 - **不引自建服务**：插件与技能正文不提供 HTTP / WebSocket 服务。可视化协作走宿主官方文档预览，配置写入走官方 `configForms` 通道。
 - **废弃字段保留声明**：`modelDisabled` / `userDisabled` 已废弃，但 schema 声明与 `.volatile()` 都要留着。去掉声明会让旧配置被 schema 丢弃，去掉 `.volatile()` 会让迁移批里的 `unset` 被宿主写入闸门拒绝。
-- **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 的硬规则——`inject` 声明依赖、`Schemastery Config` 配默认值、副作用一律包在 `ctx.effect` 里、`waterfall` 记得调 `next()`。
+- **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 的约定：`inject` 声明依赖、`Schemastery Config` 配默认值、副作用一律包在 `ctx.effect` 里、`waterfall` 记得调 `next()`。
 - **失败要响亮**：frontmatter 非法时只跳过那一个技能并 `warn`，不静默吞错。
 
 ## 开发流程
