@@ -87,7 +87,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 - 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
 - 状态写在 profile 的 `cordis.patch.yml` 的 `disabled` 字段里，跟着 profile 一起备份迁移，重装插件不丢。
 - 只影响本包这 15 个技能，不碰官方和第三方插件提供的技能。
-- 语言切换：每行有「中文 / English」按钮，切换该技能的名称与描述显示语言（英文 `description` 与中文 `description_zh`）。正文一律为英文原版。两种描述分别以 `Superpower Skill: ` / `Superpower Skill：` 开头，偏好按技能分别存储。
+- 语言切换：面板顶部（说明文案之下）一个「中文 / English」按钮，一次切换全部 15 个技能的名称与描述显示语言（英文 `description` 与中文 `description_zh`）。正文一律为英文原版。两种描述分别以 `Superpower Skill: ` / `Superpower Skill：` 开头。未在面板调过语言时，描述跟随宿主界面语言（设置里选的语言）；调过后固定为该语言。
 - 面板 UI 文案（标题、按钮、提示、meta 标签）跟随宿主界面语言（设置里切换语言即生效）。
 
 7.3.0 及更早版本用过两个开关（模型可调用 / 用户可调用），对应 `modelDisabled` 与 `userDisabled` 两张表。这两个字段已废弃：升级后旧值继续生效，你第一次拨动开关时它们会被清空，配置收敛到 `disabled` 一张表。
@@ -189,6 +189,8 @@ scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 sk
 `v7.4.0` 每个技能从两个开关合并为一个，配置收敛到单张 `disabled` 表；brainstorming 的可视化协作改用 DSH 官方文档预览，不再随包附带 HTTP 服务脚本。
 
 `v7.5.0` 每个技能新增英文正文（`SKILL.en.md`，取自上游原版并做 DSH 专属化），与中文 `SKILL.md` 并存；面板每行新增「中文 / English」切换，英文描述一律以 `Superpower Skill: ` 开头；同一语言偏好同时决定模型侧目录描述与加载正文；README.md 改为默认英文并新增中文版 README.zh.md。
+
+`v7.5.2` 语言切换按钮上移到面板顶部、全局一个；未调过时描述跟随宿主界面语言，调过后固定。
 
 `v7.5.1` 技能正文统一为上游英文原版（单份 `SKILL.md`，DSH 专属化），中文描述移入 frontmatter `description_zh`，面板语言切换只改变模型看到的描述、正文恒英文。`中文 / English` 切换、`Superpower Skill:` 前缀与双语 README 保持不变。
 

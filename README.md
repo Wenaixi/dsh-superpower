@@ -28,7 +28,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # skills are available immediately
 ```
 
-Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.1`) or `#v7.5.1`.
+Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.2`) or `#v7.5.2`.
 
 The old unscoped package name `dsh-superpower` is deprecated (`npm deprecate`); use the scoped one.
 
@@ -82,7 +82,7 @@ The official registry arbitrates same-layer name collisions by ascending `rank`.
 Open the `@wenaixi/dsh-superpower` card in the plugin manager; the panel sits at the bottom of its detail page.
 
 - One switch per skill. Off means both sides lose it: the model no longer sees it in the available-skill catalog and `skill` tool calls are rejected; you can no longer reach it from slash-command completion or the CLI skill list.
-- `中文 / English` per skill switches the display language of that skill's name and description (English `description` vs Chinese `description_zh`). The body is always the English original. Both descriptions start with `Superpower Skill:` / `Superpower Skill：`. The choice is stored per skill.
+- A single `中文 / English` button sits at the top of the panel, under the intro line, and switches the display language of all 15 skills' names and descriptions (English `description` vs Chinese `description_zh`) at once. The body is always the English original. Both descriptions start with `Superpower Skill:` / `Superpower Skill：`. The choice is per-language (a single `language` preference) and stored in the profile. Until you touch it, descriptions follow the Host UI language (settings language); once you switch it in the panel, the language stays fixed.
 - The panel header also carries enable-all, disable-all, restore-defaults, and a search box. The head line shows this bundle's `provider`, `rank`, `source`, and panel build.
 - Changes take effect immediately; the running turn is unaffected and the next turn sees the new catalog and language.
 - State lives in the profile's `cordis.patch.yml` (`disabled` and `language` tables) and travels with the profile.
@@ -189,6 +189,8 @@ Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and 
 `v7.4.1` fixed switch saves failing: the `dsh-settings` write gate validates every `op.path` against a volatile node, and dropping `.volatile()` from the two legacy fields made the whole `mutate` batch fail; restoring the marker fixed it. The panel header gained a panel-build label.
 
 `v7.5.0` shipped every skill with an English body (`SKILL.en.md`, upstream original adapted for DSH) beside the Chinese one, added a per-skill `中文 / English` switch, made English descriptions always start with `Superpower Skill: `, routed the same language preference to the model-side catalog and body, and made README.md English by default with a Chinese twin.
+
+`v7.5.2` moved the language switch to a single button at the top of the panel: it now controls all 15 skills at once, and while the `language` preference is unset the descriptions follow the Host UI language (settings language); once set, they stay fixed.
 
 `v7.5.1` makes skill bodies the official English originals (single `SKILL.md` per skill, DSH-adapted), keeps Chinese as the panel language via `description_zh`, so the language switch changes only the description the model sees. The `中文 / English` switch, the `Superpower Skill: ` prefixes, and the bilingual README remain.
 
