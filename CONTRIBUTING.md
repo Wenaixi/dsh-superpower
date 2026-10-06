@@ -4,7 +4,7 @@
 
 ## 基本原则
 
-- **同步上游**：v7.0.0 起技能名与目录回归上游命名（无 `superpower-` 前缀），整批同步了上游 `v6.4.2`。之后上游出新版本，按需 cherry-pick 合入并记进 `CHANGELOG.md`。
+- **同步上游**：技能名与目录名直接用上游原名，本仓基准是上游 `v6.4.2`。之后上游出新版本，按需 cherry-pick 合入并记进 `CHANGELOG.md`。
 - **正文恒英文**：v7.5.1 起每个技能单份 `SKILL.md`，正文是上游英文原版（DSH 专属化）。frontmatter 同时声明英文 `description` 与中文 `description_zh`，门禁断言两条描述各带自己的 `Superpower Skill:` 前缀。代码、命令、路径、变量名保持原文不译。
 - **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串。语言按钮只切技能描述与按钮自身文案，面板其余 UI 跟随宿主界面语言。
 - **不引自建服务**：插件与技能正文不提供 HTTP / WebSocket 服务。可视化协作走宿主官方文档预览，配置写入走官方 `configForms` 通道。
@@ -146,22 +146,20 @@ SP_UPSTREAM=../superpowers/skills node scripts/review-sync.mjs
 
 不设 `SP_UPSTREAM` 时脚本会退到 `%TEMP%/sp-upstream/skills`，找不到就报错，不会静默跳过。
 
-### 与上游命名对齐：技能名无 `superpower-` 前缀（v7.0.0 起）
+### 命名约定与同名裁决
 
-15 个技能的 `frontmatter.name` 与目录名都和上游一致（`brainstorming`、`writing-plans`、`diagnosing-superpowers` 等）。`v6.3.0-dsh.5` 曾经统一加 `superpower-` 前缀跟上游脱钩，`v7.0.0` 把这个决策反转回来：去掉前缀，同名时靠 rank 10 让本包胜出，于是同步上游不用手工改名。
+15 个技能的 `frontmatter.name` 与目录名都用上游原名（`brainstorming`、`writing-plans`、`diagnosing-superpowers` 等），两边必须一致，否则 Provider 会打 name drift 警告。同步上游新增技能时直接用原名，不需要改写。
 
-**同名优先语义：** 官方注册表在同层重名时按 `rank → 提供方顺序 → 本地顺序` 裁决，rank 越小越优先。本包 rank 是 10，比 `dsh-skill-filesystem` 的项目级和用户级（100–500）以及官方内置 bundled（600）都小，同名一律本包胜出。同步上游新增技能时，目录和 frontmatter 直接用上游原名。
+**同名优先语义：** 官方注册表在同层重名时按 `rank → 提供方顺序 → 本地顺序` 裁决，rank 越小越优先。本包 rank 是 10，比 `dsh-skill-filesystem` 的项目级和用户级（100–500）以及官方内置 bundled（600）都小，同名一律本包胜出。
 
 **每次同步上游新版本时：**
 
 1. 拉上游 `skills/`，用 `SP_UPSTREAM` 指向它，再跑 `node scripts/review-sync.mjs`，看 deep 与 tokens 两段各自的差异报告。
 2. 上游新增或改名的技能按原名同步进来，上游删掉的本地也删。
 3. 正文保持上游英文原版，只做 DSH 专属化（去图形符号、改写非 DSH 平台引用、补 DSH 专属小节）；`using-superpowers/references/dsh-tools.md` 这类 DSH 专属文件保留。
-4. 把所有文档里引用的技能名改成不带前缀的形式。
+4. 核对各技能 `frontmatter.name` 与目录名一致，文档里的技能名引用也用同一写法。
 5. 跑 `pnpm build && pnpm typecheck && node scripts/verify.mjs`，再跑一次 `node scripts/review-sync.mjs` 确认无漂移，全绿再收工。
-6. 同步完成后按本仓版本线发布，并在 `CHANGELOG.md` 记录所同步的上游版本
-
-**目录名同步策略：** 目录名与 `frontmatter.name` 必须一致（`v6.3.0-dsh.9` 起硬重命名）；同步上游新增技能时目录与 frontmatter 使用同一名字，避免触发 Provider 的 name drift 警告。
+6. 同步完成后按本仓版本线发布，并在 `CHANGELOG.md` 记录所同步的上游版本。
 
 ---
 
