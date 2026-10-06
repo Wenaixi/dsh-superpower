@@ -93,19 +93,6 @@ export class SkillContractChecker {
   }
 
   /**
-   * 守卫真实可失败自检（证明规则不是假绿）
-   */
-  /**
-   * 中英配对契约：每个技能目录必须存在 SKILL.en.md；
-   * 英文 frontmatter 的 description 必须带 "Superpower Skill: " 前缀且不含中文；
-   * 中文 SKILL.md 与英文 SKILL.en.md 的 frontmatter.name 必须一致。
-   */
-    /**
-   * 技能文件双语契约：每个技能目录的 SKILL.md 必须同时声明英文 description 与中文
-   * description_zh；英文描述带 "Superpower Skill: " 前缀且不含中文，中文描述带
-   * "Superpower Skill：" 前缀且含中文；frontmatter.name 与目录名一致。
-   */
-  /**
    * README 语言面契约：README.md 默认英文（正文不得含中文标题），
    * README.zh.md 为中文版，两者顶部都有互跳链接。
    */
@@ -129,6 +116,11 @@ export class SkillContractChecker {
     return issues
   }
 
+  /**
+   * 技能文件双语契约：每个技能目录的 SKILL.md 必须同时声明英文 description 与中文
+   * description_zh；英文描述带 "Superpower Skill: " 前缀且不含中文，中文描述带
+   * "Superpower Skill：" 前缀且含中文；frontmatter.name 与目录名一致。
+   */
   async checkBilingualPairing(dir = this.skillDir) {
     const issues = []
     const entries = await readdir(dir, { withFileTypes: true })
