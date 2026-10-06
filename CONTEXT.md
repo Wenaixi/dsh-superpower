@@ -23,24 +23,34 @@
 - **职责**:
   - 去除 UTF-8 BOM 头与 CRLF 换行归一化；
   - 解析 YAML Frontmatter，校验必填字段（`name`、`description`）与调用策略（`user-invocable`、`disable-model-invocation`）；
+  - 解析双语描述（英文 `description` 与中文 `description_zh`），由 `descriptionFor(language)` 按语言取词，未指定语言时取英文；
   - 校验技能名是否严格符合 kebab-case 规范；
   - 转换生成 DSH 契约对象（`SkillCandidate` 与 `SkillDefinition`）。
 - **接缝 (Seams)**: 位于裸 Markdown 文本/文件与系统结构化技能对象之间。
 
-### 3. SuperpowersProvider (技能提供者)
+### 3. SkillSwitches (技能开关与语言偏好)
+- **定位**: 深度模块，位于 `src/switches.ts`，封装禁言表解包、语言偏好读取与调用策略覆盖，内建 `selfTest()`。
+- **职责**:
+  - `readSwitches(config)` 解包三张 volatile 表：`disabled` 为唯一写入目标，`disabled` 为空时并入 `modelDisabled` 与 `userDisabled` 两张废弃表；
+  - 读取 `language` 偏好，缺失即 `undefined`，表示跟随宿主界面语言；
+  - `applySwitches()` 产出 `invocation` 覆盖，list 与 get 两条路径共用同一判定语义。
+- **接缝 (Seams)**: 位于 volatile 配置引用与 DSH 调用策略之间。
+
+### 4. SuperpowersProvider (技能提供者)
 - **定位**: 运行时适配层 (Adapter)，位于 `src/superpowers.ts`，实现 DSH 规范的 `SkillProvider` 接口。
 - **职责**:
   - 维护 Cordis 插件的生命周期（注册、事件监听、卸载清理）；
   - 持有 `SkillCatalog` 实例，将 `list()` 和 `get()` 纯调度委托给编目模块；
+  - 读 `dsh-settings` 的 `locale` 条目拿宿主界面语言，与 `language` 偏好合成最终生效语言（结果缓存，`loader/volatile-update` 时失效）；
   - 固化 `rank = 10` 优先级常数，保证本插件技能在同名裁决中胜出。
 
-### 4. SkillCandidate (候选技能元数据)
+### 5. SkillCandidate (候选技能元数据)
 - **定位**: 传输对象 (Contract Object)，轻量级技能概要，供模型在初次扫描时快速枚举。
 
-### 5. SkillDefinition (技能定义本体)
+### 6. SkillDefinition (技能定义本体)
 - **定位**: 传输对象 (Contract Object)，包含完整 Markdown 正文内容（`content`）的完整技能对象。
 
-### 6. SyncEngine (上游同步复核深度引擎)
+### 7. SyncEngine (上游同步复核深度引擎)
 - **定位**: 深度模块 (Deep Module)，位于 `scripts/lib/sync-engine.mjs`，统一封装上游同步复核引擎。
 - **职责**:
   - 双树并行加载与全文件扫描（全文件树与仅 .md 树）；
@@ -50,11 +60,21 @@
   - 由 `review-sync*.mjs` 调度器消费结果并负责 CLI 报告与退出码，三大入口保持向后兼容。
 - **接缝 (Seams)**: 位于上游检出与本地 skills/ 资产之间，将双树比对与差异判定收敛在引擎内部，将报告输出留在 CLI seam。
 
-### 7. SkillContractChecker (技能契约治理深度模块)
+### 8. ReviewSyncCLI (上游同步复核统一总线)
+- **定位**: 统一命令行调度器，位于 `scripts/review-sync.mjs`，收敛 deep、tokens 与 fences 三大碎片化薄脚本。
+- **职责**:
+  - 提供单命令子命令调度模式 (`deep` / `tokens` / `fences` / `all`)；
+  - 默认 `all` 模式按序执行深度 Markdown 块结构比对与 Token 级敏感词逐字比对，二者皆绿方可 exit 0；
+  - 通过单行代理保持原有 `review-sync-deep.mjs` 等历史入口 100% 向后兼容。
+- **接缝 (Seams)**: 位于开发者/CI 交互与 `SyncEngine` 核心比对能力之间。
+
+### 9. SkillContractChecker (技能契约治理深度模块)
 - **定位**: 深度模块 (Deep Module)，位于 `scripts/lib/contract.mjs`，统一封装技能库内容契约治理。
 - **职责**:
   - 相对链接死链提取与探测（`checkRelativeLinks`）；
   - 资源引用契约与孤儿文件判定（`checkResourceRefs`，两遍扫描收集，集中维护白名单）；
+  - 技能文件双语 frontmatter 契约（`checkBilingualPairing`：英文 `description` 带 `Superpower Skill: ` 前缀且不含中文，中文 `description_zh` 带全角前缀且含中文，`frontmatter.name` 与目录名一致）；
+  - README 语言面契约（`checkReadmeLanguage`：默认文档不得含中文标题，两份 README 顶部互跳链接齐全）；
   - 随包脚本调用守卫（`checkBareScriptCalls`，正文调用 `scripts/*` 必须带解释器前缀）；
   - 全仓无 Emoji / 图形状态符号硬扫描（`checkSymbols`）；
   - 随包 shell 脚本的 Shebang 与 CRLF 健壮性自检（`checkBundledShellScripts`）；
@@ -62,32 +82,20 @@
   - 契约守卫真实可失败自检（`assertGuardCanFail`）。
 - **接缝 (Seams)**: 位于技能正文写作契约与物理文件/AST 结构之间，使测试表面与规则逻辑高度局部化，`verify.mjs` 成为无状态的轻量门禁编排器。
 
-### 8. harness-common (测试骨架共享引擎)
-- **定位**: 深度模块，位于 `scripts/lib/harness-common.mjs`，check-same-name-priority 双脚本的公共样板（`check`/`freshRegistry`/`exitByFailed`）。
-- **职责**: 统一断言输出格式、Cordis 上下文构建与收尾退出码语义；断言语义改动只改一处。
-- **接缝 (Seams)**: 位于测试断言与进程退出语义之间，让两个实测脚本的差异只保留在业务断言本身。
+### 10. SkillPriorityHarness (同名裁决实测基座)
+- **定位**: 深度测试 Harness，位于 `scripts/lib/harness-common.mjs`，check-same-name-priority 双脚本的公共骨架。
+- **职责**:
+  - 统一断言输出格式（`check`）、Cordis 上下文构建（`freshRegistry`）与收尾退出码语义（`exitByFailed`）；
+  - 暴露高阶断言函数 `assertPriorityArbitration()`，将自研桩与官方 filesystem 实测脚本中的重复样板代码消除 40% 以上；
+  - 将复杂的正反双向注册生命周期封装在极简声明式调用之后。
+- **接缝 (Seams)**: 位于 Cordis `SkillRegistry` 与具体集成测试脚本之间。
 
 ---
 
 ## 版本与发布状态
 
-- - - - - **当前版本**：`7.5.8`（2026-10-06；消灭语言切换静默失败，增加失败显式渲染）
+- **当前版本**：`7.5.8`（2026-10-06；消灭语言切换静默失败，增加失败显式渲染）
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
 - **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
-- **本地深度验证**：`sp-deep-verify` profile（`dsh-base` + `dsh-headless` + 本插件），真实 headless 会话逐技能调用 `skill` 工具加载 15 技能，frontmatter description 与 `##` 标题逐项断言一致；安装产物 82 文件全树扫描无平台残留
-- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，现由 `7.4.1` 取代
-### 6. SkillPriorityHarness (同名裁决实测基座)
-- **定位**: 深度测试 Harness，位于 `scripts/lib/harness-common.mjs`，负责正序/反序注册编排、同名胜出断言、未受影响技能独立性与总数校验。
-- **职责**:
-  - 提供 `freshRegistry()` 建立隔离的全新 Cordis 上下文；
-  - 暴露高阶断言函数 `assertPriorityArbitration()`，将自研桩与官方 filesystem 实测脚本中的重复样板代码消除 40% 以上；
-  - 将复杂的正反双向注册生命周期封装在极简声明式调用之后。
-- **接缝 (Seams)**: 位于 Cordis `SkillRegistry` 与具体集成测试脚本之间。
-
-### 7. ReviewSyncCLI (上游同步复核统一总线)
-- **定位**: 统一命令行调度器，位于 `scripts/review-sync.mjs`，收敛 deep、tokens 与 fences 三大碎片化薄脚本。
-- **职责**:
-  - 提供单命令子命令调度模式 (`deep` / `tokens` / `fences` / `all`)；
-  - 默认 `all` 模式按序执行深度 Markdown 块结构比对与 Token 级敏感词逐字比对，二者皆绿方可 exit 0；
-  - 通过单行代理保持原有 `review-sync-deep.mjs` 等历史入口 100% 向后兼容。
-- **接缝 (Seams)**: 位于开发者/CI 交互与 `SyncEngine` 核心比对能力之间。
+- **打包产物**：`npm pack --dry-run` 实测 86 个文件（package size 184.4 kB，unpacked 506.9 kB），随包只含 `lib/`、`skills/`、`locale/`、`icon.png`、`cordis.patch.yml`、README 双份与 LICENSE，全树扫描无非 DSH 平台残留
+- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，早已由 `7.4.1` 取代
