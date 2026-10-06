@@ -28,7 +28,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # skills are available immediately
 ```
 
-Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.4`) or `#v7.5.4`.
+Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.5`) or `#v7.5.5`.
 
 The old unscoped package name `dsh-superpower` is deprecated (`npm deprecate`); use the scoped one.
 
@@ -189,6 +189,8 @@ Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and 
 `v7.4.1` fixed switch saves failing: the `dsh-settings` write gate validates every `op.path` against a volatile node, and dropping `.volatile()` from the two legacy fields made the whole `mutate` batch fail; restoring the marker fixed it. The panel header gained a panel-build label.
 
 `v7.5.0` shipped every skill with an English body (`SKILL.en.md`, upstream original adapted for DSH) beside the Chinese one, added a per-skill `中文 / English` switch, made English descriptions always start with `Superpower Skill: `, routed the same language preference to the model-side catalog and body, and made README.md English by default with a Chinese twin.
+
+`v7.5.5` makes the whole panel follow the language button: the panel's own copy (title, bulk buttons, search box, hints, meta labels) switches with the skill descriptions instead of following the Host UI language.
 
 `v7.5.4` republished under a fresh version: the 7.5.3 release hit an npm staged-publish conflict; the code is identical to 7.5.3.
 
