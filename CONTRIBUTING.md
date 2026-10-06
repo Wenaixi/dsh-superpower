@@ -4,11 +4,11 @@
 
 ## 基本原则
 
-- **同步上游**：技能名与目录名直接用上游原名，本仓基准是上游 `v6.4.2`。之后上游出新版本，按需 cherry-pick 合入并记进 `CHANGELOG.md`。
-- **正文恒英文**：v7.5.1 起每个技能单份 `SKILL.md`，正文是上游英文原版（DSH 专属化）。frontmatter 同时声明英文 `description` 与中文 `description_zh`，门禁断言两条描述各带自己的 `Superpower Skill:` 前缀。代码、命令、路径、变量名保持原文不译。
+- **同步上游**：技能名与目录名直接用上游原名，本仓基准是上游 `v6.4.2`；上游出新版本时按需 cherry-pick 合入并记进 `CHANGELOG.md`。
+- **正文恒英文**：每个技能单份 `SKILL.md`，正文是上游英文原版（DSH 专属化）。frontmatter 同时声明英文 `description` 与中文 `description_zh`，门禁断言两条描述各带自己的 `Superpower Skill:` 前缀。代码、命令、路径、变量名保持原文不译。
 - **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串。语言按钮只切技能描述与按钮自身文案，面板其余 UI 跟随宿主界面语言。
 - **不引自建服务**：插件与技能正文不提供 HTTP / WebSocket 服务。可视化协作走宿主官方文档预览，配置写入走官方 `configForms` 通道。
-- **废弃字段保留声明**：`modelDisabled` / `userDisabled` 已废弃，但 schema 声明与 `.volatile()` 都要留着。去掉声明会让旧配置被 schema 丢弃，去掉 `.volatile()` 会让迁移批里的 `unset` 被宿主写入闸门拒绝。
+- **配置字段**：开关状态只落在 `disabled` 一张 volatile 表上；`modelDisabled` / `userDisabled` 仅作为 schema 保留字段存在，让升级前的旧配置不被丢弃、迁移批能被宿主写入闸门放行，面板从不写它们。
 - **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 的约定：`inject` 声明依赖、`Schemastery Config` 配默认值、副作用一律包在 `ctx.effect` 里、`waterfall` 记得调 `next()`。
 - **失败要响亮**：frontmatter 非法时只跳过那一个技能并 `warn`，不静默吞错。
 
@@ -85,7 +85,7 @@ python scripts/browser/verify-model-perception.py \
 # 1. 确认门禁全绿，且工作区干净
 git status --short                 # 应无输出
 
-# 2. 升版本号（patch 例：7.1.1）
+# 2. 升版本号（patch 例：7.5.9）
 #    编辑 package.json 的 version，字段值须与 tag 完全一致
 
 # 3. 写 CHANGELOG
@@ -97,12 +97,12 @@ git status --short                 # 应无输出
 
 # 5. 提交并推送
 git add -A
-git commit -m "chore(release): v7.1.1 — <本次变更摘要>"
+git commit -m "chore(release): v7.5.9 — <本次变更摘要>"
 git push origin main
 
 # 6. 打标签并推送（触发 CI 发布）
-git tag -a v7.1.1 -m "v7.1.1"
-git push origin v7.1.1
+git tag -a v7.5.9 -m "v7.5.9"
+git push origin v7.5.9
 
 # 7. 观察流水线
 #    https://github.com/Wenaixi/dsh-superpower/actions

@@ -64,7 +64,7 @@ Toggles take effect immediately; the current turn is unaffected, and the next tu
 
 This bundle is designed natively for **DSH (DeepSeek Harness)** and supports only the DSH platform:
 
-- DSH tool mapping: `references/dsh-tools.md` — every skill in this bundle assumes DSH tools (Bash -> pwsh/bash, Read/Write/Edit -> fs, Glob/Grep -> fs-search, Task/Subagent -> subagent/workflow, TodoWrite -> todo, AskUserQuestion -> ask-user, Skill -> skill).
+- DSH tool mapping: `references/dsh-tools.md` — every skill in this bundle assumes DSH tools (Bash -> pwsh, Read/Write/Edit -> fs, Glob/Grep -> fs-search, Task/Subagent -> subagent/subagent_fork, TodoWrite -> todo_write, AskUserQuestion -> ask_user_question, Skill -> skill, WebSearch/WebFetch -> web_search/web_fetch). The `workflow` tool is not part of the default assembly; use `subagent` fan-out or enable the workflow row explicitly.
 ## User Instructions
 
 User instructions (CLAUDE.md, AGENTS.md, GEMINI.md, etc, direct requests) take precedence over skills, which in turn override default behavior. Only skip skill workflows or instructions when your human partner has explicitly told you to.

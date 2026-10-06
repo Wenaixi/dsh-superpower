@@ -32,7 +32,6 @@ dsh --profile web  # skills are available immediately
 
 Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.8`) or `#v7.5.8`.
 
-The old unscoped package name `dsh-superpower` is deprecated (`npm deprecate`); use the scoped one.
 
 Local development or offline install:
 
@@ -90,7 +89,6 @@ Open the `@wenaixi/dsh-superpower` card in the plugin manager; the panel sits at
 - State lives in the profile's `cordis.patch.yml` (`disabled` and `language` tables) and travels with the profile.
 - Only this bundle's 15 skills are affected; official and third-party skills are untouched.
 
-Before 7.4.0 there were two switches per skill (model-invocable / user-invocable) backed by `modelDisabled` and `userDisabled`. Both fields are deprecated: old values keep working after an upgrade, and your first panel interaction clears them, converging the config onto `disabled`.
 
 ## Usage
 

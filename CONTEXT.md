@@ -31,7 +31,7 @@
 ### 3. SkillSwitches (技能开关与语言偏好)
 - **定位**: 深度模块，位于 `src/switches.ts`，封装禁言表解包、语言偏好读取与调用策略覆盖，内建 `selfTest()`。
 - **职责**:
-  - `readSwitches(config)` 解包三张 volatile 表：`disabled` 为唯一写入目标，`disabled` 为空时并入 `modelDisabled` 与 `userDisabled` 两张废弃表；
+  - `readSwitches(config)` 读 `disabled` volatile 表——开关状态的唯一事实源；面板只写这一张表。
   - 读取 `language` 偏好，缺失即 `undefined`，表示跟随宿主界面语言；
   - `applySwitches()` 产出 `invocation` 覆盖，list 与 get 两条路径共用同一判定语义。
 - **接缝 (Seams)**: 位于 volatile 配置引用与 DSH 调用策略之间。
@@ -98,4 +98,4 @@
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
 - **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
 - **打包产物**：`npm pack --dry-run` 实测 86 个文件（package size 184.4 kB，unpacked 506.9 kB），随包只含 `lib/`、`skills/`、`locale/`、`icon.png`、`cordis.patch.yml`、README 双份与 LICENSE，全树扫描无非 DSH 平台残留
-- **历史污染说明**：npm `7.0.0`（tag 早于专属化改造）tarball 残留 `codex-tools.md` 与 `CLAUDE_MD_TESTING.md`，已废弃（`npm deprecate` 文案已生效）；历史 `7.0.1` 曾是唯一推荐版本，早已由 `7.4.1` 取代
+- **历史污染说明**：npm `7.0.0`（发布早于平台专属化改造）tarball 残留非 DSH 平台文件，已通过 `npm deprecate` 废弃，装包请用最新版

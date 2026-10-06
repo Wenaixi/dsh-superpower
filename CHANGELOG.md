@@ -16,6 +16,17 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 - **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、语言按钮作用域段去重并补上「按钮显示目标语言」语义、明确语言切换只改技能描述（技能名与正文均不随语言变化）、锁版本示例从过时的 7.2.0 更新为 7.5.8、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数错误口径（更新为 `npm pack` 实测 86 文件），并补上缺失的 SkillSwitches 词汇条目；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的 PowerShell 塞 bash 坏命令、同步上游步骤里的中文化旧流程；计划文档 28 个复选框回填为已完成并加状态注记。
 - **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释，其中一段还在要求早已删除的 `SKILL.en.md` 配对；顺带去掉误留的重复 `checkBilingualPairing` 实现。
 
+### 文档
+
+- **dsh-tools.md 工具映射全面重写**：按本机 DSH 0.2.0-rc.2 桌面版源码（desktop-runtime.json、dsh/package.json、全部 tool 包 lib/*.js）与运行时实测真值重写 skills/using-superpowers/references/dsh-tools.md。修正 5 处事实错误：
+  - fs 观察策略——write 覆盖已存在文件、edit 必须先前置 read（FS_NOT_OBSERVED / FS_STALE_VERSION），「先读再写」是宿主强制而非习惯；
+  - 不存在合并的 web 工具，web_search / web_fetch 是两个独立工具（dsh-tool-web）；
+  - 不存在常驻 workflow 工具，需装配 workflowEngine（dsh-workflow-ptc）才注册；
+  - ralph 默认禁用；
+  - cordis 工具为只读检查（cordis_inspect_list / cordis_inspect_query），非动态安装入口。
+- 新增内容：41 个桌面实测工具的完整目录（含归属包、版本、仓库相对路径、装配条件）、PTC/native 呈现模式、后台作业与 run_in_background / promoteOnTimeout、timed/阻塞 ask_user_question、agent-team 与 subagent-control 同名工具互斥替换、装配三层模型（bundle → preset → profile patch）。
+- 同步 skills/using-superpowers/SKILL.md 的 Platform Adaptation 段：Task/Subagent -> subagent/subagent_fork，去掉对 workflow 的默认存在承诺。
+
 ## [7.5.8] - 2026-10-06
 
 ### 修复
