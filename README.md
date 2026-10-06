@@ -5,6 +5,8 @@
 [![npm](https://img.shields.io/npm/v/@wenaixi%2Fdsh-superpower?label=npm)](https://www.npmjs.com/package/@wenaixi/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-5FA04E)](https://nodejs.org)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D11-F69220)](https://pnpm.io)
 
 <img src="./icon.png" alt="@wenaixi/dsh-superpower" width="128" height="128">
 
@@ -12,7 +14,7 @@ A DSH port of [obra/superpowers](https://github.com/obra/superpowers). 15 skills
 
 ## Install
 
-Node 20+, pnpm 11+, and the dsh runtime (`npm i -g @deepseek-ai/dsh`). Examples use the `web` profile; substitute your own profile name.
+Needs the dsh runtime (`npm i -g @deepseek-ai/dsh`); Node and pnpm floors are in the badges above. Examples use the `web` profile; substitute your own profile name.
 
 ```bash
 # A - npm (recommended, always latest)
@@ -182,7 +184,7 @@ Release notes live in [CHANGELOG.md](./CHANGELOG.md), newest first, one section 
 
 ## License
 
-MIT, same as upstream [obra/superpowers](https://github.com/obra/superpowers). See [LICENSE](./LICENSE).
+MIT. Full text in [LICENSE](./LICENSE).
 
 ## Contributing
 
@@ -190,5 +192,5 @@ Issues and PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Credits
 
-- Upstream author [Jesse Vincent](https://blog.fsck.com) and [Prime Radiant](https://primeradiant.com)
+- Upstream [obra/superpowers](https://github.com/obra/superpowers) by [Jesse Vincent](https://blog.fsck.com) and [Prime Radiant](https://primeradiant.com), also MIT licensed
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) for the three-role plugin architecture

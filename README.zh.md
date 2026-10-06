@@ -5,14 +5,16 @@
 [![npm](https://img.shields.io/npm/v/@wenaixi%2Fdsh-superpower?label=npm)](https://www.npmjs.com/package/@wenaixi/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-5FA04E)](https://nodejs.org)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D11-F69220)](https://pnpm.io)
 
 <img src="./icon.png" alt="@wenaixi/dsh-superpower" width="128" height="128">
 
-[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 移植版。15 个技能注入 `ctx.skills`，装上就能用，正文全中文。
+[obra/superpowers](https://github.com/obra/superpowers) 的 DSH 移植版。15 个技能注入 `ctx.skills`，装上就能用；技能正文是上游英文原版，面板可切换每个技能名称与描述的中英文。
 
 ## 安装
 
-需要 Node 20 以上、pnpm 11 以上，以及 dsh 本体（`npm i -g @deepseek-ai/dsh`）。下面以 `web` profile 为例，换个 profile 名字即可。
+需要 dsh 本体（`npm i -g @deepseek-ai/dsh`），Node 与 pnpm 的版本要求见上方徽章。下面以 `web` profile 为例，换个 profile 名字即可。
 
 ```bash
 # A — npm（推荐，自动装最新）
@@ -184,7 +186,7 @@ scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 sk
 
 ## 协议
 
-MIT，与上游 [obra/superpowers](https://github.com/obra/superpowers) 一致。详见 [LICENSE](./LICENSE)。
+MIT，详见 [LICENSE](./LICENSE)。
 
 ## 贡献
 
@@ -192,5 +194,5 @@ Issue 和 PR 都欢迎。详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 致谢
 
-- 上游作者 [Jesse Vincent](https://blog.fsck.com) 与 [Prime Radiant](https://primeradiant.com)
+- 上游 [obra/superpowers](https://github.com/obra/superpowers)，作者 [Jesse Vincent](https://blog.fsck.com) 与 [Prime Radiant](https://primeradiant.com)，同为 MIT 协议
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的三角色插件架构
