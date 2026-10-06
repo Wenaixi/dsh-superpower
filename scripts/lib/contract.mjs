@@ -549,6 +549,9 @@ export class SkillContractChecker {
     if (!source.includes("className: 'spSwLangBar'")) {
       i18nIssues.push('面板缺少顶部全局语言栏 spSwLangBar')
     }
+    if (!source.includes("spSwLangFailure") || !source.includes("failures['language']")) {
+      i18nIssues.push("语言栏缺少对 failures['language'] 失败状态的渲染（spSwLangFailure），存在静默失败风险")
+    }
     if (!/h\('button', \{\s*className: 'spSwLangBtn'/.test(source)) {
       i18nIssues.push('面板缺少单个 spSwLangBtn 语言切换按钮')
     }

@@ -4,6 +4,13 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.5.8] - 2026-10-06
+
+### 修复
+
+- **消灭语言切换静默失败（Silent Failure）**：在顶部语言栏（`spSwLangBar`）增加对 `failures['language']`（`spSwLangFailure`）的显式渲染与控制台告警。当底层 `form.mutate` 因任何原因失败、拒绝或超时时，红字实时告警，绝不静默吞掉报错。
+- **防止热更新表单失效假死**：在 `submit` 回调中输出明确的控制台调试日志，并在静态契约中永久断言 `spSwLangFailure` 渲染的存在性。
+
 ## [7.5.7] - 2026-10-06
 
 ### 修复

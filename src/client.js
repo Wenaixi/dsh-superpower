@@ -34,7 +34,7 @@ window.__ModuleLoader__.load({
     var SKILL_SOURCE = 'bundled';
     /* 面板所在的包版本。写死而非从宿主取：浏览器侧读不到 package.json，
        而版本号正是排查「装的是哪一版、界面是不是这一版」时唯一能直接看到的东西。 */
-    var PACKAGE_VERSION = '7.5.7';
+    var PACKAGE_VERSION = '7.5.8';
     var NS = 'dsh-superpower';
     var DISABLED_FIELD = 'disabled';
     /* v7.3.0 及之前的双侧禁言表。面板写入成功后会把它们 unset，
@@ -141,6 +141,7 @@ window.__ModuleLoader__.load({
       '.spSwLangBtn:hover{border-color:var(--dsw-alias-border-l1);color:var(--dsw-alias-label-primary)}',
       '.spSwLangBtn:disabled{opacity:.5;cursor:default}',
       '.spSwLangNote{margin:0;font:var(--dsw-font-xxs-12);color:var(--dsw-alias-label-tertiary)}',
+      '.spSwLangFailure{margin:0;font:var(--dsw-font-xxs-12);color:var(--dsw-alias-error)}',
       '.spSwSwitchLabel{white-space:nowrap;font:var(--dsw-font-xxs-12);color:var(--dsw-alias-label-secondary)}',
       '.spSwEmpty{margin:0;padding:24px 0;font:var(--dsw-font-xs-13);color:var(--dsw-alias-label-tertiary);text-align:center}',
       /* 窄屏：开关区落到文字下方 */
@@ -311,7 +312,8 @@ window.__ModuleLoader__.load({
                 [{ op: 'set', path: [LANGUAGE_FIELD], value: effective === 'zh' ? 'en' : 'zh' }]);
             },
           }, (language === undefined ? hostActive : language) === 'zh' ? SP_LANG_EN : SP_LANG_ZH),
-          h('span', { className: 'spSwLangNote' }, t('langNote'))),
+          h('span', { className: 'spSwLangNote' }, t('langNote')),
+          failures['language'] ? h('span', { className: 'spSwLangFailure', role: 'alert' }, failures['language']) : null),
         h('ul', { className: 'spSwMeta' },
           h('li', { className: 'spSwMetaItem' }, t('provider'), h('code', null, PROVIDER_NAME)),
           h('li', { className: 'spSwMetaItem' }, t('rank'), h('code', null, String(PROVIDER_RANK))),

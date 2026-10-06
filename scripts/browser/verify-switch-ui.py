@@ -140,7 +140,7 @@ with sync_playwright() as pw:
     ok('技能名与 skills/ 目录逐字一致', [r['name'] for r in rows] == EXPECTED)
     ok('面板开关总数 15（每行一个）',
        page.evaluate('() => document.querySelectorAll(' + json.dumps(SWITCH) + ').length') == 15)
-    ok('详情页标题显示版本号', 'v7.5.7' in body)
+    ok('详情页标题显示版本号', 'v7.5.8' in body)
     ok('面板标题为「技能开关」', '技能开关' in body)
     meta = page.inner_text('[class*="spSwMeta"]')
     ok('元信息三项齐全',
@@ -203,6 +203,9 @@ with sync_playwright() as pw:
         page.click(lang_bar, timeout=15000)
         settle('归零到中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
     btn_text = page.inner_text(lang_bar).strip()
+    note_el = page.query_selector('[class*="spSwLangNote"]')
+    ok('语言栏可见说明存在', note_el is not None and '仅切换技能描述' in note_el.inner_text())
+    ok('无语言切换失败报错', page.query_selector('[class*="spSwLangFailure"]') is None)
     ok('中文态按钮文案为 English', btn_text == 'English', btn_text)
     page.click(lang_bar, timeout=15000)
     settle('语言切换后描述为英文', lambda _: 'Superpower Skill:' in page.inner_text(desc_sel), 30000)
