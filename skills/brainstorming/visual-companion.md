@@ -1,54 +1,51 @@
-# 可视化辅助指南
+# Visual Companion Guide
 
-基于 DSH 官方文档预览的头脑风暴辅助工具，用于展示原型、图表和选项。
+Browser-based visual brainstorming companion for showing mockups, diagrams, and options, built on DSH's official document preview.
 
-## 何时使用
+## When to Use
 
-按问题逐个判断，而非按会话判断。判断标准：**用户看图是否比看文字更易理解？**
+Decide per-question, not per-session. The test: **would the user understand this better by seeing it than reading it?**
 
-**内容本身是可视化的场景，适合用浏览器预览：**
+**Use the browser preview** when the content itself is visual:
 
-- **界面原型** — 线框图、布局、导航结构、组件设计
-- **架构图** — 系统组件、数据流、关系图谱
-- **并排可视化对比** — 对比两种布局、两种配色方案、两种设计方向
-- **设计打磨** — 问题涉及外观与质感、间距、视觉层级
-- **空间关系** — 状态机、流程图、实体关系等以图形方式呈现
+- **UI mockups** — wireframes, layouts, navigation structures, component designs
+- **Architecture diagrams** — system components, data flow, relationship maps
+- **Side-by-side visual comparisons** — comparing two layouts, two color schemes, two design directions
+- **Design polish** — when the question is about look and feel, spacing, visual hierarchy
+- **Spatial relationships** — state machines, flowcharts, entity relationships rendered as diagrams
 
-**内容为文本或表格的场景，适合使用终端：**
+**Use the terminal** when the content is text or tabular:
 
-- **需求与范围问题** — 「这是什么意思？」，「哪些功能在范围内？」
-- **概念性的 A/B/C 选择** — 在文字描述的方案之间做选择
-- **权衡清单** — 优缺点、对比表格
-- **技术决策** — API 设计、数据建模、架构方案选型
-- **澄清性问题** — 任何答案是文字而非视觉偏好的问题
+- **Requirements and scope questions** — "what does X mean?", "which features are in scope?"
+- **Conceptual A/B/C choices** — picking between approaches described in words
+- **Tradeoff lists** — pros/cons, comparison tables
+- **Technical decisions** — API design, data modeling, architectural approach selection
+- **Clarifying questions** — anything where the answer is words, not a visual preference
 
-一个*关于*界面主题的问题并不自动等同于可视化问题。「你想要哪种向导？」是概念性问题——使用终端。「这些向导布局中哪一个更合适？」是可视化问题——使用浏览器预览。
+A question *about* a UI topic is not automatically a visual question. "What kind of wizard do you want?" is conceptual — use the terminal. "Which of these wizard layouts feels right?" is visual — use the browser preview.
 
-## 工作原理
+## How It Works
 
-你把 HTML 写入工作区的一个约定目录，DSH 的文档预览面板读取并渲染它。用户在浏览器侧的文档栏打开该文件即见画面。
+You write HTML to a convention directory in the workspace; DSH's document preview reads and renders it. The user opens the file in the document sidebar to see it.
 
-**选择结果不会自动回传给你。** 预览是一个隔离的 iframe 文档，它无法把你的选择送达会话。所以：让用户在终端里回答。绝不要声称读到了用户在预览里的点击。
+**Selection results are not sent back to you automatically.** The preview is an isolated iframe document and cannot deliver your user's choices to the session. So: ask the user to answer in the terminal. Never claim to have read a click inside the preview.
 
-## 写文件
+## Writing Files
 
-把每一页 HTML 写成一个自包含的完整文档。三条硬要求：
+Write every page as a self-contained HTML document. Three hard requirements:
 
-1. **完整文档。** 官方预览不做内容包裹，不提供任何现成 CSS 类。
-   `<div class="options">` 在这里没有任何含义，页面上什么都不会出现。
-2. **自包含。** 不引用外部相对路径的 CSS 或脚本——相对依赖只在交互预览
-   开关打开时才被打包。写单文件最稳。
-3. **不依赖 iframe 外的能力。** 预览文档与宿主页面不共享上下文，
-   `window.parent` 拿不到任何东西。
+1. **Full document.** The official preview wraps nothing and provides no ready-made CSS classes. `<div class="options">` means nothing here; nothing renders on the page.
+2. **Self-contained.** Do not reference external relative CSS or scripts — relative dependencies are bundled only when interactive preview is enabled. A single file is safest.
+3. **No outside-iframe capabilities.** The preview document does not share the host page context; `window.parent` gets nothing.
 
-### 最小示例
+### Minimal example
 
 ```html
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>布局方案</title>
+<title>Layout options</title>
 <style>
   body { font: 15px/1.7 system-ui, sans-serif; margin: 0; padding: 40px; }
   h1 { font-size: 20px; margin: 0 0 6px; }
@@ -60,65 +57,64 @@
 </style>
 </head>
 <body>
-  <h1>哪种布局更合适？</h1>
-  <p class="subtitle">请考虑可读性与视觉层级</p>
+  <h1>Which layout fits better?</h1>
+  <p class="subtitle">Consider readability and visual hierarchy</p>
   <div class="cards">
     <div class="card">
-      <h3>A 单列</h3>
-      <p>阅读体验最好，信息密度最低</p>
+      <h3>A Single column</h3>
+      <p>Best reading experience, lowest information density</p>
     </div>
     <div class="card">
-      <h3>B 两列</h3>
-      <p>空间利用率高，需要额外样式约束</p>
+      <h3>B Two columns</h3>
+      <p>Higher space utilization, needs extra style constraints</p>
     </div>
   </div>
 </body>
 </html>
 ```
 
-深色环境下把配色换成跟随 `prefers-color-scheme`，或直接用中性灰阶。
+In dark environments, switch colors to follow `prefers-color-scheme` or use neutral grays.
 
-## 目录与命名
+## Directory and Naming
 
-约定目录：项目根下的 `.superpowers/brainstorm/`。会话结束后由你自行删除。
+Convention directory: `.superpowers/brainstorm/` under the project root. Delete it yourself when the session ends.
 
-- 使用语义化名称：`platform.html`、`visual-style.html`、`layout.html`
-- 不要复用文件名——每次迭代写一个新文件，`layout-v2.html`、`layout-v3.html`
-- 用户打开的是他指定的那一个文件；改完告诉他新文件名
+- Use semantic names: `platform.html`, `visual-style.html`, `layout.html`
+- Do not reuse filenames — write a new file each iteration, `layout-v2.html`, `layout-v3.html`
+- The user opens the specific file they were told about; tell them the new filename when you rewrite
 
-若项目的 `.gitignore` 尚未包含 `.superpowers/`，提醒用户添加。
+If the project's `.gitignore` does not yet include `.superpowers/`, remind the user to add it.
 
-## 循环流程
+## Loop Flow
 
-1. **写入 HTML** 到约定目录，用文件工具创建，不要用 `cat`/heredoc（会在终端产生大量噪音）。
-2. **告知用户预期内容并结束本轮**：
-   - 提醒文件路径，以及如何在右侧文档栏打开它；
-   - 简要文字概括这一页在展示什么（例如「正在展示首页的 3 种布局方案」）；
-   - 请他们在终端里回答。措辞要让人知道在哪里回答。
-3. **读用户的终端回复**。这是唯一的选择回传通道。
-4. **迭代或推进** —— 若反馈改变了当前页面，写一个新版本文件。
-5. **回到终端时清场** —— 下一步不需要预览时，删除不再需要的 HTML 文件，
-   避免用户在文档栏看到早已解决的问题。
-6. 重复直至完成。
+1. **Write HTML** to the convention directory with file tools, not `cat`/heredoc (they flood the terminal).
+2. **Tell the user what to expect and end the turn**:
+   - Remind the file path and how to open it in the right-hand document sidebar;
+   - Summarize in words what this page shows (e.g. "showing 3 layout options for the homepage");
+   - Ask them to answer in the terminal, and say where.
+3. **Read the user's terminal reply.** This is the only selection return channel.
+4. **Iterate or move on** — if feedback changes the current page, write a new version file.
+5. **Clean up when back in the terminal** — delete HTML files no longer needed, so the user does not see stale problems in the document sidebar.
+6. Repeat until done.
 
-## 逐题决策
+## Per-Question Decisions
 
-即使用户已接受预览，仍需针对每个问题决定是否值得画出来：
+Even after the user accepts the preview, decide per question whether it is worth drawing:
 
-- **使用预览** 处理视觉内容——原型、线框、布局对比、架构图、并排视觉设计
-- **使用终端** 处理文本内容——需求问题、概念抉择、权衡清单、A/B/C/D 文本选项、范围决策
+- **Use preview** for visual content — mockups, wireframes, layout comparisons, architecture diagrams, side-by-side visual designs
+- **Use terminal** for text content — requirement questions, conceptual choices, tradeoff lists, A/B/C/D text options, scope decisions
 
-涉及 UI 话题的问题不一定是视觉问题。「在此上下文中 personality 指什么？」是概念问题——使用终端。「哪种向导布局更合适？」是视觉问题——使用预览。
+A question about a UI topic is not necessarily visual. "What does personality mean in this context?" is conceptual — use the terminal. "Which wizard layout feels better?" is visual — use the preview.
 
-## 设计建议
+## Design Advice
 
-- **按问题匹配保真度**——布局问题用线框图，视觉打磨问题再做精细化
-- **在每页上说明问题**——「哪种看起来更专业？」而非仅仅「选一个」
-- **先迭代再推进**——若反馈改变了当前页面，先写一个新版本
-- **每屏最多 2-4 个选项**
-- **在重要场景使用真实内容**——真实文案与真实配色比占位文本更能暴露问题
-- **保持原型简洁**——聚焦布局与结构，而非像素级完美
+- **Match fidelity to the question** — wireframes for layout questions, polish only for visual-fidelity questions
+- **State the question on each page** — "Which looks more professional?" rather than just "pick one"
+- **Iterate before pushing** — if feedback changes the page, write a new version first
+- **At most 2-4 options per screen**
+- **Use real content for important scenarios** — real copy and colors expose problems better than placeholder text
+- **Keep mockups lean** — focus on layout and structure, not pixel perfection
 
-## 清理
+## Cleanup
 
-删除本次会话写下的所有 HTML 文件。若用了项目目录，提醒用户该目录已在 `.gitignore` 中。
+Delete every HTML file written this session. If a project directory was used, remind the user that the directory is in `.gitignore`.

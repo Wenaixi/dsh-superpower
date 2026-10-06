@@ -1,58 +1,122 @@
 ---
 name: diagnosing-superpowers
-description: "Superpower Skill：当 superpowers 会话出错、human partner 想查原因（重复工作、忽略计划、技能未触发、耗时过长、成本过高、结果不佳）或想为维护者建缺陷报告时，适用当前或历史会话。"
+description: "Superpower Skill: Use when a superpowers session went wrong and your human partner wants to know why - repeated work, ignored plans, stumbles, poor results, a skill that didn't fire, it took too long, why is it so expensive, what is it doing - or wants to build a bug report for the superpowers maintainers, for the current session or a past one identified by id or path, on any harness."
+description_zh: "Superpower Skill：当 superpowers 会话出错、human partner 想查原因（重复工作、忽略计划、技能未触发、耗时过长、成本过高、结果不佳）或想为维护者建缺陷报告时，适用当前或历史会话。"
 ---
 
-# 诊断 superpowers
 
-## 概览
+# Diagnosing Superpowers
 
-与你的 human partner 一起确定会话中哪里出了问题，读取磁盘上的 transcript，并基于证据报告实际发生的情况。你负责报告；你不对 superpowers 做诊断。由分诊 bundle 或 issue 的人决定 superpowers 是否要改。
+## Overview
 
-**核心原则：** 每条发现都引用 `path:line`。没有引用就没有发现。每个数字都来自 transcript 或你运行的命令，绝不来自记忆。
+Pin down with your human partner what went wrong in a session, read the
+transcripts on disk, and report what happened with evidence. You report;
+you do not diagnose superpowers. Whoever triages the bundle or the issue
+decides whether superpowers changes.
 
-## 工作流程
+**Core principle:** Every finding cites `path:line`. No citation, no
+finding. Every number comes from the transcript or from a command you ran,
+never from memory.
 
-每个步骤创建一个 todo。步骤 5–7 仅在其所述条件满足时运行。
+## Workflow
 
-1. **问题收集。** 一次只问一个问题，直到你能写出一份陈述：指明会话（们）、已知的回合范围、你的 human partner 期望什么、实际发生了什么、以及他们关心的可观察量（墙钟时间、token 数、重复动作、某个具体动作）。"耗时太长"是抱怨，不是问题陈述。同时记录目标是否为提交 superpowers 缺陷报告。
-2. **定位。** 使用 `references/session-discovery.md` 把每个会话解析为经过验证的绝对文件系统路径。通过引用其首个 prompt 与时间戳来确认历史会话，并列出你拒绝的每个候选及其原因，没有则写"无"。枚举 subagent transcript。创建 `~/.superpowers/diagnosing-superpowers/<session-id>/`，把路径告诉你的 human partner，并按 `templates/case.md` 在其中填写 case 文件，遵循其对环境与技能观察的来源（provenance）规则。
-3. **分诊。** 亲自阅读报告问题周围的区域。然后按维度并行派出分析师 subagent，每个 subagent 获得 case 文件路径、`prompts/analyst-common.md` 以及 `prompts/` 中的一个维度文件：`skill-timeline.md`、`plan-adherence.md`、`repeated-work.md`、`stumbles.md`、`quality-evidence.md`、`request-conflicts.md`、`cost-and-time.md`。transcript 较长时按回合范围拆分维度。丢弃任何缺少 `path:line` 的返回发现。
-4. **报告。** 按顺序填满 `templates/report.md` 的每一节，写入 workspace，展示并给出路径。检查引用的内容实际证明了什么，并保留支撑性 case；符号链接别名不是冗余副本。
-5. **GitHub issues** — 当报告 §7 显示"可能（possible）"或"很可能（likely）"，或你的 human partner 要求时。按 `references/github-issues.md` 搜索已开与已关闭 issue 中的症状。展示匹配项并建议把报告附加到最接近的一条。若无匹配，填写 `templates/issue.md`，写入 workspace，展示确切文本，仅在批准后创建 issue。`gh` 无法附加文件；若存在 bundle，把路径交给你的 human partner 在浏览器中附加。
-6. **导出** — 仅当你的 human partner 要求 bundle 时；绝不未经要求构建。若收集阶段的目标是缺陷报告，说一次"可按需提供已脱敏的 bundle"，然后等待。询问脱敏级别，说明各级包含什么：skeleton（无工具结果正文）、evidence（仅被引用事件有正文）、full。按 `templates/bundle-README.md` 构建 bundle，派出 `prompts/scrub.md`，然后 `prompts/scrub-audit.md`，重复两者直到审计返回 CLEAN。完成 bundle 模板的证据检查与对账后，再展示最终脱敏日志、文件清单与隐私和证据结论。仅在批准后归档（`zip -r` 或 `tar -czf`）。给出归档路径时，说明其包含内容、指出脱敏日志中的替换，并说明脱敏可能遗漏：他们必须在分享前审阅每个文件。
-7. **相似会话** — 应要求时。把已确认的发现转为签名（signature），按 mtime 与大小列出候选，找出标记行号，对每个候选并行派出 `prompts/similar-session.md`，并把报告 §9 追加进去。
+Create a todo per step. Steps 5–7 run only on their stated condition.
 
-## 快速参考
+1. **Problem intake.** Ask one question at a time until you can write a
+   statement naming the session(s), the turn range if known, what your
+   partner expected, what happened, and the observable they care about
+   (wall-clock, tokens, repeated actions, one specific action). "It took
+   too long" is a complaint, not a problem statement. Note whether the
+   goal is a superpowers bug report.
+2. **Locate.** Resolve each session to verified absolute filesystem paths using
+   `references/session-discovery.md`. Confirm a past session by quoting its
+   first prompt and timestamp, and list every candidate you rejected with the
+   reason, or "none". Enumerate subagent transcripts. Create
+   `~/.superpowers/diagnosing-superpowers/<session-id>/`, tell your
+   partner the path, and fill `templates/case.md` there, following its
+   provenance rules for environment and skill observations.
+3. **Triage.** Read the region around the reported problem yourself. Then
+   dispatch one analyst subagent per dimension in parallel, each given the
+   case file path, `prompts/analyst-common.md`, and one dimension file from
+   `prompts/`: `skill-timeline.md`,
+   `plan-adherence.md`, `repeated-work.md`, `stumbles.md`,
+   `quality-evidence.md`, `request-conflicts.md`, `cost-and-time.md`.
+   Split a dimension by turn range when the transcript is long. Discard
+   any returned finding without `path:line`.
+4. **Report.** Fill every section of `templates/report.md` in order, write
+   it to the workspace, show it, and give the path. Check what cited content
+   actually proves and preserve the supporting case; a symlink alias is not a
+   redundant copy.
+5. **GitHub issues** — when report §7 says possible or likely, or your
+   partner asks. Search open and closed issues for the symptoms per
+   `references/github-issues.md`. Show matches and suggest adding the
+   report to the closest. If none match, fill `templates/issue.md`, write
+   it to the workspace, show the exact text, and create the issue only
+   after approval. `gh` cannot attach files; if a bundle exists, give
+   your partner its path to attach in the browser.
+6. **Export** — only when your partner asks for a bundle; never build one
+   unprompted. If the intake goal was a bug report, say once that a
+   scrubbed bundle is available on request, then wait. Ask the redaction
+   level, stating what each includes: skeleton (no tool-result bodies),
+   evidence (bodies only for cited events), full. Build the bundle per
+   `templates/bundle-README.md`, dispatch `prompts/scrub.md`, then
+   `prompts/scrub-audit.md`, repeating both until the audit returns CLEAN.
+   Complete the bundle template's evidence check and reconciliation before
+   showing the final scrub log, file list, and privacy and evidence outcomes.
+   Archive (`zip -r` or `tar -czf`) only after approval. With the archive
+   path, state what it contains, point at the scrub log for replacements, and
+   say scrubbing can miss things: they must review every file before sharing.
+7. **Similar sessions** — when asked. Turn confirmed findings into a
+   signature, list candidates by mtime and size, find marker line numbers,
+   dispatch `prompts/similar-session.md` per candidate in parallel, and
+   append report §9.
 
-七个分析师始终运行。本表说明步骤 3 中你要亲自读哪个区域，以及在结论中优先展示哪些发现。
+## Quick reference
 
-| 抱怨 | 先读，优先展示 |
+All seven analysts always run. This table says which region to read
+yourself in step 3 and which findings to lead with in the verdict.
+
+| Complaint | Read first, lead with |
 |---|---|
-| "耗时太长" | cost-and-time, stumbles |
-| "为什么做了这份额外工作？" | repeated-work, plan-adherence |
-| "为什么这么贵？" | cost-and-time |
-| "它在搞什么鬼？"（仍在运行） | skill-timeline；在覆盖范围注明进行中 |
-| "它忽略了计划" | plan-adherence，压缩行优先 |
-| "技能 X 从未触发" | skill-timeline |
+| "It took too long" | cost-and-time, stumbles |
+| "Why did it do this extra work?" | repeated-work, plan-adherence |
+| "Why is it so expensive?" | cost-and-time |
+| "What the hell is it doing?" (still running) | skill-timeline; note in-progress in coverage |
+| "It ignored the plan" | plan-adherence, compaction lines first |
+| "Skill X never fired" | skill-timeline |
 
-## 铁律
+## Hard rules
 
-- **上下文安全。** 一行 transcript 可能有一兆字节。对每个会话文件的每次读取都遵循 `references/context-safety.md`。
-- **只读。** 绝不修改、移动或删除会话文件。
-- **给 subagent 的绝对路径。** subagent 的"当前会话"是它自己的。传递绝对路径与 id。
-- **仅限人类 prompt。** 钩子输出、系统提醒与工具结果不是你的 human partner 的话。在 subagent transcript 中，"user"是父代理。
-- **不做 superpowers 诊断。** 报告 §7 说明参与程度并就此打住。绝不在技能中指认缺陷或提出修改。你的 human partner 催促修复并不豁免这一点；指向 issue 步骤并提及可按需提供 bundle。也不给你的 human partner 任何建议。
-- **审批关卡。** 在你的 human partner 看到脱敏日志与文件清单之前，不归档。他们批准确切文本之前，不创建 issue 或评论。
-- **分析前先收集。** 步骤 2–7 的任何事情都要等你的 human partner 回答后才开始。若他们不在，写下问题并停止。你为他们重构的陈述不是回答。已界定范围的请求——某个具体事件、现在正在运行什么、或要运行的分析——本身就是陈述：先回答它，再提问。对整个会话的"为什么"是抱怨。
+- **Context safety.** One transcript line can be a megabyte. Follow
+  `references/context-safety.md` on every session file, every time.
+- **Read-only.** Never modify, move, or delete a session file.
+- **Exact paths to subagents.** A subagent's "current session" is its
+  own. Pass absolute paths and ids.
+- **Human prompts only.** Hook output, system reminders, and tool results
+  are not your partner's words. In a subagent transcript, "user" is the
+  parent agent.
+- **No superpowers diagnosis.** Report §7 states involvement and stops.
+  Never name a defect in a skill or propose a change. Your partner
+  pressing for a fix does not waive this; point at the issue step and
+  mention that a bundle is available on request. No advice to your
+  partner either.
+- **Approval gates.** No archive before your partner has seen the scrub
+  log and file list. No issue or comment before they approve the exact
+  text.
+- **Intake before analysis.** Nothing in steps 2–7 starts until your
+  partner has answered. If they are away, write the questions and stop.
+  A statement you reconstructed for them is not an answer. An
+  already-scoped request — one specific event, what is running now, or
+  the analysis to run — is itself the statement: answer it, then ask.
+  A whole-session "why" is a complaint.
 
-## 红旗
+## Red Flags
 
-| 想法 | 实际情况 |
+| Thought | Reality |
 |---------|---------|
-| "问题很明显，跳过收集" | 问题陈述界定了所有范围。问。 |
-| "他们不在，我重构陈述" | 你无法重构他们想要的东西。写下问题并停止。 |
-| "我先全量扫描，最后再问" | 未界定范围的扫描把他们的预算花在错误的问题上。先问。 |
-| "他们要缺陷报告，我这就构建 bundle" | bundle 是他们的会话数据被打包。仅当他们要求时才构建。 |
-| "小范围、有针对性的编辑，无需重构" | 这不是你说了算，无论多小。报告证据；由分诊者决定。 |
-| "每 token 的价格众所周知" | 你不是从 transcript 算出的数字都是编造的。引用或删除。 |
+| "The problem is obvious, skip intake" | The problem statement scopes everything. Ask. |
+| "They're away, so I'll reconstruct the statement" | You cannot reconstruct what they wanted. Write the questions and stop. |
+| "I'll sweep everything now and ask at the end" | An unscoped sweep spends their budget on the wrong question. Ask first. |
+| "They want a bug report, so I'll build the bundle now" | The bundle is their session data, packaged. Build it only when they ask for it. |
+| "Small, targeted edit, no restructuring needed" | Not your call, however small. Report the evidence; the triager decides. |
+| "The price per token is well known" | Numbers you did not compute from the transcript are invented. Cite or drop. |

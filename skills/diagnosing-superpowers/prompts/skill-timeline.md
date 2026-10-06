@@ -1,16 +1,30 @@
-先读 `prompts/analyst-common.md`；它给出你的角色、输入、上下文安全规则与返回格式。本文件补充维度。
+Read `prompts/analyst-common.md` first; it gives your role, inputs,
+context-safety rules, and the return format. This file adds the dimension.
 
-维度：技能时间线
+Dimension: Skill timeline
 
-构建逐人类回合的技能与插件使用记录，然后找缺口。
+Build the per-human-turn record of skill and plugin use, then look for gaps.
 
-1. 列出人类 prompt 及其行号与时间戳。
-2. 使用 case 文件中确立的技能调用与归属含义，列出每次显式调用、活跃技能归属或对名为 `SKILL.md` 的文件的读取。记录行、技能名与所属的人类回合。
-3. 列出使用的每个非 superpowers 插件、技能、代理类型、MCP 服务器或钩子。只使用 case 文件中记录的有证据的工具、归属、代理派发、MCP 与钩子含义；识别与 `superpowers` 之外的东西关联的值。
-4. 对每个人类回合，把请求文本与已安装 superpowers 技能的触发描述对比（读取 `<install root>/skills/*/SKILL.md` 的 frontmatter `description` 行；安装根在 case 文件中）。报告以下发现：
-   - 被调用的技能及前置请求（数量少时每次调用一条发现即可；数量多时按技能分组）；
-   - 请求匹配某技能触发描述但该回合无调用的回合（说明哪个描述匹配并引用请求）；
-   - 匹配请求一个或多个回合之后才调用的技能（迟到）；
-   - 用到的每个非 superpowers 插件/技能/工具及其位置。
+1. List the human prompts with line numbers and timestamps.
+2. Using the skill-invocation and attribution meanings established in the case
+   file, list every explicit invocation, active-skill attribution, or read of a
+   file named `SKILL.md`. Record the line, the skill name, and the human turn it
+   happened in.
+3. List every non-superpowers plugin, skill, agent type, MCP server, or
+   hook used. Use only the evidenced tool, attribution, agent-dispatch, MCP,
+   and hook meanings recorded in the case file; identify values associated
+   with something other than `superpowers`.
+4. For each human turn, compare the request text against the trigger
+   descriptions of the superpowers skills installed (read
+   `<install root>/skills/*/SKILL.md` frontmatter `description` lines; the
+   install root is in the case file). Report as findings:
+   - a skill invoked, with the request that preceded it (one finding per
+     invocation is fine when there are few; group by skill when many);
+   - a turn whose request matches a skill's trigger description with no
+     invocation in that turn (state which description matched and quote
+     the request);
+   - a skill invoked one or more turns after the matching request (late);
+   - each non-superpowers plugin/skill/tool used, with where.
 
-不要说错过或迟到的触发是错的。报告匹配与缺失；由读者决定。
+Do not say whether a missed or late trigger was wrong. Report the match
+and the absence; the reader decides.

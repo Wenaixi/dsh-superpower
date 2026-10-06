@@ -1,69 +1,70 @@
 ---
 name: using-superpowers
-description: "Superpower Skill：适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题。"
+description: "Superpower Skill: Use when starting any conversation - establishes how to find and use skills, requiring skill invocation before ANY response including clarifying questions"
+description_zh: "Superpower Skill：适用于任何对话开始前，建立技能查找与调用规范，要求在任何回复前优先调用相关技能，包括澄清问题。"
 ---
 
+
 <SUBAGENT-STOP>
-如果你是作为 subagent 被派来执行特定任务，请忽略本技能。
+If you were dispatched as a subagent to execute a specific task, ignore this skill.
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
-如果你认为有哪怕 1% 的可能性某个技能适用于你当前要做的事，你就**必须**调用该技能。
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
 
-如果某项任务适用某个技能，你别无选择，必须使用它。
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
 
-这没有商量余地，你不能为自己找借口绕开它。
+This is not negotiable. You cannot rationalize your way out of this.
 </EXTREMELY-IMPORTANT>
 
-## 规则
+## The Rule
 
-**在任何回复或行动之前先调用相关或被请求的技能**——包括澄清问题、探索代码库或检查文件。如果事后发现不适用于当前情况，可以不使用它。
+**Invoke relevant or requested skills BEFORE any response or action** — including clarifying questions, exploring the codebase, or checking files. If it turns out wrong for the situation, you don't have to use it.
 
-**进入规划模式之前：** 如果尚未进行头脑风暴，请先调用头脑风暴技能。
+**Before entering plan mode:** if you haven't already brainstormed, invoke the brainstorming skill first.
 
-然后宣告 "Using [skill] to [purpose]" 并严格按技能要求执行。如果技能包含清单，请为每一项创建一个待办。
+Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it has a checklist, create a todo per item.
 
-## 技能优先级
+## Skill Priority
 
-当多个技能同时适用时，流程类技能优先——它们决定方法论，然后由实现类技能（如 frontend-design 等）负责落地。头脑风暴与系统化调试是 Superpowers 中最常见的流程技能，但该规则适用于所有技能。
+When multiple skills apply, process skills come first — they set the approach, then implementation skills (frontend-design, etc.) carry it out. Brainstorming and systematic-debugging are Superpowers' most common process skills, but the rule holds for any of them.
 
-- "Let's build X" → 优先使用 brainstorming，再使用实现类技能。
-- "Fix this bug" → 优先使用 systematic-debugging，再使用领域技能。
+- "Let's build X" → superpowers:brainstorming first, then implementation skills.
+- "Fix this bug" → superpowers:systematic-debugging first, then domain skills.
 
-## 警示信号
+## Red Flags
 
-出现以下想法时请立刻停下——你正在为自己找借口：
+These thoughts mean STOP—you're rationalizing:
 
-| 想法 | 现实 |
+| Thought | Reality |
 |---------|---------|
-| "这只是个简单问题" | 问题也是任务，先检查技能。 |
-| "我需要先了解更多上下文" | 技能检查应在澄清问题之前。 |
-| "我先探索一下代码库" | 技能会告诉你如何探索，先检查技能。 |
-| "我可以快速看一下 git/文件" | 文件缺少对话上下文，先检查技能。 |
-| "我先收集一下信息" | 技能会告诉你如何收集信息。 |
-| "这不需要正式的技能" | 只要技能存在，就要用。 |
-| "我记得这个技能" | 技能会演进，请阅读当前版本。 |
-| "这不算任务" | 有行动就是任务，检查技能。 |
-| "用技能太小题大做了" | 简单的事情也会变复杂，请使用技能。 |
-| "我就先做这一件事" | 做任何事之前先检查。 |
-| "这样做感觉很高效" | 无章法的行动只会浪费时间，技能可以避免。 |
-| "我知道那是什么意思" | 知道概念不等于会用技能，请调用它。 |
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
 
-## 技能开关
+## Skill Switches
 
-本套件的 15 个技能各自带两个开关，位于 DSH Web GUI 插件管理页中 `@wenaixi/dsh-superpower` 卡片的详情页：
+Each of the 15 skills in this bundle has one switch on the detail page of the `@wenaixi/dsh-superpower` card in the DSH Web GUI plugin manager:
 
-- **模型可调用**：关闭后该技能不再出现在模型的可用技能目录中，`skill` 工具调用也会被拒绝。
-- **用户可调用**：关闭后该技能不再出现在斜杠命令补全与命令行技能清单中。
+- **Model invocable:** when off, the skill no longer appears in the model's available skill catalog and `skill` tool calls are rejected.
+- **User invocable:** when off, the skill no longer appears in slash-command completion or the CLI skill list.
 
-开关拨动后立即生效，状态落在 profile 的 `cordis.patch.yml` 里；当前进行中的这一轮对话不受影响，下一轮才会看到新的目录。
+Toggles take effect immediately; the current turn is unaffected, and the next turn sees the new catalog. State is stored in the profile's `cordis.patch.yml` under the `disabled` table.
 
-## 平台适配
+## Platform Adaptation
 
-本套件专为 **DSH (DeepSeek Harness)** 原生环境设计，仅支持 DSH 平台：
+This bundle is designed natively for **DSH (DeepSeek Harness)** and supports only the DSH platform:
 
-- DSH 工具规范：`references/dsh-tools.md` — 本套件中的所有技能均假定使用 DSH 工具（Bash→pwsh/bash、Read/Write/Edit→fs、Glob/Grep→fs-search、Task/Subagent→subagent/workflow、TodoWrite→todo、AskUserQuestion→ask-user、Skill→skill）。
+- DSH tool mapping: `references/dsh-tools.md` — every skill in this bundle assumes DSH tools (Bash -> pwsh/bash, Read/Write/Edit -> fs, Glob/Grep -> fs-search, Task/Subagent -> subagent/workflow, TodoWrite -> todo, AskUserQuestion -> ask-user, Skill -> skill).
+## User Instructions
 
-## 用户指令
-
-用户指令（AGENTS.md、CLAUDE.md 等，以及直接请求）的优先级高于技能，技能又高于默认行为。仅当 human partner 明确指示时，才可跳过技能工作流或指令。
+User instructions (CLAUDE.md, AGENTS.md, GEMINI.md, etc, direct requests) take precedence over skills, which in turn override default behavior. Only skip skill workflows or instructions when your human partner has explicitly told you to.

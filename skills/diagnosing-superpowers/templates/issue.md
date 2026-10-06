@@ -1,45 +1,51 @@
-标题：<技能或症状>：<一行可观察量>（<harness>）
+Title: <skill or symptom>: <one-line observable> (<harness>)
 
-- [x] 我已搜索现有 issue 且这不是重复（搜索：<查询词>；最接近：<#n 标题，或 "none">）
+- [x] I searched existing issues and this is not a duplicate (searched: <query terms>; closest: <#n title, or "none">)
 
-## 环境（必填）
+## Environment (required)
 
-| 字段 | 值 | 来源 / 支撑证据 |
+| Field | Value | Provenance / supporting evidence |
 |-------|-------|-------------------------------|
-| superpowers 版本 | <version>（<sha 或 "not a checkout">） | <历史证据 / 未验证快照 / 当前观察 / 未知>；<位置> |
-| harness (DSH) | <harness> | <标签>；<位置> |
-| harness 版本 | <version> | <标签>；<位置> |
-| 你的模型 + 版本 | <所见 model ids> | <标签>；<位置> |
-| 已安装的全部插件 | <列表> | <标签>；<位置> |
-| OS + shell | <os 版本>, <shell> | <标签>；<位置> |
+| Superpowers version | <version> (<sha or "not a checkout">) | <historical evidence / unverified snapshot / current observation / unknown>; <location> |
+| Harness (Claude Code, Cursor, etc.) | <harness> | <label>; <location> |
+| Harness version | <version> | <label>; <location> |
+| Your model + version | <model ids seen> | <label>; <location> |
+| All plugins installed | <list> | <label>; <location> |
+| OS + shell | <os version>, <shell> | <label>; <location> |
 
-## 这是 superpowers 问题还是平台问题？
+## Is this a Superpowers issue or a platform issue?
 
-- [ ] 我确认未安装 superpowers 时该问题不会出现
+- [ ] I confirmed this issue does not occur without Superpowers installed
 
-报告者尚未尝试在不安装 superpowers 的情况下复现。参与程度的证据见下；它不确立因果。
+The reporter has not tried reproducing without superpowers. Evidence for
+involvement is below; it does not establish cause.
 
-## 发生了什么？
+## What happened?
 
-<问题陈述，然后是分诊结论，`path:line` 引用改写为 `transcript line <n>`。>
+<Problem statement, then the triage verdict, with `path:line` citations
+rewritten as `transcript line <n>`.>
 
-## 复现步骤
+## Steps to reproduce
 
-1. <首个人类 prompt，已脱敏>
-2. <导致问题的回合，每行一个>
-3. <可观察量>
+1. <first human prompt, scrubbed>
+2. <the turns leading to the problem, one line each>
+3. <the observable>
 
-## 预期行为
+## Expected behavior
 
-<来自问题陈述>
+<from the problem statement>
 
-## 实际行为
+## Actual behavior
 
-<来自分诊结论>
+<from the triage verdict>
 
-## 调试日志或会话 transcript
+## Debug log or conversation transcript
 
-会话 id：<ids>。交付的本地归档：<路径，脱敏级别 <级别> | 未构建>。附加 bundle：<不声明；仅在批准后附加>。诊断报告所述的 superpowers 参与程度：<possible | likely>，证据位于 <transcript 行>。本报告不提出修复。
+Session id(s): <ids>. Delivered local archive: <path, redaction level <level>
+| none built>. Attached bundle: <no claim; attach only after approval>.
+Superpowers involvement per the diagnosis report: <possible | likely>, with
+evidence at <transcript lines>. This report does not propose a fix.
 
 ---
-使用 `diagnosing-superpowers` 技能提交。模型、harness、harness 版本与已安装插件列于上方。
+Filed with the `diagnosing-superpowers` skill. Model, harness, harness
+version, and installed plugins are listed above.

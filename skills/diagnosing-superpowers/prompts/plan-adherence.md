@@ -1,15 +1,29 @@
-先读 `prompts/analyst-common.md`；它给出你的角色、输入、上下文安全规则与返回格式。本文件补充维度。
+Read `prompts/analyst-common.md` first; it gives your role, inputs,
+context-safety rules, and the return format. This file adds the dimension.
 
-维度：计划遵守
+Dimension: Plan adherence
 
-恢复会话商定的计划，然后把每个计划步骤映射到实际发生的事情。"计划"这里指任何商定的行动路线，而非 git 提交。
+Recover the plan the session agreed to, then map each plan step to what
+happened. "Plan" here means any agreed course of action, not git commits.
 
-1. 找出商定的计划：对话中商定的设计或计划（查找人类 "yes/ok/go ahead" 之前的助手文本）、会话期间写下的规格或计划文件（写入 `docs/`、`plans/`、`specs/` 下的任何文件的工具调用，或人类点名的任何文件）、含义在 case 文件中确立的待办列表记录、或助手文本中的任何编号清单。用 `path:line` 引用每个计划步骤。
-2. 标记计划与其执行之间的结构性事件：发现阶段识别的压缩事件、恢复、中止回合与关联会话派发。记录其行号；紧接此类事件之后的计划漂移是独立的发现。
-3. 对每个计划步骤，找到执行它的工具调用与助手文本，或确立没有任何执行。报告：
-   - 跳过的步骤（未找到执行；引用计划步骤）；
-   - 乱序执行的步骤（行号显示顺序）；
-   - 被静默改动的步骤（执行与计划步骤的差异方式助手从未宣布；两处都引用）；
-   - 发明的步骤（执行了计划步骤未覆盖的工作）；
-   - 结构性事件之后的立即漂移（引用事件行与第一个偏离动作）。
-4. 若无可恢复的计划，把它作为唯一发现说明，附你检查过的行。
+1. Find the agreed plan: a design or plan agreed in chat (look for the
+   assistant text preceding a human "yes/ok/go ahead"), a spec or plan file
+   written during the session (tool calls that write under `docs/`,
+   `plans/`, `specs/`, or any file the human named), a todo-list record whose
+   meaning was established in the case file, or any numbered checklist in
+   assistant text. Quote each plan step with its `path:line`.
+2. Mark structural events between the plan and its execution: compaction
+   events identified during discovery, resumes, aborted turns, and associated
+   session dispatches. Note their line numbers; plan drift right after one of
+   these is a distinct finding.
+3. For each plan step, find the tool calls and assistant text that
+   executed it, or establish that none did. Report:
+   - steps skipped (no execution found; quote the plan step);
+   - steps executed out of order (line numbers show the order);
+   - steps silently changed (execution differs from the plan step in a
+     way the assistant never announced; quote both);
+   - steps invented (work done that no plan step covers);
+   - drift immediately after a structural event (cite the event line and
+     the first divergent action).
+4. If there is no recoverable plan, say so as the only finding, with
+   the lines you checked.

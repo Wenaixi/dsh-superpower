@@ -1,11 +1,26 @@
-先读 `prompts/analyst-common.md`；它给出你的角色、输入、上下文安全规则与返回格式。本文件补充维度。
+Read `prompts/analyst-common.md` first; it gives your role, inputs,
+context-safety rules, and the return format. This file adds the dimension.
 
-维度：质量证据
+Dimension: Quality evidence
 
-对照其自身的声明评判流程。这不是代码评审；不要评估会话产出的代码。
+Judge the process against its own claims. This is not a code review; do
+not evaluate the code the session produced.
 
-1. 测试：每次测试运行（包含 `test`、`pytest`、`npm test`、`cargo test`、`go test`、`bats`、`bash tests/…` 或指令文件中点名的项目运行器的命令）及其结果行。报告失败的运行与助手接下来做了什么。
-2. 声明背后的验证：寻找声称 done、fixed、passing、verified、works、complete 的助手文本。对每一条，在同一回合中向后查找能证明它的工具结果（测试运行、命令输出、diff）。报告该回合中无支撑结果的声明。
-3. 提交：每次 `git commit` 及其消息；把每条消息与前一回合（们）的工具调用对比。报告消息声称了工作而没有任何工具调用执行它的提交，以及商定计划说会提交却从未提交的执行工作。
-4. 评审反馈：reviewer（人或 subagent）提出观点的地方，找到回应。报告被承认但未落实的观点，以及无陈述理由就被驳回的观点。
-5. 验收标准：若 case 文件的问题陈述或商定计划陈述了标准，把每条报告为 达成 / 未达成 / 未检查，附证据行。
+1. Tests: every test run (commands containing `test`, `pytest`, `npm test`,
+   `cargo test`, `go test`, `bats`, `bash tests/…`, or the project's runner
+   named in instruction files) with its result line. Report runs that
+   failed and what the assistant did next.
+2. Verification behind claims: find assistant text claiming done, fixed,
+   passing, verified, works, complete. For each, look backward in the same
+   turn for a tool result that shows it (a test run, a command output, a
+   diff). Report claims with no supporting result in that turn.
+3. Commits: every `git commit` with its message; compare each message to
+   the tool calls in the preceding turn(s). Report commits whose message
+   claims work that no tool call performed, and work performed that was
+   never committed when the agreed plan said it would be.
+4. Review feedback: where a reviewer (human or subagent) raised points,
+   find the response. Report points acknowledged but not acted on, and
+   points dismissed without a stated reason.
+5. Acceptance criteria: if the case file's problem statement or the
+   agreed plan states criteria, report each as met / not met /
+   not checked with the evidence line.

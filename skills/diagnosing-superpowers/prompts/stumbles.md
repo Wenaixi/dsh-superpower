@@ -1,16 +1,28 @@
-先读 `prompts/analyst-common.md`；它给出你的角色、输入、上下文安全规则与返回格式。本文件补充维度。
+Read `prompts/analyst-common.md` first; it gives your role, inputs,
+context-safety rules, and the return format. This file adds the dimension.
 
-维度：磕绊
+Dimension: Stumbles
 
-找出会话停止前进的每个点。
+Find every point where the session stopped going forward.
 
-来源，每个都使用 case 文件有证据的记录含义与提取命令来定位行号：
-- 标记为错误、非零退出或显式失败记录的工具结果；
-- 失败的 shell 命令（结果中非零退出、"command not found"、"No such file"）；
-- 重试：出错后同一回合内重新发出的同一工具调用；
-- 回退的编辑：编辑之后跟着恢复先前内容的编辑，或对会话碰过的文件执行 `git checkout`/`git restore`/`git revert`/`git reset`；
-- 助手文本中的折返（"actually"、"let me instead"、"that was wrong"、"I misread"）；
-- 人类纠正：与助手的紧接前一个动作矛盾或纠正它的人类 prompt；
-- 权限拒绝、钩子失败、API 错误、速率限制、中止回合、以及任务中途触发的上下文溢出或压缩。
+Sources, each using the case file's evidenced record meanings and extraction
+commands to locate line numbers:
+- tool results marked as errors, non-zero exits, or explicit failure records;
+- shell commands that failed (non-zero exit in the result, "command not
+  found", "No such file");
+- retries: the same tool call re-issued within the same turn after an
+  error;
+- reverted edits: an edit followed by an edit that restores the earlier
+  content, or `git checkout`/`git restore`/`git revert`/`git reset` on a
+  file the session touched;
+- backtracking in assistant text ("actually", "let me instead", "that was
+  wrong", "I misread");
+- human corrections: a human prompt that contradicts or corrects the
+  assistant's immediately preceding action;
+- permission denials, hook failures, API errors, rate limits, aborted turns,
+  and context overflow or compaction triggered mid-task.
 
-对每个磕绊报告行、回合、失败了什么与接下来发生了什么（同一回合恢复 / 之后在第 N 行恢复 / 从未恢复）。把相同的重复失败合并为一条发现并附计数。
+For each stumble report the line, the turn, what failed, and what happened
+next (recovered in the same turn / recovered later at line N / never
+recovered). Group identical repeated failures into one finding with a
+count.

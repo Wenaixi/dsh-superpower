@@ -1,92 +1,113 @@
 ---
 name: writing-plans
-description: "Superpower Skill：当已具备清晰的需求规格或多步骤 task description 且尚未开始编码时使用，用于把需求拆解为结构清晰、粒度可控、可直接执行、可测试与可验证的完整实施计划。"
+description: "Superpower Skill: Use when you have a spec or requirements for a multi-step task, before touching code"
+description_zh: "Superpower Skill：当已具备清晰的需求规格或多步骤 task description 且尚未开始编码时使用，用于把需求拆解为结构清晰、粒度可控、可直接执行、可测试与可验证的完整实施计划。"
 ---
 
-# 编写计划
 
-## 概述
+# Writing Plans
 
-为一个尚未见过本代码库、也未见过本规格的工程师编写实施计划。假设对方一旦获知精确的接口与精确的测试，就能用项目所用语言写出惯用代码，并会在计划留白之处做出合理选择。他们无从知晓的是你的决定：选哪些文件、用哪些名称与签名、从规格里取哪些值、每个任务由哪些测试来证明。把这些写进文档。把整份计划按一口大小的任务交给他们。遵循 DRY。遵循 YAGNI。遵循 TDD。频繁提交。
+## Overview
 
-**开始时声明：** “我正在使用 writing-plans 技能创建实施计划。”
+Write implementation plans for an engineer who has not seen this codebase or this spec. Assume they write idiomatic code in the project's language once they know the exact interface and the exact test, and that they will make a reasonable choice wherever the plan leaves one open. What they cannot know is what you decided: which files, which names and signatures, which values from the spec, which tests prove each task. Document those. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
-**上下文：** 如在隔离的 worktree 中工作，该 worktree 应在执行时通过 `using-git-worktrees` 技能创建。
+**Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
-**计划保存路径：** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- （如用户已指定计划存放位置，则以用户偏好为准）
+**Context:** If working in an isolated worktree, it should have been created via the `superpowers:using-git-worktrees` skill at execution time.
 
-## 范围检查
+**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+- (User preferences for plan location override this default)
 
-若需求规格涵盖多个独立子系统，理应在头脑风暴阶段就已拆分为子项目规格。若未拆分，建议将其拆为多份独立计划——每个子系统一份。每份计划都应能独立产出可运行、可测试的软件。
+## Scope Check
 
-## 文件结构
+If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
 
-在定义任务之前，先梳理清楚将创建或修改哪些文件，以及每个文件的职责。这是锁定拆解方案的关键环节。
+## File Structure
 
-- 设计边界清晰、接口明确的单元。每个文件只承担单一、明确的职责。
-- 人对能一次性完整装入上下文的代码推理最准确，聚焦的文件也更利于可靠地编辑。优先选择小而聚焦的文件，而非承载过多职责的大文件。
-- 会一同变更的文件应放在一起。按职责拆分，而非按技术分层。
-- 在现有代码库中遵循既有模式。若项目本身采用大文件结构，不要擅自重构；但若你正修改的文件已过于臃肿，在计划中安排一次拆分是合理的。
+Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
 
-该结构将直接决定任务如何拆解。每个任务都应产出自洽、独立有意义的变更。
+- Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.
+- You reason best about code you can hold in context at once, and your edits are more reliable when files are focused. Prefer smaller, focused files over large ones that do too much.
+- Files that change together should live together. Split by responsibility, not by technical layer.
+- In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - but if a file you're modifying has grown unwieldy, including a split in the plan is reasonable.
 
-## 任务规模控制
+This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
 
-任务是具备完整测试闭环、值得独立评审的最小单元。划分任务边界时：将初始化、配置、脚手架与文档等步骤归入真正需要其产物的任务中；仅在 reviewer 可能对相邻两个任务做出不同评审结论（一个通过、一个驳回）时才进行拆分。每个任务结束时都应产出可独立测试的交付物。
+## Task Right-Sizing
 
-## 步骤粒度
+A task is the smallest unit that carries its own test cycle and is worth a
+fresh reviewer's gate. When drawing task boundaries: fold setup,
+configuration, scaffolding, and documentation steps into the task whose
+deliverable needs them; split only where a reviewer could meaningfully
+reject one task while approving its neighbor. Each task ends with an
+independently testable deliverable.
 
-**每个步骤都是带有可校验结果的一个动作：**
-- “编写失败的测试”——一个步骤
-- “运行它，确认它确实失败”——一个步骤
-- “编写让测试通过的最小实现”——一个步骤
-- “运行测试，确认它们通过”——一个步骤
-- “提交”——一个步骤
+## Step Granularity
 
-## 计划文档头部
+**Each step is one action with a checkable result:**
+- "Write the failing test" - step
+- "Run it to make sure it fails" - step
+- "Implement the minimal code to make the test pass" - step
+- "Run the tests and make sure they pass" - step
+- "Commit" - step
 
-**每份计划必须以此头部开头：**
+## Plan Document Header
+
+**Every plan MUST start with this header:**
 
 ```markdown
-# [功能名称] 实施计划
+# [Feature Name] Implementation Plan
 
-> **面向 Agent 执行者：** 必需子技能：使用 subagent-driven-development（推荐）或 executing-plans 按任务逐项实现本计划。步骤使用复选框（`- [ ]`）语法跟踪进度。
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**目标：** [一句话描述本计划构建的内容]
+**Goal:** [One sentence describing what this builds]
 
-**架构：** [2-3 句话说明技术路线]
+**Architecture:** [2-3 sentences about approach]
 
-**技术栈：** [关键技术与依赖库]
+**Tech Stack:** [Key technologies/libraries]
 
-**规格：** [本计划实现的规格/设计文档路径——计划以规格为依据进行论证，故规格须随计划一起流转；执行者两者都要读]
+**Spec:** [path to the spec/design doc this plan implements — the plan
+argues from the spec, so the spec travels with it; executors read both]
 
-## 全局约束
+## Global Constraints
 
-[规格中项目级的要求——版本下限、依赖限制、命名与文案规则、平台要求——每项一行，数值从规格原文逐字复制。每个任务的需求默认隐含包含本节。]
+[The spec's project-wide requirements — version floors, dependency limits,
+naming and copy rules, platform requirements — one line each, with exact
+values copied verbatim from the spec. Every task's requirements implicitly
+include this section.]
 
 ## Review Focus
 
-[规格隐含、但没有任何任务的测试覆盖、最可能坑到使用该软件之人的五种输入类别或失败模式——每项一行，写明该输入或条件，以及理性之人会期待的行为，最可能发生的排最前。规格是愿景文档：它说明软件必须做什么，而不是它会遇到的一切；规格对某输入的沉默不等于允许该输入弄坏程序。把这份清单一次写全于此处，写作时规格就在眼前。然后为每一行，把钉住它的测试加进拥有该代码的任务，套用那个任务自己的步骤风格。]
+[The five input classes or failure modes the spec implies but no task's
+tests exercise that are most likely to bite a person using this software
+— one line each, naming the input or condition and the behavior a
+reasonable person would expect, most likely first. The spec is a vision
+document: it says what the software must do, not everything it will
+meet, and its silence on an input is not permission for that input to
+break the program. Write the list here, once, with the spec in front of
+you. Then, for each line, add the test that pins it to the task that
+owns the code, in that task's own step style.]
 
 ---
 ```
 
-## 任务结构
+## Task Structure
 
 ````markdown
-### 任务 N：[组件名称]
+### Task N: [Component Name]
 
-**文件：**
-- 新建：`exact/path/to/file.py`
-- 修改：`exact/path/to/existing.py:123-145`
-- 测试：`tests/exact/path/to/test.py`
+**Files:**
+- Create: `exact/path/to/file.py`
+- Modify: `exact/path/to/existing.py:123-145`
+- Test: `tests/exact/path/to/test.py`
 
-**接口：**
-- 消费：[本任务使用的前置任务产物——精确签名]
-- 产出：[后续任务依赖的内容——精确的函数名、参数与返回类型。任务的实现者只看到自己的任务；本块是他们获知相邻任务所用名称与类型的方式。]
+**Interfaces:**
+- Consumes: [what this task uses from earlier tasks — exact signatures]
+- Produces: [what later tasks rely on — exact function names, parameter
+  and return types. A task's implementer sees only their own task; this
+  block is how they learn the names and types neighboring tasks use.]
 
-- [ ] **步骤 1：编写失败的测试**
+- [ ] **Step 1: Write the failing test**
 
 ```python
 def test_specific_behavior():
@@ -94,21 +115,23 @@ def test_specific_behavior():
     assert result == expected
 ```
 
-- [ ] **步骤 2：运行测试，确认其失败**
+- [ ] **Step 2: Run test to verify it fails**
 
-运行：`pytest tests/path/test.py::test_name -v`
-预期：FAIL，报 "function not defined"
+Run: `pytest tests/path/test.py::test_name -v`
+Expected: FAIL with "function not defined"
 
-- [ ] **步骤 3：在 `exact/path/to/file.py` 中实现 `function(input: InputType) -> ResultType`**
+- [ ] **Step 3: Implement `function(input: InputType) -> ResultType` in `exact/path/to/file.py`**
 
-当签名与测试留下选择余地时（调用哪个库、用哪个数据结构），写一行说明；只有执行者无法自行确定的算法才给代码块。
+One line on the approach when the signature and the test leave a choice
+(which library call, which data structure); a code block only for an
+algorithm they do not determine.
 
-- [ ] **步骤 4：运行测试，确认其通过**
+- [ ] **Step 4: Run test to verify it passes**
 
-运行：`pytest tests/path/test.py::test_name -v`
-预期：PASS
+Run: `pytest tests/path/test.py::test_name -v`
+Expected: PASS
 
-- [ ] **步骤 5：提交**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add tests/path/test.py src/path/file.py
@@ -116,52 +139,68 @@ git commit -m "feat: add specific feature"
 ```
 ````
 
-## 步骤包含什么
+## What a Step Contains
 
-一个步骤在“执行者能凭它写出恰好一件合理的事”时即为完成。这就是全部要求：无歧义，而非完备。每类步骤只携带使它无歧义所需的东西，不多不少：
+A step is done when the implementer can write exactly one reasonable thing
+from it. That is the whole requirement: unambiguous, not complete. Each kind
+of step carries what makes it unambiguous and nothing more:
 
-- **测试步骤：** 测试的名称及其断言，以代码形式给出，内含规格中的精确取值。
-- **代码步骤：** 精确签名（名称、参数、返回类型）、所在文件，以及规格钉死的具体取值。函数体由执行者自己写。只有签名与测试都无法确定的算法、或规格固定了要逐字照抄的内容，才给出函数体。
-- **验证步骤：** 要运行的命令，以及代表通过的输出。
-- **对另一个任务的引用：** 那个任务的 Interfaces 块已经说明了要使用什么；计划不重复那个任务的代码。
+- **A test step:** the test's name and its assertions, as code, with the
+  spec's exact values in them.
+- **A code step:** the exact signature (name, parameters, return type), the
+  file it lives in, and the specific values the spec pins. The implementer
+  writes the body. A body appears only for an algorithm the signature and
+  tests do not determine, or for exact copy the spec fixes.
+- **A verification step:** the command to run and the output that means it
+  passed.
+- **A reference to another task:** that task's Interfaces block says what
+  to use; the plan does not repeat that task's code.
 
-一份计划是执行者独自无法做出的那组决定。计划比它所描述的代码还长，等于把代码写了出来。不决定任何内容的行（“TBD”、“处理边界情况”、“添加适当的校验”、“为上述内容编写测试”、没有任何任务定义过的类型或函数）是另一端的失败，自检会把两端都抓住。
+A plan is the set of decisions the implementer cannot make alone. A plan
+longer than the code it describes has written the code instead. Lines that
+decide nothing ("TBD", "handle edge cases", "add appropriate validation",
+"write tests for the above", a type or function no task defines) are the
+opposite failure, and the self-review catches both.
 
-## 自检
+## Self-Review
 
-写完完整计划后，带着全新视角重读规格，用它核对计划。这是你亲自运行的清单——不是分发给 subagent 的活。
+After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.
 
-**1. 规格覆盖度：** 逐节浏览规格中的每一项要求。能否指出实现它的那个任务？列出所有遗漏。
+**1. Spec coverage:** Skim each section/requirement in the spec. Can you point to a task that implements it? List any gaps.
 
-**2. 步骤扫描：** 每个步骤都必须让执行者只写出恰好一件合理的事，且任何步骤不得携带更多内容：不决定任何内容的行是缺口，签名与测试已能确定却仍写出的函数体是转写。两者都要修复。
+**2. Step scan:** Every step must let the implementer write exactly one reasonable thing, and no step may carry more than that: a line that decides nothing is a gap, a function body the signature and tests already determine is a transcript. Fix both.
 
-**3. 类型一致性：** 后续任务中使用的类型、方法签名与属性名，是否与前置任务中定义的一致？任务 3 里叫 `clearLayers()`、任务 7 里却写成 `clearFullLayers()` 的函数就是缺陷。
+**3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
-**4. Review Focus：** 规格隐含的每种输入类别或失败模式，是否都有某个任务的测试在覆盖它？最可能坑人的五种未覆盖项写入 Review Focus 段，且该段每一行都要把对应测试加进所属任务。段落为空意味着你去检查过、确认没有，而不是跳过了这项检查。
+**4. Review Focus:** For each input class or failure mode the spec implies, is there a task whose tests exercise it? The five uncovered ones most likely to bite a person go in the Review Focus section, and each line there gets its test added to the owning task. An empty section means you checked and found none, not that you skipped the check.
 
-**5. 篇幅比例：** 把计划长度与规格长度相比。一份比它所实现规格长数倍的计划，是对程序的转写，不是计划。如果代码块占了文档大半，把函数体换成签名、测试名与断言，并核实每个步骤仍然无歧义。
+**5. Proportion:** Compare the plan's length to the spec's. A plan several times longer than the spec it implements is a transcript of the program, not a plan. If code blocks are most of the document, replace bodies with signatures, test names and assertions, and check that each step is still unambiguous.
 
-如发现问题，直接原地修复。无需再评审一轮——修完继续即可。若发现某项规格要求没有对应任务，补上该任务。
+If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
-## 执行交接
+## Execution Handoff
 
-保存并自检完计划后，把计划链接给到你的 human partner 阅读。若对方已明确提供执行方式，请其复核计划、确认它捕捉到了对方想要的；实现前等待该复核，然后使用保留的方式。否则，请在实现前请对方复核计划并选择一种执行方式。
+After saving and self-reviewing the plan, link it for your human partner
+to read. If they have already explicitly supplied an execution method, ask
+them to review the plan and confirm it captures what they want; wait for that
+review before implementation, then use the preserved method. Otherwise, ask
+them to review the plan and choose an execution method before implementation.
 
-**当尚未提供执行方式时：**
+**When no execution method has already been supplied:**
 
-**“计划已完成并保存至 `docs/superpowers/plans/<filename>.md`。请复核计划。你倾向哪种执行方式？**
+**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Please review the plan. Which execution approach would you prefer?**
 
-- **subagent 驱动**——每个任务由全新 subagent 实现，由全新 reviewer 在下一个任务开始前检查，最后再做一次全分支评审。最彻底；每个任务与每次评审各耗一份全新上下文。
-- **原生**——我在本会话中亲手逐任务实现，按本 harness 运行工作的方式推进，最后在最强模型上用一位全新 reviewer 检查整个分支。最省钱最快；结束前没有独立评审。用中档会话模型跑得很好，因为设计由计划承载。
+- **Subagent-driven** - A fresh subagent implements each task and a fresh reviewer checks it before the next one starts, then a whole-branch review at the end. Most thorough; costs a fresh context per task and per review.
+- **Native** - I implement every task myself in this session, the way this harness runs work, then one fresh reviewer on the most capable model checks the whole branch. Cheapest and fastest; no independent review until the end. Runs well with a mid-tier session model, since the plan carries the design.
 
-**就本计划我推荐 <二者之一>，因为 <从计划取一句话：任务之间对彼此接口的依赖有多深、有多少个任务、交付一个错误要付出什么代价>。计划是否符合你的期望，我们该用哪种方式？”**
+**For this plan I recommend <one of the two>, because <one sentence from the plan: how much the tasks depend on each other's interfaces, how many there are, what a shipped mistake would cost>. Does the plan capture what you want, and which approach should we use?"**
 
-**当已提供执行方式时：**
+**When an execution method has already been supplied:**
 
-**“计划已完成并保存至 `docs/superpowers/plans/<filename>.md`。请复核计划。它是否捕捉到了你想要的？”**
+**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Please review the plan. Does it capture what you want?"**
 
-**若选择 subagent 驱动：**
-- **必需子技能：** 使用 subagent-driven-development
+**If Subagent-driven chosen:**
+- **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
 
-**若选择原生：**
-- **必需子技能：** 使用 executing-plans
+**If Native chosen:**
+- **REQUIRED SUB-SKILL:** Use superpowers:executing-plans

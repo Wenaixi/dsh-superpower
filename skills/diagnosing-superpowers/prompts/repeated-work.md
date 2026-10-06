@@ -1,19 +1,30 @@
-先读 `prompts/analyst-common.md`；它给出你的角色、输入、上下文安全规则与返回格式。本文件补充维度。
+Read `prompts/analyst-common.md` first; it gives your role, inputs,
+context-safety rules, and the return format. This file adds the dimension.
 
-维度：重复工作
+Dimension: Repeated work
 
-找出会话做过不止一次的工作。
+Find work the session did more than once.
 
-1. 把每次工具调用提取为 `(line, turn, tool, key)`，其中 `key` 是：读取/编辑/写入的文件路径；shell 调用的命令文本（去掉尾部空白；保留整条命令）；subagent 派发的 `description` 加 prompt 的前 80 个字符；搜索的查询。
-2. 按 `(tool, key)` 分组，报告达到或超过阈值的组：
+1. Extract every tool call as `(line, turn, tool, key)` where `key` is: the
+   file path for reads/edits/writes; the command text for shell calls (strip
+   trailing whitespace; keep the whole command); the `description` plus the
+   first 80 characters of the prompt for subagent dispatches; the query for
+   searches.
+2. Group by `(tool, key)` and report the groups at or over threshold:
 
-   | 类别 | 阈值 | 豁免 |
+   | Category | Threshold | Exempt |
    |---|---|---|
-   | 读取、搜索 | 3 | |
-   | 编辑 | 2 | |
-   | shell 命令 | 2 | 状态检查与测试运行（`git status`、`ls`、`pwd`、测试运行器） |
-   | subagent 派发 | 2 且 description 相同 | |
-
-3. 对每组，检查重复之间是否有什么变化（对该文件的写入、压缩、人类纠正）。说明属于哪种情况：编辑后的重读不是发现；压缩后的重读是归因于压缩的发现；之间什么都没有的重读本身就是发现。
-4. 寻找重新推导的决定：助手文本得出了会话早前已陈述的结论（同一文件、同一设计选择、同一要运行的命令）。两处都引用。
-5. 每组一条发现，附首末行号与计数。
+   | reads, searches | 3 | |
+   | edits | 2 | |
+   | shell commands | 2 | status checks and test runs (`git status`, `ls`, `pwd`, test runners) |
+   | subagent dispatches | 2 with the same description | |
+3. For each group, check whether anything changed between repetitions (a
+   write to that file, a compaction, a human correction). Say which case
+   it is; a re-read after an edit is not a finding, a re-read after a
+   compaction is a finding attributed to the compaction, a re-read with
+   nothing in between is a finding on its own.
+4. Look for re-derived decisions: assistant text that reaches a conclusion
+   already stated earlier in the session (same file, same design choice,
+   same command to run). Quote both places.
+5. One finding per group, with the first and last line numbers and the
+   count.

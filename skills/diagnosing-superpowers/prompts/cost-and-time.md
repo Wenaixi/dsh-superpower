@@ -1,12 +1,28 @@
-先读 `prompts/analyst-common.md`；它给出你的角色、输入、上下文安全规则与返回格式。本文件补充维度。
+Read `prompts/analyst-common.md` first; it gives your role, inputs,
+context-safety rules, and the return format. This file adds the dimension.
 
-维度：成本与时间
+Dimension: Cost and time
 
-核算 token 与墙钟时间花在哪里。
+Account for where tokens and wall-clock went.
 
-1. Token。只使用 case 文件中确立的用量记录与计数器含义。计算总计前先说清每个计数器是增量还是累计；对累计观测做差分，且不把缺失观测变成零。报告支撑总量最大的五个回合，以及每个关联会话的支撑总量。
-2. 墙钟时间。使用 case 文件中记录的、有证据的时间戳字段、事件边界与单位。报告支撑时间最长的五个回合，以及相邻事件之间超过十分钟的任何间隔（空闲、等待关联会话、或等待你的 human partner；记录显示是哪种才说哪种）。
-3. 最大的工具结果：使用 case 文件有证据的工具结果记录，报告最大的十个结果及其工具与回合。提取有界内容前先量记录。
-4. 压缩：统计并定位在发现阶段确立含义为压缩事件的记录。报告可用的前后计数器，以及每次触发时会话在做什么；缺失的字段标记为不存在。
-5. 关联会话：统计数量，并报告每个的支撑用量、时长与派发回合。
-6. 报告主导总量的回合、subagent、工具或重复，附数字。除 transcript 显示的内容外，不要推测回合昂贵的原因。
+1. Tokens. Use only the usage records and counter meanings established in the
+   case file. State whether each counter is incremental or cumulative before
+   calculating totals; difference cumulative observations without turning a
+   missing observation into zero. Report the five turns with the largest
+   supported totals and the supported totals per associated session.
+2. Wall-clock. Use the evidenced timestamp fields, event boundaries, and units
+   recorded in the case file. Report the five longest supported turns and any
+   gap longer than ten minutes between consecutive events (idle, waiting on an
+   associated session, or waiting on your human partner; say which only when
+   the records show it).
+3. Largest tool results: use the case file's evidenced tool-result records to
+   report the ten largest results with their tool and turn. Measure records
+   before extracting bounded content.
+4. Compactions: count and locate records whose meaning as compaction events was
+   established during discovery. Report available before/after counters and
+   what the session was doing when each fired; mark unsupported fields absent.
+5. Associated sessions: count them and report supported usage, duration, and
+   dispatching turn for each.
+6. Report the turns, subagents, tools, or repeats that dominate the
+   totals, with numbers. Do not speculate about why a
+   turn was expensive beyond what the transcript shows.

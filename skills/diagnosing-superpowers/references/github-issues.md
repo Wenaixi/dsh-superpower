@@ -1,15 +1,17 @@
 # GitHub issues
 
-`gh` 已安装并已认证时使用它；它处理认证、速率限制与 JSON。没有则退回公共 API 用 curl，再退回由你的 human partner 打开的 URL。
+Use `gh` when it is installed and authenticated; it handles auth, rate
+limits, and JSON. Fall back to the public API with curl, then to a URL
+your partner opens.
 
-## 搜索
+## Search
 
 ```bash
 gh search issues --repo obra/superpowers --limit 10 "<terms>" \
   --json number,state,title --jq '.[] | "\(.number)\t\(.state)\t\(.title)"'
 ```
 
-没有 `gh` 时（未认证，每分钟 10 个请求）：
+Without `gh` (unauthenticated, 10 requests a minute):
 
 ```bash
 curl -s -H "Accept: application/vnd.github+json" \
@@ -17,23 +19,29 @@ curl -s -H "Accept: application/vnd.github+json" \
   | jq -r '.items[] | "\(.number)\t\(.state)\t\(.title)"'
 ```
 
-没有 curl 时，转交 `https://github.com/obra/superpowers/issues?q=<terms>`。
+Without curl, hand over `https://github.com/obra/superpowers/issues?q=<terms>`.
 
-## 提交
+## File
 
-把填好的 `templates/issue.md` 写入 workspace 并展示确切文本。批准后：
+Write the filled `templates/issue.md` to the workspace and show the exact
+text. After approval:
 
 ```bash
 gh issue create --repo obra/superpowers --title "<title>" --body-file <path> \
   --label bug --label automated-issue-report
 ```
 
-当报告者没有推送权限时，GitHub 会静默丢弃标签，因此标签只对协作者生效；模板脚注仍将 issue 标记为技能提交。`gh` 无法附加文件：在 issue 创建后，把 bundle 路径交给你的 human partner 通过浏览器附加。
+GitHub drops labels silently when the reporter lacks push access, so the
+labels land only for collaborators; the template footer still marks the
+issue as skill-filed. `gh` cannot attach files: give your partner the
+bundle path to attach through the browser after the issue exists.
 
-没有 `gh` 时，转交一个基于 `diagnosis_report.md` 模板的预填链接，任何报告者都能应用两个标签：
+Without `gh`, hand over a prefilled link on the `diagnosis_report.md`
+template, which applies both labels for any reporter:
 
 ```
 https://github.com/obra/superpowers/issues/new?template=diagnosis_report.md&title=<url-encoded title>&body=<url-encoded body>
 ```
 
-GitHub 拒绝超过约 8,000 字符的 URL；超过时，只发送带标题的链接，并告诉你的 human partner 从文件中粘贴正文。
+GitHub rejects URLs over about 8,000 characters; past that, send the link
+with the title only and tell your partner to paste the body from the file.

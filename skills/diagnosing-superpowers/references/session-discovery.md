@@ -1,20 +1,31 @@
-# 发现会话历史
+# Discover the session history
 
-使用本环境中可用的工具与信息，把 human partner 点名的会话解析出来。你的知识可以提示去哪里找；用实际历史验证结果。
+Resolve the session your human partner named using the tools and information
+available in this environment. Your knowledge can suggest where to look; verify
+the result against the actual history.
 
-使用宿主暴露的会话工具、配置存储、本地帮助、文档或有界文件系统检查。读取内容前先量文件，并遵循 context-safety.md。环境指向归档或索引时检查它们。已提供的可用路径无需再次搜索。
+Use the harness's exposed session tools, configured storage, local help,
+documentation, or bounded filesystem inspection. Measure files before reading
+their content and follow context-safety.md. Inspect archives or indexes when the
+environment points to them. A supplied usable path does not need another search.
 
-使用可用的会话 id、工作目录、时间戳与匹配的会话内容确认身份。仅凭时间先后不是确认。区分所请求的会话与其子会话及无关候选。当现有证据无法区分时，询问缺失的身份事实。
+Confirm identity using the available session id, working directory, timestamps,
+and matching conversation content. Recency alone is not confirmation. Distinguish
+the requested session from its children and unrelated candidates. Ask for a
+missing identifying fact when the available evidence cannot distinguish them.
 
-对每个文件系统来源，从环境获取其完整绝对路径，展开家目录简写与变量。在 case 记录与你给 human partner 的发现答案中使用同一路径。
+For each filesystem source, obtain its full absolute path from the environment,
+with home-directory shorthand and variables expanded. Use that same path in the
+case record and in the discovery answer you give your human partner.
 
-从观察到的记录或文档中，建立所请求调查所需的记录含义。区分人类消息与注入消息、工具结果与父代理的派发。把工具调用与其结果对应起来。在计算总计前建立用量计数器语义。不要从另一个 harness 推断格式，也不要把缺失字段当成零。
+Establish the record meanings needed for the requested investigation from
+observed records or documentation. Distinguish human messages from injected
+messages, tool results, and a parent agent's dispatch. Match tool calls to their
+results. Establish usage-counter semantics before calculating totals. Do not
+infer a format from another harness or turn a missing field into a zero.
 
-在 case 文件中记录确切来源、相关字段含义、支撑记录位置、关联会话、被拒的疑似候选与未解决信息。后续读者使用该记录而不是重复发现。若历史缺失、不可访问或存在歧义，说明具体局限并索要缺失的路径、导出或身份细节。
-
-## DSH 环境定位
-
-- DSH 会话日志是 JSONL，位于 profile 目录：`$env:DSH_HOME\profiles\<profile名>\` 下（默认 `C:\Users\Administrator\.dsh\profiles\<profile名>\`）。查找会话文件用 `Get-ChildItem "$env:DSH_HOME\profiles\<名字>\*.jsonl"`。
-- 会话标识与内容匹配用文件名里的会话 id 与时间戳；subagent 会话同样在那里。
-- 读取大文件前先 `Get-Item` 看大小，超大文件用 `Get-Content -Tail N` 只读尾部，遵守 context-safety 的"先量后读"原则。
-- 报告中的证据路径直接写该绝对路径。
+Record the exact sources, relevant field meanings, supporting record locations,
+associated sessions, rejected plausible candidates, and unresolved information
+in the case file. Subsequent readers use that record rather than repeating
+discovery. If history is missing, inaccessible, or ambiguous, state the specific
+limitation and ask for the missing path, export, or identifying detail.

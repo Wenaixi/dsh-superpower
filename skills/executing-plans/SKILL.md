@@ -1,227 +1,375 @@
 ---
 name: executing-plans
-description: "Superpower Skill：当你在本会话中亲自作为实现者执行实施计划时使用——human partner 选择了内联执行，或环境不提供 subagent 工具。"
+description: "Superpower Skill: Use when executing an implementation plan in the current session as the implementer yourself — your human partner chose inline execution, or no subagent tool is available"
+description_zh: "Superpower Skill：当你在本会话中亲自作为实现者执行实施计划时使用——human partner 选择了内联执行，或环境不提供 subagent 工具。"
 ---
 
-# 执行计划
 
-在本会话中由你亲手逐任务执行计划：不为每个任务配实现者 subagent，也不为每个任务配 reviewer。最后对整个分支做一次全新上下文的评审。
+# Executing Plans
 
-**为什么内联：** subagent 驱动开发要为每个任务各付一份全新实现者与一份全新 reviewer，两者都要从零重读代码库。内联执行只付一份上下文（你的），外加结束时的一位 reviewer。它放弃的，是每个任务一份全新上下文、以及每个任务的第二双眼睛。本技能用别的手段保住这两样东西买来的价值：brief 就是规格，ledger 就是你的记忆，TDD 是每个任务的门禁，最终 reviewer 就是那第二双眼睛。
+Execute the plan yourself, task by task, in this session: no implementer
+subagent per task, no reviewer per task. One fresh-context review of the
+whole branch at the end.
 
-**核心原则：** 思考已经由计划完成。严格照它执行，用你亲眼看着先失败、再通过的测试证明每一步，并留下能扛住你自己遗忘的记录。
+**Why inline:** Subagent-driven development pays for a fresh implementer
+and a fresh reviewer on every task, each re-reading the codebase from zero.
+Inline execution pays for one context (yours) plus one reviewer at the end.
+What it gives up is a fresh context per task and a second pair of eyes per
+task. This skill keeps what those two things bought, by other means: the
+brief is the spec, the ledger is your memory, TDD is the per-task gate, and
+the final reviewer is the second pair of eyes.
 
-**叙述：** 工具调用之间最多说一句短话——记录由 ledger 和工具结果承载。
+**Core principle:** The plan already did the thinking. Execute it exactly,
+prove each step with a test you watched fail and then pass, and leave a
+record that survives your own forgetting.
 
-**连续执行：** 任务之间不要停下来跟 human partner 确认。他们选择内联是为了少花钱，而不是为了在每个任务之后回答“要不要继续？”。把计划里的任务一口气全部执行完。
+**Narration:** between tool calls, narrate at most one short line — the
+ledger and the tool results carry the record.
 
-**裁决，而非停滞。** 冲突、含糊、计划缺陷——都由你裁决。规格是有约束力的权威，计划是它给出的论证，二者都答不上的部分由你的判断了结。每条决定都记入 ledger：`Ruling: <你决定了什么> — <为什么> — <错了要付出什么代价>`，然后继续。偏离计划却没有 ledger 里的一条裁决，等于偷偷做了决定。
+**Continuous execution:** Do not pause to check in with your human partner
+between tasks. They chose inline execution to spend less, not to answer
+"should I continue?" after every task. Execute all tasks from the plan
+without stopping.
 
-只有四件事会让你停下，也仅此四件：不可逆或破坏性操作；安全敏感的动作；按惯例应先打招呼的 workspace 外副作用（合并、推送到共享分支、发布）；以及烂到每条前路都只能靠猜的计划。遇到这些，停下并询问。
+**Rulings, not stalls.** Conflicts, ambiguities, plan defects — decide them.
+The spec is the binding authority, the plan is its argument, and your
+judgment settles what neither answers. Record every decision in the ledger
+as `Ruling: <what you decided> — <why> — <what it costs if wrong>`, and keep
+going. Deviating from the plan without a ledgered ruling is a decision made
+in secret.
 
-## 何时使用
+Four things stop you, and only these: an irreversible or destructive
+operation; a security-sensitive action; a side effect outside this worktree
+that norms say you ask about first (a merge, a push to a shared branch, a
+publish); and a plan so broken that every path forward is a guess. For
+those, stop and ask.
 
-- 你手上有来自 writing-plans 的计划，且 human partner 在交接时选择了内联执行。
-- 你的运行环境没有 subagent 工具（见 `../using-superpowers/references/` 中的各平台参考）。绝不要捏造一次分发；就在本地跑这份计划。
-- 任务大体相互独立——与 subagent-driven-development 相同的前置条件。
+## When to Use
 
-一份完全写明的计划，让内联执行退化为“转写加测试”：它在中档会话模型上跑得很好，而最强模型真正值回票价的地方是最终评审，本技能会单独派发那一次评审。human partner 选择内联时，请这样告诉他们。
+- You have a plan from superpowers:writing-plans and your human partner
+  chose inline execution at the handoff.
+- Your harness has no subagent tool (see the per-platform references in
+  `../using-superpowers/references/`). Never fabricate a dispatch; run
+  the plan here.
+- Tasks are mostly independent — the same precondition as
+  superpowers:subagent-driven-development.
 
-当 human partner 要求每个任务都有评审关卡，或计划长到后半段任务会在被压缩的上下文里执行时，优先用 subagent-driven-development。长计划上的内联执行依然可行——ledger 正是它可恢复的原因——但最后几个任务得到的是你最少的注意力。
+A fully specified plan makes inline execution transcription plus testing:
+it runs well on a mid-tier session model, and the one place the most
+capable model earns its cost is the final review, which this skill
+dispatches separately. Tell your human partner so when they choose inline.
 
-## 流程
+Prefer superpowers:subagent-driven-development when your human partner
+wants a review gate on every task, or when the plan is long enough that
+its later tasks would run on a compacted context. Inline execution over a
+long plan still works — the ledger is what makes it recoverable — but the
+last tasks get the least of you.
+
+## The Process
 
 ```dot
 digraph process {
     rankdir=TB;
 
     subgraph cluster_per_task {
-        label="每个任务";
-        "task-start：brief + BASE；阅读 brief" [shape=box];
-        "按顺序执行步骤：TDD，运行每一次验证，阅读每一份输出" [shape=box];
-        "步骤输出与计划的 Expected 一致？" [shape=diamond];
-        "计划错了？裁决并记 ledger。代码错了？systematic-debugging" [shape=box];
-        "按计划中的提交步骤提交" [shape=box];
-        "完成契约是否满足？" [shape=diamond];
-        "task-done：运行测试，把结果记入 ledger；把 todo 标为完成" [shape=box];
+        label="Per Task";
+        "task-start: brief + BASE; read the brief" [shape=box];
+        "Work the steps in order: TDD, run every verification, read every output" [shape=box];
+        "Step output matches plan's Expected?" [shape=diamond];
+        "Plan wrong? Rule and ledger. Code wrong? systematic-debugging" [shape=box];
+        "Commit as the plan's commit steps say" [shape=box];
+        "Completion contract met?" [shape=diamond];
+        "task-done: run tests, ledger the result; mark todo complete" [shape=box];
     }
 
-    "准备：worktree、workspace + ledger、阅读计划 + 规格、预检扫描" [shape=box];
-    "还有任务吗？" [shape=diamond];
-    "最终全分支评审（有 subagent 就用全新 reviewer）" [shape=box];
-    "重新分级，然后：Critical/Important → 一次修复轮，每个修复 RED→GREEN + 全绿套件；Minor → ledger" [shape=box];
-    "最终评审干净：删除本计划的 workspace" [shape=box];
-    "使用 finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "Setup: worktree, workspace + ledger, read plan + spec, pre-flight scan" [shape=box];
+    "More tasks remain?" [shape=diamond];
+    "Final whole-branch review (fresh reviewer if you have one)" [shape=box];
+    "Re-grade, then: Critical/Important → ONE fix pass, each fix RED→GREEN + green suite; Minor → ledger" [shape=box];
+    "Final review clean: delete this plan's workspace" [shape=box];
+    "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
-    "准备：worktree、workspace + ledger、阅读计划 + 规格、预检扫描" -> "task-start：brief + BASE；阅读 brief";
-    "task-start：brief + BASE；阅读 brief" -> "按顺序执行步骤：TDD，运行每一次验证，阅读每一份输出";
-    "按顺序执行步骤：TDD，运行每一次验证，阅读每一份输出" -> "步骤输出与计划的 Expected 一致？";
-    "步骤输出与计划的 Expected 一致？" -> "计划错了？裁决并记 ledger。代码错了？systematic-debugging" [label="否"];
-    "计划错了？裁决并记 ledger。代码错了？systematic-debugging" -> "按顺序执行步骤：TDD，运行每一次验证，阅读每一份输出";
-    "步骤输出与计划的 Expected 一致？" -> "按计划中的提交步骤提交" [label="是，最后一步"];
-    "按计划中的提交步骤提交" -> "完成契约是否满足？";
-    "完成契约是否满足？" -> "按顺序执行步骤：TDD，运行每一次验证，阅读每一份输出" [label="否——把这个任务做完"];
-    "完成契约是否满足？" -> "task-done：运行测试，把结果记入 ledger；把 todo 标为完成" [label="是"];
-    "task-done：运行测试，把结果记入 ledger；把 todo 标为完成" -> "还有任务吗？";
-    "还有任务吗？" -> "task-start：brief + BASE；阅读 brief" [label="有"];
-    "还有任务吗？" -> "最终全分支评审（有 subagent 就用全新 reviewer）" [label="没有"];
-    "最终全分支评审（有 subagent 就用全新 reviewer）" -> "重新分级，然后：Critical/Important → 一次修复轮，每个修复 RED→GREEN + 全绿套件；Minor → ledger";
-    "重新分级，然后：Critical/Important → 一次修复轮，每个修复 RED→GREEN + 全绿套件；Minor → ledger" -> "最终评审干净：删除本计划的 workspace";
-    "最终评审干净：删除本计划的 workspace" -> "使用 finishing-a-development-branch";
+    "Setup: worktree, workspace + ledger, read plan + spec, pre-flight scan" -> "task-start: brief + BASE; read the brief";
+    "task-start: brief + BASE; read the brief" -> "Work the steps in order: TDD, run every verification, read every output";
+    "Work the steps in order: TDD, run every verification, read every output" -> "Step output matches plan's Expected?";
+    "Step output matches plan's Expected?" -> "Plan wrong? Rule and ledger. Code wrong? systematic-debugging" [label="no"];
+    "Plan wrong? Rule and ledger. Code wrong? systematic-debugging" -> "Work the steps in order: TDD, run every verification, read every output";
+    "Step output matches plan's Expected?" -> "Commit as the plan's commit steps say" [label="yes, last step"];
+    "Commit as the plan's commit steps say" -> "Completion contract met?";
+    "Completion contract met?" -> "Work the steps in order: TDD, run every verification, read every output" [label="no - finish the task"];
+    "Completion contract met?" -> "task-done: run tests, ledger the result; mark todo complete" [label="yes"];
+    "task-done: run tests, ledger the result; mark todo complete" -> "More tasks remain?";
+    "More tasks remain?" -> "task-start: brief + BASE; read the brief" [label="yes"];
+    "More tasks remain?" -> "Final whole-branch review (fresh reviewer if you have one)" [label="no"];
+    "Final whole-branch review (fresh reviewer if you have one)" -> "Re-grade, then: Critical/Important → ONE fix pass, each fix RED→GREEN + green suite; Minor → ledger";
+    "Re-grade, then: Critical/Important → ONE fix pass, each fix RED→GREEN + green suite; Minor → ledger" -> "Final review clean: delete this plan's workspace";
+    "Final review clean: delete this plan's workspace" -> "Use superpowers:finishing-a-development-branch";
 }
 ```
 
-## 准备
+## Setup
 
-确保工作在隔离的 workspace 中进行：用 using-git-worktrees 创建一个，或核实已存在的那个。未经 human partner 明确同意，绝不在 main/master 分支上开始实现。
+Ensure the work happens in an isolated workspace: use
+superpowers:using-git-worktrees to create one or verify the existing one.
+Never start implementation on a main/master branch without your human
+partner's explicit consent.
 
-对话记忆扛不过压缩。丢掉进度的内联执行者会重新实现那些提交已经存在的任务——与控制器重新派发它们是同一种失败，只不过代价记在你自己的上下文上。用 ledger 文件跟踪进度，而不是只靠 todo。harness 的 todo 是实时视图；ledger 才是记录。
+Conversation memory does not survive compaction. An inline executor that
+loses its place re-implements tasks whose commits already exist — the same
+failure as a controller re-dispatching them, paid for in your own context.
+Track progress in a ledger file, not only in todos. Harness todos are a
+live view; the ledger is the record.
 
-workspace 与 ledger 与 subagent-driven-development 共用——同一个目录、同一种格式——所以一份计划可以在执行中途换执行者，新执行者从同一份 ledger 接着往下做。
+The workspace and ledger are shared with superpowers:subagent-driven-development
+— same directory, same format — so a plan can change executors mid-flight
+and the new one resumes from the same ledger.
 
-- 每份计划拥有一个 workspace：技能开始时运行 `bash ../subagent-driven-development/scripts/sdd-workspace PLAN_FILE`——它会打印本计划的 git 忽略目录（`<repo-root>/.superpowers/sdd/<plan-basename>/`），该目录是这份计划所有产物的家：ledger、brief、review package。别的计划的目录永远不归你读写。
-- 在本计划的 `<workspace>/progress.md` 检查 ledger。如果它的第一行点名的是你的计划文件，那么带 `Task <N>: complete` 行的任务就是已完成的——不要重做；从第一个没有该行的任务继续。即使你的上下文已不记得做过，它们的提交也确实存在于 git 中：压缩之后，宁可相信 ledger 与 `git log`，也不要相信自己的回忆。第一行点名了另一份计划文件的 ledger，是别的计划的进度：别动它，另起一份全新的。
-- 创建 ledger，第一行写身份：`# SDD ledger — plan: <plan file path>`。
-- `git clean -fdx` 会摧毁 workspace（它是 git 忽略的临时区）；真要发生，从 `git log` 恢复。
+- Each plan owns a workspace: at skill start, run
+  `bash ../subagent-driven-development/scripts/sdd-workspace PLAN_FILE` — it
+  prints the plan's git-ignored directory
+  (`<repo-root>/.superpowers/sdd/<plan-basename>/`), home to every
+  artifact for THIS plan: ledger, briefs, review packages. Another plan's
+  directory is never yours to read or write.
+- Check for this plan's ledger at `<workspace>/progress.md`. If its first
+  line names your plan file, tasks with a `Task <N>: complete` line are
+  DONE — do not redo them; resume at the first task without one. Their
+  commits exist in git even when your context no longer remembers making
+  them: after compaction, trust the ledger and `git log` over your own
+  recollection. A ledger whose first line names a different plan file is
+  another plan's progress: leave it and start your own, fresh.
+- Create the ledger with its identity as the first line:
+  `# SDD ledger — plan: <plan file path>`.
+- `git clean -fdx` will destroy the workspace (it's git-ignored scratch);
+  if that happens, recover from `git log`.
 
-把计划读一遍，记下它的上下文与全局约束，并为每个任务建一条 todo。如果计划点名了规格，也要读它：规格是计划据以论证的权威，计划内部的冲突按规格裁决。读不到规格的计划，要在 ledger 里记一条说明——没有规格时做出的裁决都是暂定的。
+Read the plan once, note its context and Global Constraints, and create a
+todo per task. If the plan names a Spec, read that too: the spec is the
+authority the plan argues from, and conflicts inside the plan resolve
+against it. A plan with no reachable spec gets a ledger note saying so —
+rulings made without one are provisional.
 
-**必需子技能：** 现在、在任务 1 之前，加载 test-driven-development。它管着下面每个任务的每一步；一份步骤里已经写着“先写失败的测试”的计划，并不免除你去读它。
+**REQUIRED SUB-SKILL:** load superpowers:test-driven-development now,
+before Task 1. It governs every step of every task below; a plan whose
+steps already say "write the failing test first" does not exempt you
+from reading it.
 
-在任务 1 之前，扫描计划中任务之间的冲突。计划里的 Interfaces 块告诉你该往哪儿看：对每个消费早期任务产出的任务，记一行 ledger——涉及哪两个任务、一个产出什么而另一个消费什么、你发现了什么。彼此不共享任何东西的任务不必记行；任务之间毫无共享的计划，只写一行 `Pre-flight: no shared interfaces`。每个被 ledger 行暴露出的冲突，都以规格为有约束力的权威做裁决，把裁决记在那一行旁边，然后开始任务 1。每个任务自身的文本在你读它的 brief 时才检查，不在这里检查。
+Before Task 1, scan the plan for conflicts between tasks. The plan's
+Interfaces blocks tell you where to look: for every task that consumes
+what an earlier task produces, one ledger row — the two tasks, what one
+produces against what the other consumes, and what you found. Tasks that
+share nothing get no row; a plan whose tasks share nothing gets the single
+line `Pre-flight: no shared interfaces`. Rule on each conflict a row
+surfaces with the spec as the binding authority, record the ruling beside
+its row, and start Task 1. Each task's own text is checked when you read
+its brief, not here.
 
-## 任务循环
+## The Task Loop
 
-你打印的一切、每一条工具结果，都会在本次会话余下的时间里驻留在你的上下文中。把冗长的测试输出重定向到 workspace 里的文件，只读它的尾部；读 brief，而不是读整份计划。
+Everything you print, and every tool result, stays resident in your
+context for the rest of the session. Redirect long test output to a file
+in the workspace and read its tail; read a brief, not the whole plan.
 
-### 1. 接手任务
+### 1. Take the task
 
-- 运行本技能的 `bash scripts/task-start PLAN_FILE N`。它在一次调用中打印 brief 路径与 BASE（该任务评审区间的起点提交）。每个任务都要读 brief，包括你在准备阶段记得的那些：你记得的是摘要，brief 里才是精确的取值、签名与测试用例。
-- 把该任务的 todo 标为 in_progress。
+- Run this skill's `bash scripts/task-start PLAN_FILE N`. It prints the brief
+  path and BASE (the commit the task's range is cut from) in one call.
+  Read the brief for every task, including ones you remember from setup:
+  what you remember is a summary, the brief has the exact values,
+  signatures, and test cases.
+- Mark the task's todo in_progress.
 
-每一次工具调用都是一轮重新读取你全部上下文的过程。记账要搭着干活一起走——追加 ledger 与提交放在同一次调用里，绝不单独花一次调用。
+Every tool call is a turn that re-reads your whole context. Bookkeeping
+rides along with work — a ledger append in the same call as the commit,
+never in a call of its own.
 
-### 2. 执行步骤
+### 2. Work the steps
 
-计划里的步骤已经按 RED-GREEN 排好序；在准备阶段加载的 test-driven-development 之下，按这个顺序执行。测试步骤的代码先写、先跑。看着它失败是一个步骤，不是走过场——一个在实现尚不存在时就通过的测试，是关于这个测试的一条发现。
+The plan's steps are already in RED-GREEN order; follow them in that
+order under superpowers:test-driven-development, loaded at setup. A test
+step's code is written first and run first. Watching it fail is a step,
+not a formality — a test that passes before the implementation exists is
+a finding about the test.
 
-每个要运行命令的步骤都有 `Expected:` 行。运行该命令，读它的输出，做比较。三种结果：
+Every step that runs a command has an `Expected:` line. Run the command,
+read its output, and compare. Three outcomes:
 
-- **一致。** 进入下一步。
-- **代码错了。** 使用 systematic-debugging。找到原因；绝不为了迎合步骤的输出去修补症状。
-- **计划错了**——某个步骤与规格矛盾，早期任务的接口与本任务消费的内容对不上，某条命令根本不可能工作。就满足规格的最小改动做出裁决，记入 ledger `Task <N>: Ruling: <发现> — <你决定了什么以及为什么>`，然后继续。裁决是被携带下去的，不是靠记住的：后来触碰同一接口的任务从 ledger 里读到它。
+- **Matches.** Next step.
+- **The code is wrong.** Use superpowers:systematic-debugging. Find the
+  cause; never patch the symptom to make the step's output match.
+- **The plan is wrong** — a step contradicts the spec, an interface from an
+  earlier task doesn't match what this task consumes, a command that
+  cannot work. Rule on the smallest change that satisfies the spec, ledger
+  it as `Task <N>: Ruling: <finding> — <what you decided and why>`, and
+  continue. The ruling is carried, not remembered: later tasks that touch
+  the same interface read it from the ledger.
 
-按计划中的提交步骤提交。一个任务跨多次提交没关系；评审区间从 BASE 切起，永远不是 `HEAD~1`。
+Commit as the plan's commit steps say. A task that spans several commits
+is fine; BASE is what the review range is cut from, never `HEAD~1`.
 
-### 3. 完成契约
+### 3. The completion contract
 
-在一个任务的 ledger 行写下之前，以下各项都成立，且证据来自本次会话——而不是从 diff 看起来没问题推断出来：
+Before a task's ledger line, all of the following are true, with evidence
+in this session — not inferred from the diff looking right:
 
-- brief 点名的每一个测试都存在，都在本任务中运行过，而且你读过输出。
-- 该任务最后一次测试运行通过——`task-done` 就是那次运行，它把命令与结果写进 ledger 行。
-- brief 里的每一行 `Expected:` 都对照过真实输出。
-- 每一处对 brief 的偏离，ledger 里都有对应的 `Ruling:` 行。
+- Every test the brief names exists and ran in this task, and you read
+  the output.
+- The final test run for the task passed — `task-done` is that run, and
+  it writes the command and result into the ledger line.
+- Every `Expected:` line in the brief was compared against real output.
+- Every deviation from the brief has a `Ruling:` line in the ledger.
 
-**必需子技能：** verification-before-completion 管辖这次断言。任何一项缺失，任务就没完成：把它做完。
+**REQUIRED SUB-SKILL:** superpowers:verification-before-completion governs
+the claim. If any item is missing, the task is not complete: finish it.
 
-### 4. 完成任务
+### 4. Complete the task
 
-运行本技能的 `bash scripts/task-done PLAN_FILE N BASE -- <测试命令>`，测试命令用 brief 为整个任务点名的那条。它会运行测试，把完整输出留在 workspace，打印尾部，并且——只在测试通过时——把完成行追加到 ledger：
+Run this skill's `bash scripts/task-done PLAN_FILE N BASE -- <test command>`
+with the test command the brief names for the whole task. It runs the
+tests, keeps the full output in the workspace, prints the tail, and — only
+if they pass — appends the completion line to the ledger:
 
 `Task <N>: complete (commits <base7>..<head7>, tests: <command> → <result>)`
 
-失败的运行什么都不记录；任务没有完成。记录成功时，把 todo 标为完成，接手下一个任务。
+A failing run records nothing; the task is not complete. When it records,
+mark the todo complete and take the next task.
 
-## 最终评审
+## Final Review
 
-运行 `bash ../subagent-driven-development/scripts/review-package PLAN_FILE MERGE_BASE HEAD`（MERGE_BASE = 分支起点的提交，例如 `git merge-base main HEAD`），并从它打印出的文件出发评审。
+Run `bash ../subagent-driven-development/scripts/review-package PLAN_FILE MERGE_BASE HEAD`
+(MERGE_BASE = the commit the branch started from, e.g.
+`git merge-base main HEAD`) and review from the file it prints.
 
-**有 subagent 工具时：** 用可用的最强模型派发 reviewer——全分支评审是一项判断题——使用 requesting-code-review 的 [code-reviewer.md](../requesting-code-review/code-reviewer.md)，并把包路径、计划与规格路径、计划的 Review Focus 段（若存在）逐字交给它（该段列出计划的测试未覆盖的输入类别与失败模式——reviewer 要逐条刻意检查），再加一个指向 ledger 中 `Ruling:` 行的提示，让它能权衡你所做的决定。明确指定模型；省略模型会继承本会话的模型，而它未必是最强的。这是整轮执行唯一买到的一份全新上下文。不要跳过它，也不要用你自己读 diff 来代替它。
+**With a subagent tool:** dispatch the reviewer on the most capable
+available model — the whole-branch review is a judgment task — using
+superpowers:requesting-code-review's
+[code-reviewer.md](../requesting-code-review/code-reviewer.md), with the
+package path, the plan and spec paths, the plan's Review Focus section
+verbatim if it has one (the input classes and failure modes the plan's
+tests do not exercise — the reviewer checks each deliberately), and a
+pointer to the ledger's `Ruling:` lines so it can weigh the calls you
+made. Specify the model
+explicitly; an omitted model inherits the session's, which may not be the
+most capable. This is the one fresh context the whole run buys. Do not
+skip it, and do not replace it with your own read of the diff.
 
-**没有 subagent 工具时：** 读 code-reviewer.md，在最后一个任务的 ledger 行之后，作为单独的一遍，自己对该包执行那次评审。把 `Final review: self-review (no subagent tool)` 写进 ledger，并在最终消息里说明这一点：作者自评比一位全新 reviewer 更弱，是否足够要在合并前由你的 human partner 定夺。
+**Without a subagent tool:** read code-reviewer.md and perform that review
+yourself against the package, as a separate pass after the last task's
+ledger line. Write `Final review: self-review (no subagent tool)` to the
+ledger, and say so in your final message: a self-review by the author is
+weaker than a fresh reviewer, and your human partner decides whether that
+is enough before merge.
 
-在对任何发现动手之前，先给它们排序。reviewer 给的严重度标签是建议；门禁在你手里。它的“拒绝评判”清单也归你：那上面的每一行都是你要做出并记入 ledger 的裁决，和计划冲突完全一样——`Final: Ruling: <reviewer 搁置的行为> — <使用该软件的理性之人会得到什么，以及为什么这站得住、或为什么它现在算一条发现> — <错了要付出什么代价>`。先按影响重新分级：规格是愿景文档，一条发现的等级取决于它若上线，使用该软件的理性之人会遭遇什么，而不是规格有没有点名触发它的输入——一位 reviewer 仅仅因为规格沉默就把发现定为 Minor，那他评的是规格，不是影响。然后：
+Sort the findings before you act on any of them. The reviewer's severity
+labels are advice; the gate is yours. Its "Declined to judge" list is
+yours too: every line there is a ruling you make and ledger, exactly like
+a plan conflict — `Final: Ruling: <behavior the reviewer set aside> —
+<what a reasonable person using this software gets, and why that stands
+or why it is now a finding> — <cost if wrong>`. Re-grade first, by effect: the
+spec is a vision document, and a finding's grade is what a reasonable
+person using this software gets if it ships, not whether the spec names
+the input that triggers it — a reviewer who set a finding at Minor
+because the spec was silent has graded the spec, not the effect. Then:
 
-- **Critical 与 Important** 进入修复轮。
-- **Minor** 作为 `Final: minor (deferred): <一句话>` 进 ledger，并进入最终消息的“延后的 Minor”一栏。Minor 绝不进入修复轮，也绝不变成裁决——裁决是对冲突的决定，不是你婉拒一条润色建议的备注。
+- **Critical and Important** enter the fix pass.
+- **Minor** goes to the ledger as `Final: minor (deferred): <one-liner>`
+  and to your final message under "Deferred minors". Minors never enter
+  the fix pass, and never become rulings — a ruling is a decision about a
+  conflict, not a note that you declined a polish suggestion.
 
-Critical 与 Important 的发现由你自己修——这里你就是实现者——只修一轮。每个修复由 TDD 验证，而不是由第二位 reviewer 验证：写出复现该发现的测试，看着它失败，让它通过，再跑整套测试。每条都记入 ledger `Final: fixed <finding> — <test name> RED→GREEN, suite <N>/<N>`。没有先失败过的测试伴随的修复不算已验证；这一轮之后套件不绿，说明这一轮没结束。不要再派发复审：那只会重读一份 diff，而它对应的覆盖测试已经回答了“是否已解决”，套件运行已经回答了“有没有弄坏别的”。
+Fix the Critical and Important findings yourself — you are the
+implementer here — in ONE pass. Each fix is verified by TDD, not by a
+second reviewer: write the test that reproduces the finding, watch it
+fail, make it pass, then run the whole suite. Record each in the ledger as
+`Final: fixed <finding> — <test name> RED→GREEN, suite <N>/<N>`. A fix
+without a test that failed first is not verified; a suite that is not
+green after the pass means the pass is not over. Do not dispatch a
+re-review: it would re-read a diff whose covering tests already answer
+"addressed" and whose suite run already answers "broke nothing".
 
-你决定不修的发现是一条裁决——`Final: Ruling: <finding> — <代码为何站得住> — <错了要付出什么代价>`——并会出现在交给 human partner 的裁决清单里。没有第二次修复轮。
+A finding you decide not to fix is a ruling — `Final: Ruling: <finding> —
+<why the code stands> — <cost if wrong>` — and reaches your human partner
+in the rulings list. There is no second fix pass.
 
-## 收尾
+## Finish
 
-删除任何东西之前，把 ledger 中所有含 `Ruling:` 的行按你做出决定的顺序收集进最终消息的“我做出的裁决”一栏，每条带上错了要付出什么代价；再把所有 `minor (deferred)` 行收集进“延后的 Minor”一栏。两份清单都要穷尽。最终消息是你替 human partner 所做的决定、以及你选择不处理的发现，唯一能到达他们那里的地方。
+Before you delete anything, collect every ledger line containing
+`Ruling:` into your final message under "Rulings I made", in the order you
+made them, each with what it costs if wrong, and every `minor (deferred)`
+line under "Deferred minors". Both lists are exhaustive. Your final
+message is the only place the decisions you took on your human partner's
+behalf — and the findings you chose not to act on — reach them.
 
-当最终评审干净、其修复也已提交，删除本计划的 workspace 目录——此后 git 历史就是记录。同级的其他目录属于别的计划，别碰。
+When the final review is clean and its fixes are committed, delete this
+plan's workspace directory — the git history is the record now. Sibling
+directories belong to other plans; leave them alone.
 
-使用 finishing-a-development-branch。
+Use superpowers:finishing-a-development-branch.
 
-## 常见的自我合理化
+## Common Rationalizations
 
-| 借口 | 现实 |
+| Excuse | Reality |
 |--------|---------|
-| “我记得任务 N 说的是什么” | 你记得的是摘要。brief 里才有精确的取值。去读它。 |
-| “计划里的代码是对的，跳过看测试失败吧” | 你没见它失败过的测试什么都证明不了。那只是一个步骤。去跑它。 |
-| “我到最后跑整套测试，不用每步都跑” | 每步都跑才能知道是哪一步弄坏的。任务结束时的运行是契约，不是替代品。 |
-| “计划这里写错了，我直接做对的事就行” | 做对的事，并把裁决记进 ledger。不记 ledger 的偏离就是偷偷做的决定。 |
-| “ledger 行等做完几个任务再补” | 压缩不会等你方便的时候。每个任务一行，和提交放在同一条消息里。 |
-| “下一个任务之前让我先确认一下” | 他们选择内联就是为了少花钱。进度确认花的是他们的时间。只有那四件事能让你停下。 |
-| “我仔细读过自己的 diff 了，最终评审是多余的” | 同一个作者，同一片盲区。reviewer 是这一轮唯一买到的新鲜上下文。 |
-| “测试应该能过，改动很琐碎” | “应该”不是证据。契约要求命令本身和它的输出。 |
-| “subagent 又慢又贵，最终评审我也一起省了” | 内联已经取消了每任务的 reviewer。对整个分支做一次评审是下限，不是上限。 |
-| “reviewer 说是 Minor，那就是 Minor” | 那个标签评的是规格的沉默。要评人实际得到什么。先重新分级，再过门禁。 |
-| “修复显而易见，不用先写失败的测试” | 失败的测试是唯一证明“发现是真的、且现在已消失”的东西。没有它，你只有一份 diff 和一点希望。 |
-| “既然都动手了，把 Minor 一起修了吧” | 你修的每个 Minor 都是一个测试、一次修复、一轮套件运行，而 human partner 并没有要求。记进 ledger；让 human partner 决定。 |
+| "I remember what Task N says" | You remember a summary. The brief has the exact values. Read it. |
+| "The plan's code is right, skip watching the test fail" | A test you never saw fail proves nothing. It is one step. Run it. |
+| "I'll run the full suite at the end instead of per step" | Per-step runs are how you learn which step broke it. The end-of-task run is the contract, not a substitute. |
+| "The plan is wrong here, I'll just do the right thing" | Do the right thing and ledger the ruling. Unledgered deviation is a decision made in secret. |
+| "I'll write the ledger lines after a few tasks" | Compaction does not wait for a convenient moment. One line per task, in the same message as the commit. |
+| "Let me check in before the next task" | They chose inline to spend less. Progress prompts spend their time instead. Only the four stops stop you. |
+| "I read my own diff carefully; the final reviewer is redundant" | Same author, same blind spots. The reviewer is the only fresh context this run buys. |
+| "Tests should pass, the change was trivial" | "Should" is not evidence. The contract requires the command and its output. |
+| "Subagents are slow and expensive, I'll skip the final review too" | Inline already removed the per-task reviewers. One review of the whole branch is the floor, not the ceiling. |
+| "The reviewer said Minor, so it's Minor" | The label graded the spec's silence. Grade what the person gets. Re-grade, then gate. |
+| "The fix is obvious, no need for a failing test first" | The failing test is the only proof the finding was real and is now gone. Without it you have a diff and a hope. |
+| "I'll fix the minors too while I'm in there" | Every minor you fix is a test, a fix, and a suite run your partner did not ask for. Ledger them; your partner decides. |
 
-## 示例工作流
+## Example Workflow
 
 ```
-你：我正在使用 executing-plans 技能内联实现这份计划。
+You: I'm using the executing-plans skill to implement this plan inline.
 
-[准备：worktree 已核实]
-[读一遍计划：docs/superpowers/plans/feature-plan.md；规格已读]
-[确定 workspace：sdd-workspace docs/superpowers/plans/feature-plan.md — 里面没有 ledger，全新开始]
-[预检扫描：2 行共享接口，4 行自洽性检查，无冲突；写入 ledger]
-[为所有任务创建 todo]
+[Setup: worktree verified]
+[Read plan once: docs/superpowers/plans/feature-plan.md; spec read]
+[Resolve workspace: sdd-workspace docs/superpowers/plans/feature-plan.md — no ledger inside, fresh start]
+[Pre-flight scan: 2 shared-interface rows, 4 self-consistency rows, clean; written to ledger]
+[Create todos for all tasks]
 
-任务 1：钩子安装脚本
+Task 1: Hook installation script
 
-[task-start plan 1 → brief 已读；BASE a1b2c3d]
-[步骤 1：编写失败测试——已写]
-[步骤 2：运行它——FAIL：install_hook 未定义。与 Expected 一致。]
-[步骤 3：实现——已写]
-[步骤 4：运行它——PASS 1/1。与 Expected 一致。]
-[步骤 5：提交——d4e5f6a]
-[契约：测试已运行，输出已读，无偏离]
-[task-done plan 1 a1b2c3d -- npm test -- hooks → ledger：Task 1: complete (commits a1b2c3d..d4e5f6a, tests: npm test -- hooks → 1/1 pass)]
+[task-start plan 1 → brief read; BASE a1b2c3d]
+[Step 1: write failing test — written]
+[Step 2: run it — FAIL: install_hook not defined. Matches Expected.]
+[Step 3: implement — written]
+[Step 4: run it — PASS 1/1. Matches Expected.]
+[Step 5: commit — d4e5f6a]
+[Contract: tests ran, output read, no deviations]
+[task-done plan 1 a1b2c3d -- npm test -- hooks → ledger: Task 1: complete (commits a1b2c3d..d4e5f6a, tests: npm test -- hooks → 1/1 pass)]
 
-任务 2：恢复模式
+Task 2: Recovery modes
 
-[task-start plan 2 → brief 已读；BASE d4e5f6a]
-[步骤 2：运行失败测试——FAIL，但报的是导入错误：任务 1 导出的是
- installHook，而 brief 消费的是 install_hook]
-[Ruling: brief 的消费方名称相对任务 1 的 Produces 块是笔误；
-  use installHook —— ledger：Task 2: Ruling: install_hook → installHook — 与任务 1 Produces 一致 — 错了要付出什么代价：一次重命名]
-[步骤 2-5 按计划执行；提交 b7c8d9e]
-[task-done plan 2 d4e5f6a -- npm test -- recovery → ledger：Task 2: complete (commits d4e5f6a..b7c8d9e, tests: npm test -- recovery → 8/8 pass)]
+[task-start plan 2 → brief read; BASE d4e5f6a]
+[Step 2: run failing test — FAIL, but on an import error: Task 1 exported
+ installHook, brief consumes install_hook]
+[Ruling: brief's consumer name is a typo against Task 1's Produces block;
+ use installHook — Ledger: Task 2: Ruling: install_hook → installHook — matches Task 1 Produces — cost if wrong: one rename]
+[Steps 2-5 as planned; commit b7c8d9e]
+[task-done plan 2 d4e5f6a -- npm test -- recovery → ledger: Task 2: complete (commits d4e5f6a..b7c8d9e, tests: npm test -- recovery → 8/8 pass)]
 
 ...
 
-[所有任务完成后：review-package plan MERGE_BASE HEAD；派发 code-reviewer，用最强模型]
-reviewer：一条 Important 发现——进度上报间隔被硬编码。两条 Minor。
-[重新分级：Important 成立；Minor → 作为延后项记入 ledger]
-[修复轮：test_progress_interval_configurable RED → 抽出 PROGRESS_INTERVAL → GREEN；套件 12/12；提交]
-[ledger：Final: fixed hardcoded interval — test_progress_interval_configurable RED→GREEN, suite 12/12]
+[After all tasks: review-package plan MERGE_BASE HEAD; dispatch code-reviewer, most capable model]
+Reviewer: One Important finding — progress reporting interval hardcoded. Two Minor.
+[Re-grade: Important stands; minors → ledger as deferred]
+[Fix pass: test_progress_interval_configurable RED → extract PROGRESS_INTERVAL → GREEN; suite 12/12; commit]
+[Ledger: Final: fixed hardcoded interval — test_progress_interval_configurable RED→GREEN, suite 12/12]
 
-我做出的裁决：
-- Task 2: install_hook → installHook（brief 笔误；错了要付出什么代价：一次重命名）
+Rulings I made:
+- Task 2: install_hook → installHook (brief typo; cost if wrong: one rename)
 
-延后的 Minor：
-- README 缺少使用示例
-- recovery.js 可以把 verify/repair 拆成两个文件
+Deferred minors:
+- README lacks a usage example
+- recovery.js could split verify/repair into two files
 
-[删除本计划的 workspace——记录如今存在 git 里]
+[Delete this plan's workspace — the record now lives in git]
 
-正在使用 finishing-a-development-branch。
+Using superpowers:finishing-a-development-branch.
 ```
