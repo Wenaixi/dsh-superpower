@@ -71,7 +71,7 @@
 
 ## 版本与发布状态
 
-- **当前版本**：`7.5.2`（2026-10-06；描述默认跟随宿主语言、面板顶部单按钮全局切换）
+- **当前版本**：`7.5.3`（2026-10-06；修复语言按钮显示逻辑，未调过时正确显示目标语言）
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
 - **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
 - **本地深度验证**：`sp-deep-verify` profile（`dsh-base` + `dsh-headless` + 本插件），真实 headless 会话逐技能调用 `skill` 工具加载 15 技能，frontmatter description 与 `##` 标题逐项断言一致；安装产物 82 文件全树扫描无平台残留

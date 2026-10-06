@@ -190,6 +190,8 @@ scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 sk
 
 `v7.5.0` 每个技能新增英文正文（`SKILL.en.md`，取自上游原版并做 DSH 专属化），与中文 `SKILL.md` 并存；面板每行新增「中文 / English」切换，英文描述一律以 `Superpower Skill: ` 开头；同一语言偏好同时决定模型侧目录描述与加载正文；README.md 改为默认英文并新增中文版 README.zh.md。
 
+`v7.5.3` 修复语言按钮显示：按钮按生效语言（未调过时取宿主语言）显示目标语言，未调过时正确显示 English、点击真正切换。
+
 `v7.5.2` 语言切换按钮上移到面板顶部、全局一个；未调过时描述跟随宿主界面语言，调过后固定。
 
 `v7.5.1` 技能正文统一为上游英文原版（单份 `SKILL.md`，DSH 专属化），中文描述移入 frontmatter `description_zh`，面板语言切换只改变模型看到的描述、正文恒英文。`中文 / English` 切换、`Superpower Skill:` 前缀与双语 README 保持不变。
