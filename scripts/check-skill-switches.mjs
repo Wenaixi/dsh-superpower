@@ -192,7 +192,9 @@ async function loadPlugin(raw) {
 }
 
 // ---------------------------------------------------------------------------
-// 场景 6：语言偏好（language）驱动模型侧正文与描述，且不触碰开关 invocation
+// 场景 6：语言偏好（language）驱动模型侧描述，不触碰开关 invocation。
+//    mock 无 settings 服务（ctx.get('settings') 为 undefined），宿主语言回退 zh，
+//    故默认描述为中文前缀；language=en 时描述切英文；正文恒英文。
 // ---------------------------------------------------------------------------
 {
   const { ctx: zhCtx } = await loadPlugin({})
@@ -238,6 +240,17 @@ async function loadPlugin(raw) {
     enSnapshot.skills.every((skill) => skill.description.startsWith('Superpower Skill: ')),
     true,
   )
+}
+
+// ---------------------------------------------------------------------------
+// 场景 7：language 字段缺失时 readSwitches 返回 undefined（跟随宿主语言的语义）
+// ---------------------------------------------------------------------------
+{
+  const { readSwitches } = await import('../lib/superpowers.js')
+  const out = readSwitches({})
+  check(state, '[语言语义] 缺失返回 undefined（跟随宿主）', out.language, undefined)
+  const outEn = readSwitches({ language: 'en' })
+  check(state, '[语言语义] language=en 返回 en', outEn.language, 'en')
 }
 
 exitByFailed('技能开关端到端实测', state)

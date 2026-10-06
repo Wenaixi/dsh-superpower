@@ -533,16 +533,24 @@ export class SkillContractChecker {
         i18nIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declared + ' 处）')
       }
     }
-    // (4.6) 语言切换按钮契约：按钮文案必须经 t() 取词、zh/en 双字典都要声明；
+    // (4.6) 语言切换按钮契约：单按钮显示目标语言字面量（SP_LANG_ZH/SP_LANG_EN），
+    //       不得回退到双按钮 aria-pressed 形态；langTitle tooltip 必须经 t()；
     //       技能描述的英文取词只能经 skillText()（面板渲染路径不得出现裸 descriptionEn 字面量）。
-    for (const key of ['langZh', 'langEn', 'langTitle']) {
-      if (!source.includes("t('" + key + "')")) {
-        i18nIssues.push("语言切换缺少 t('" + key + "') 取词调用")
-      }
-      const declared = (source.match(new RegExp(key + ": '", 'g')) || []).length
-      if (declared < 2) {
-        i18nIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declared + ' 处）')
-      }
+    if (!source.includes("var SP_LANG_ZH = '中文'") || !source.includes("var SP_LANG_EN = 'English'")) {
+      i18nIssues.push('缺少 SP_LANG_ZH / SP_LANG_EN 目标语言字面量常量')
+    }
+    if (!source.includes("t('langTitle')")) {
+      i18nIssues.push("语言切换缺少 t('langTitle') 取词调用")
+    }
+    const declaredTitle = (source.match(/langTitle: '/g) || []).length
+    if (declaredTitle < 2) {
+      i18nIssues.push('键 langTitle 未在 zh/en 两本字典同时声明（当前 ' + declaredTitle + ' 处）')
+    }
+    if (!/h\('button', \{\s*className: 'spSwLangBtn'/.test(source)) {
+      i18nIssues.push('面板缺少单个 spSwLangBtn 语言切换按钮')
+    }
+    if (/spSwLang[^B]|aria-pressed/.test(source)) {
+      i18nIssues.push('存在双按钮语言切换形态（spSwLang 组 / aria-pressed），应改为单按钮')
     }
     const bareEnDesc = /h('p', { className: 'spSwDesc' }, skill.descriptionEn)/.exec(source)
     if (bareEnDesc !== null) {
