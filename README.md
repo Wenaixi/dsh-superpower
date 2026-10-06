@@ -190,6 +190,8 @@ Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and 
 
 `v7.5.0` shipped every skill with an English body (`SKILL.en.md`, upstream original adapted for DSH) beside the Chinese one, added a per-skill `中文 / English` switch, made English descriptions always start with `Superpower Skill: `, routed the same language preference to the model-side catalog and body, and made README.md English by default with a Chinese twin.
 
+`v7.5.4` republished under a fresh version: the 7.5.3 release hit an npm staged-publish conflict; the code is identical to 7.5.3.
+
 `v7.5.3` fixed the language button label: it now shows the target language based on the effective language (falling back to the Host language when the preference is unset), so an untouched panel correctly offers `English` and clicking it actually switches.
 
 `v7.5.2` moved the language switch to a single button at the top of the panel: it now controls all 15 skills at once, and while the `language` preference is unset the descriptions follow the Host UI language (settings language); once set, they stay fixed.
