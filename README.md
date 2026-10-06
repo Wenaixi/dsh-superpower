@@ -28,7 +28,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # skills are available immediately
 ```
 
-Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.6`) or `#v7.5.6`.
+Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.7`) or `#v7.5.7`.
 
 The old unscoped package name `dsh-superpower` is deprecated (`npm deprecate`); use the scoped one.
 
@@ -190,7 +190,7 @@ Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and 
 
 `v7.5.0` shipped every skill with an English body (`SKILL.en.md`, upstream original adapted for DSH) beside the Chinese one, added a per-skill `中文 / English` switch, made English descriptions always start with `Superpower Skill: `, routed the same language preference to the model-side catalog and body, and made README.md English by default with a Chinese twin.
 
-`v7.5.6` keeps the language button scoped to descriptions only: it switches the `Superpower Skill:` text users and the model see, the button label, and nothing else — the rest of the panel stays in the Host UI language, and skill bodies remain the English originals.: the panel's own copy (title, bulk buttons, search box, hints, meta labels) switches with the skill descriptions instead of following the Host UI language.
+`v7.5.7` fixed the panel version label (7.5.6 showed 7.5.4 after the revert) and added a visible note next to the language button: it switches only the skill descriptions, the bodies stay English.: it switches the `Superpower Skill:` text users and the model see, the button label, and nothing else — the rest of the panel stays in the Host UI language, and skill bodies remain the English originals.: the panel's own copy (title, bulk buttons, search box, hints, meta labels) switches with the skill descriptions instead of following the Host UI language.
 
 `v7.5.4` republished under a fresh version: the 7.5.3 release hit an npm staged-publish conflict; the code is identical to 7.5.3.
 
