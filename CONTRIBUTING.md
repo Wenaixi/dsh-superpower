@@ -5,8 +5,8 @@
 ## 基本原则
 
 - **同步上游**：v7.0.0 起技能名与目录回归上游命名（无 `superpower-` 前缀），整批同步了上游 `v6.4.2`。之后上游出新版本，按需 cherry-pick 合入并记进 `CHANGELOG.md`。
-- **中文化**：`skills/**/SKILL.md` 与辅助文档保持简体中文，代码、命令、路径、变量名不译。
-- **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串；技能名与描述固定中文，不做技能级翻译。
+- **正文恒英文**：v7.5.1 起每个技能单份 `SKILL.md`，正文是上游英文原版（DSH 专属化）。frontmatter 同时声明英文 `description` 与中文 `description_zh`，门禁断言两条描述各带自己的 `Superpower Skill:` 前缀。代码、命令、路径、变量名保持原文不译。
+- **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串。语言按钮只切技能描述与按钮自身文案，面板其余 UI 跟随宿主界面语言。
 - **不引自建服务**：插件与技能正文不提供 HTTP / WebSocket 服务。可视化协作走宿主官方文档预览，配置写入走官方 `configForms` 通道。
 - **废弃字段保留声明**：`modelDisabled` / `userDisabled` 已废弃，但 schema 声明与 `.volatile()` 都要留着。去掉声明会让旧配置被 schema 丢弃，去掉 `.volatile()` 会让迁移批里的 `unset` 被宿主写入闸门拒绝。
 - **DSH 标准**：插件入口遵循 `dsh-plugin-dev` 的硬规则——`inject` 声明依赖、`Schemastery Config` 配默认值、副作用一律包在 `ctx.effect` 里、`waterfall` 记得调 `next()`。
@@ -28,7 +28,7 @@ dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 2. 小步提交，一个技能或一篇文档一个 commit，信息用简体中文、动词开头。
 3. 提交前跑一遍 `pnpm build && pnpm typecheck && node scripts/verify.mjs`，全绿再推。
 4. PR 描述写清：关联的上游版本、改动范围、有没有动到 `rank` / `providerName` / `skillDir`。
-5. 改到技能正文的话，说明中文化和 DSH 工具映射是怎么处理的。
+5. 改到技能正文的话，说明 DSH 专属化（去图形符号、改写非 DSH 平台引用、补 DSH 小节）与工具映射是怎么处理的。
 
 ## 开发与发布流程
 
@@ -36,8 +36,8 @@ dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 
 | 工具 | 版本 | 说明 |
 |---|---|---|
-| Node | `>=20` | 与 CI 一致 |
-| pnpm | `>=11` | DSH 官方设计面向 pnpm 11+（`nodeLinker: isolated` 符号链接隔离 + `allowBuilds` 构建审批）。pnpm 10.x 在依赖较多的 profile 上处理依赖图会抛 `FATAL ERROR: invalid array length`，与内存无关，8 GB 堆照样崩 |
+| Node | `>=20` | 与 CI 一致（`engines.node` 声明 `>=20`） |
+| pnpm | 本地 `>=11`；CI 固定 9 | 两个 workflow 都写 `pnpm/action-setup@v4` + `version: 9`，锁文件是 `lockfileVersion: 9.0`。DSH 本体面向 pnpm 11+（`nodeLinker: isolated` 符号链接隔离 + `allowBuilds` 构建审批），pnpm 10.x 在依赖较多的 profile 上处理依赖图会抛 `FATAL ERROR: invalid array length`，与内存无关。CI 用 9 只为保证构建可复现，本地跑 12 也能通过 |
 | dsh | 最新 | `npm i -g @deepseek-ai/dsh` |
 
 ### 本地质量门禁（提交前必须全绿）
@@ -46,7 +46,7 @@ dsh --profile demo --dump-config   # 应看到 "# == @wenaixi/dsh-superpower"
 pnpm install
 pnpm build          # tsc -p tsconfig.build.json
 pnpm typecheck      # tsc --noEmit
-node scripts/verify.mjs                      # 契约门禁：随包 shell 脚本 / 边界自检 / 符号扫描 / 自建服务禁令 / 图标与卡片元数据 / UI i18n 与单开关取词
+node scripts/verify.mjs                      # 契约门禁：随包 shell 脚本 / 边界自检 22 条 / 符号扫描 / 自建服务禁令 / 图标与卡片元数据 / 双语 frontmatter 与 README 语言面
 node scripts/check-skill-switches.mjs         # 技能开关端到端实测（真实 SkillRegistry）
 node scripts/check-same-name-priority.mjs    # 同名裁决实测一（自研桩，无外部依赖）
 node scripts/check-same-name-priority-fs.mjs # 同名裁决实测二（加载官方 filesystem）
@@ -134,10 +134,17 @@ tar -tzf wenaixi-dsh-superpower-<version>.tgz | head -30
 ## 同步上游
 
 ```bash
-git clone --depth 1 https://github.com/obra/superpowers.git /tmp/superpowers
-# 对比 skills/ 与 package.json#version
-# 保留 references/dsh-tools.md 等 DSH 专属文件
+git clone --depth 1 https://github.com/obra/superpowers.git ../superpowers
+
+# PowerShell（Windows）
+$env:SP_UPSTREAM = (Resolve-Path ../superpowers/skills).Path
+node scripts/review-sync.mjs
+
+# bash / zsh
+SP_UPSTREAM=../superpowers/skills node scripts/review-sync.mjs
 ```
+
+不设 `SP_UPSTREAM` 时脚本会退到 `%TEMP%/sp-upstream/skills`，找不到就报错，不会静默跳过。
 
 ### 与上游命名对齐：技能名无 `superpower-` 前缀（v7.0.0 起）
 
@@ -147,11 +154,11 @@ git clone --depth 1 https://github.com/obra/superpowers.git /tmp/superpowers
 
 **每次同步上游新版本时：**
 
-1. 拉上游 `skills/`，跟本仓库 `skills/` 逐目录对比。
+1. 拉上游 `skills/`，用 `SP_UPSTREAM` 指向它，再跑 `node scripts/review-sync.mjs`，看 deep 与 tokens 两段各自的差异报告。
 2. 上游新增或改名的技能按原名同步进来，上游删掉的本地也删。
-3. 正文和新增的辅助文档一起中文化，`using-superpowers/references/dsh-tools.md` 这类 DSH 专属文件保留。
+3. 正文保持上游英文原版，只做 DSH 专属化（去图形符号、改写非 DSH 平台引用、补 DSH 专属小节）；`using-superpowers/references/dsh-tools.md` 这类 DSH 专属文件保留。
 4. 把所有文档里引用的技能名改成不带前缀的形式。
-5. 跑 `pnpm build && pnpm typecheck && node scripts/verify.mjs`，全绿再收工。
+5. 跑 `pnpm build && pnpm typecheck && node scripts/verify.mjs`，再跑一次 `node scripts/review-sync.mjs` 确认无漂移，全绿再收工。
 6. 同步完成后按本仓版本线发布，并在 `CHANGELOG.md` 记录所同步的上游版本
 
 **目录名同步策略：** 目录名与 `frontmatter.name` 必须一致（`v6.3.0-dsh.9` 起硬重命名）；同步上游新增技能时目录与 frontmatter 使用同一名字，避免触发 Provider 的 name drift 警告。
