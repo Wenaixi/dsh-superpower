@@ -46,3 +46,26 @@ temp/
 
 # 浏览器验证产物（截图与本地产出，不入库）
 .verify-shots/
+
+# 编辑器与补丁残留
+*.orig
+*.rej
+*.bak
+.history/
+
+# 本地私有配置（模板提交 .example，真实值不入库）
+*.local.json
+*.local.yml
+*.local.yaml
+
+# Playwright 测试产物
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# 打包自检与产物分析输出
+reports/
+
+# 工具把临时目录拼成 undefined/ 的兜底（曾出现 undefined/temp/*.tgz 污染）
+undefined/
