@@ -4,6 +4,18 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 清理
+
+- **深度清理仓库**：删除根目录 12 个历史 `*.tgz`（v7.0.0 至 v7.5.8 各一）、`undefined/temp/`（一次 pnpm 把临时目录拼成 `undefined` 字面量留下的 13 个文件）、`.verify-shots/`（约 175 MB 截图）与已完工的 `.superpowers/` SDD 账本；工作区从约 176 MB 降到 0.12 MB。
+- **git 忽略补齐**：新增编辑器残留（`*.orig`/`*.rej`/`*.bak`/`.history/`）、本地私有配置（`*.local.json` 等）、Playwright 产物（`test-results/`、`playwright-report/`）、`reports/`，以及 `undefined/` 兜底防复发。已用 `git check-ignore -v` 逐条验证命中，且无已跟踪文件被误伤。
+
+### 修复
+
+- **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、语言按钮作用域段去重并补上「按钮显示目标语言」语义、锁版本示例从过时的 7.2.0 更新为 7.5.8、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数错误口径（更新为 `npm pack` 实测 86 文件），并补上缺失的 SkillSwitches 词汇条目；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的 PowerShell 塞 bash 坏命令、同步上游步骤里的中文化旧流程；计划文档 28 个复选框回填为已完成并加状态注记。
+- **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释，其中一段还在要求早已删除的 `SKILL.en.md` 配对；顺带去掉误留的重复 `checkBilingualPairing` 实现。
+
 ## [7.5.8] - 2026-10-06
 
 ### 修复
