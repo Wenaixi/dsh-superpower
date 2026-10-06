@@ -89,8 +89,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 - 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
 - 状态写在 profile 的 `cordis.patch.yml` 的 `disabled` 字段里，跟着 profile 一起备份迁移，重装插件不丢。
 - 只影响本包这 15 个技能，不碰官方和第三方插件提供的技能。
-- 语言切换：面板顶部（说明文案之下）一个「中文 / English」按钮，一次切换全部 15 个技能的名称与描述显示语言（英文 `description` 与中文 `description_zh`）。正文一律为英文原版。两种描述分别以 `Superpower Skill: ` / `Superpower Skill：` 开头。未在面板调过语言时，描述跟随宿主界面语言（设置里选的语言）；调过后固定为该语言。
-- 面板 UI 文案（标题、按钮、提示、meta 标签）跟随宿主界面语言（设置里切换语言即生效）。
+- 语言切换：面板顶部（说明文案之下）一个「中文 / English」按钮，一次切换全部 15 个技能名称与描述的显示语言（英文 `description` 与中文 `description_zh`）。按钮只改 `Superpower Skill:` 后面的文本与按钮自身文案：面板其余 UI（标题、批量按钮、搜索框、提示、meta 标签）跟随宿主界面语言，技能正文恒为英文原版。两种描述分别以 `Superpower Skill: ` / `Superpower Skill：` 开头。按钮显示的是切过去的那门语言，所以宿主中文且未调过时显示 `English`。未调过时描述跟随宿主界面语言，调过后固定为你选的那门。
 
 7.3.0 及更早版本用过两个开关（模型可调用 / 用户可调用），对应 `modelDisabled` 与 `userDisabled` 两张表。这两个字段已废弃：升级后旧值继续生效，你第一次拨动开关时它们会被清空，配置收敛到 `disabled` 一张表。
 

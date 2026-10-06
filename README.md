@@ -73,7 +73,7 @@ Skill bodies are the upstream English originals (DSH-adapted: symbols, platform 
 | `finishing-a-development-branch` | Decide whether to merge, open a PR, or keep the branch |
 | `writing-skills` | Create or edit a skill |
 
-Tool mapping (Bash to pwsh, Read/Write to fs, and so on) lives in `skills/using-superpowers/references/dsh-tools.md` and its English twin `dsh-tools.en.md`.
+Tool mapping (Bash to pwsh, Read/Write to fs, and so on) lives in `skills/using-superpowers/references/dsh-tools.md`.
 
 ### Same-name precedence
 
@@ -84,7 +84,7 @@ The official registry arbitrates same-layer name collisions by ascending `rank`.
 Open the `@wenaixi/dsh-superpower` card in the plugin manager; the panel sits at the bottom of its detail page.
 
 - One switch per skill. Off means both sides lose it: the model no longer sees it in the available-skill catalog and `skill` tool calls are rejected; you can no longer reach it from slash-command completion or the CLI skill list.
-- A single `中文 / English` button sits at the top of the panel, under the intro line, and switches the description language of all 15 skills at once — only the `Superpower Skill:` text users and the model see. The button label and the descriptions follow the preference; the rest of the panel stays in the Host UI language and skill bodies stay the English originals. The body is always the English original. Both descriptions start with `Superpower Skill:` / `Superpower Skill：`. The choice is per-language (a single `language` preference) and stored in the profile. Until you touch it, descriptions follow the Host UI language (settings language); once you switch it in the panel, the language stays fixed.
+- One `中文 / English` button at the top of the panel switches the description language of all 15 skills at once. It changes the `Superpower Skill:` text and its own label, and nothing else: the rest of the panel stays in the Host UI language and skill bodies stay English. Both descriptions carry the `Superpower Skill:` / `Superpower Skill：` prefix. The button label names the language you would switch to, so an untouched panel on a Chinese Host offers `English`. Until you touch the button, descriptions follow the Host UI language (the language chosen in settings); after that they stay on the language you picked. The choice is a single `language` preference stored in the profile.
 - The panel header also carries enable-all, disable-all, restore-defaults, and a search box. The head line shows this bundle's `provider`, `rank`, `source`, and panel build.
 - Changes take effect immediately; the running turn is unaffected and the next turn sees the new catalog and language.
 - State lives in the profile's `cordis.patch.yml` (`disabled` and `language` tables) and travels with the profile.
