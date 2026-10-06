@@ -555,7 +555,7 @@ export class SkillContractChecker {
     if (/spSwItem[\s\S]{0,600}className: 'spSwLangBtn'/.test(source)) {
       i18nIssues.push('语言按钮出现在技能行内，应上移到面板顶部全局一个')
     }
-    if (/spSwLang[^B]|aria-pressed/.test(source)) {
+    if (/spSwLang\s*\{|spSwLang"|aria-pressed/.test(source)) {
       i18nIssues.push('存在双按钮语言切换形态（spSwLang 组 / aria-pressed），应改为单按钮')
     }
     const bareEnDesc = /h('p', { className: 'spSwDesc' }, skill.descriptionEn)/.exec(source)
