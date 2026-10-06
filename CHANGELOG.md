@@ -4,6 +4,15 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.5.1] - 2026-10-06
+
+### 变更
+
+- **技能正文统一为上游英文原版**：每个技能单份 `SKILL.md`（DSH 专属化：去违禁符号、改写非 DSH 平台引用、补 DSH 专属小节），frontmatter 同时声明英文 `description` 与中文 `description_zh`；删除全部 52 个 `SKILL.en.md` 与辅助 `.en.md`，文档链接回改为 `.md`。
+- **语言偏好只切换描述**：`language` 偏好决定 `ctx.skills.list()/get()` 返回 `description` 还是 `description_zh`，正文恒为英文；面板「中文 / English」按钮与门禁断言同步更新。
+- **真机验收**：隔离实例（sp-verify-751）跑通 UI 全流程与模型感知四相位，修复浏览器脚本的卡片定位、版本断言与语言切换步。
+- 版本：7.5.0 -> 7.5.1。
+
 ## [7.5.0] - 2026-10-06
 
 ### 新增

@@ -28,7 +28,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # skills are available immediately
 ```
 
-Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.0`) or `#v7.5.0`.
+Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.1`) or `#v7.5.1`.
 
 The old unscoped package name `dsh-superpower` is deprecated (`npm deprecate`); use the scoped one.
 
@@ -187,6 +187,8 @@ Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and 
 `v7.4.0` merged each skill's two switches into one and converged configuration onto a single `disabled` table; brainstorming's visual collaboration moved to DSH's official document preview and the bundled HTTP server scripts were removed.
 
 `v7.4.1` fixed switch saves failing: the `dsh-settings` write gate validates every `op.path` against a volatile node, and dropping `.volatile()` from the two legacy fields made the whole `mutate` batch fail; restoring the marker fixed it. The panel header gained a panel-build label.
+
+`v7.5.0` shipped every skill with an English body (`SKILL.en.md`, upstream original adapted for DSH) beside the Chinese one, added a per-skill `中文 / English` switch, made English descriptions always start with `Superpower Skill: `, routed the same language preference to the model-side catalog and body, and made README.md English by default with a Chinese twin.
 
 `v7.5.1` makes skill bodies the official English originals (single `SKILL.md` per skill, DSH-adapted), keeps Chinese as the panel language via `description_zh`, so the language switch changes only the description the model sees. The `中文 / English` switch, the `Superpower Skill: ` prefixes, and the bilingual README remain.
 

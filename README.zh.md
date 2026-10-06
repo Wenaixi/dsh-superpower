@@ -188,6 +188,8 @@ scripts/build-client.mjs      # 复制客户端产物后校验内联清单与 sk
 
 `v7.4.0` 每个技能从两个开关合并为一个，配置收敛到单张 `disabled` 表；brainstorming 的可视化协作改用 DSH 官方文档预览，不再随包附带 HTTP 服务脚本。
 
+`v7.5.0` 每个技能新增英文正文（`SKILL.en.md`，取自上游原版并做 DSH 专属化），与中文 `SKILL.md` 并存；面板每行新增「中文 / English」切换，英文描述一律以 `Superpower Skill: ` 开头；同一语言偏好同时决定模型侧目录描述与加载正文；README.md 改为默认英文并新增中文版 README.zh.md。
+
 `v7.5.1` 技能正文统一为上游英文原版（单份 `SKILL.md`，DSH 专属化），中文描述移入 frontmatter `description_zh`，面板语言切换只改变模型看到的描述、正文恒英文。`中文 / English` 切换、`Superpower Skill:` 前缀与双语 README 保持不变。
 
 `v7.4.1` 修复开关保存失败：`dsh-settings` 的写入闸门逐条校验 `op.path` 是否落在 volatile 节点下，两个旧字段去掉 `.volatile()` 会让整批 `mutate` 被拒，恢复标注即可；面板页头补「面板版本」标注。
