@@ -30,7 +30,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # skills are available immediately
 ```
 
-Pin a version by appending `@<version>` (`@wenaixi/dsh-superpower@7.5.8`) or `#v7.5.8`.
+Pin a version by appending `@<version>` or `#v<version>` (the version currently published; check `npm view @wenaixi/dsh-superpower version`).
 
 
 Local development or offline install:

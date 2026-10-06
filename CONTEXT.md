@@ -92,10 +92,8 @@
 
 ---
 
-## 版本与发布状态
+## 发布与打包
 
-- **当前版本**：`7.5.8`（2026-10-06；消灭语言切换静默失败，增加失败显式渲染）
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
-- **发布纪律**：任何修改 `package.json#version` 的提交必须同步创建并推送 annotated tag；npm 禁止 unpublish，污染版本以 `npm deprecate` 废弃
+- **发布纪律**：改 `package.json#version` 必须同步打 annotated tag 并推送；npm 禁止 unpublish，装包一律用最新版，历史上发布早于平台专属化改造的旧版本已 `npm deprecate`
 - **打包产物**：`npm pack --dry-run` 实测 86 个文件（package size 184.4 kB，unpacked 506.9 kB），随包只含 `lib/`、`skills/`、`locale/`、`icon.png`、`cordis.patch.yml`、README 双份与 LICENSE，全树扫描无非 DSH 平台残留
-- **历史污染说明**：npm `7.0.0`（发布早于平台专属化改造）tarball 残留非 DSH 平台文件，已通过 `npm deprecate` 废弃，装包请用最新版

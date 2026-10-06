@@ -4,7 +4,7 @@
 
 ## 基本原则
 
-- **同步上游**：技能名与目录名直接用上游原名，本仓基准是上游 `v6.4.2`；上游出新版本时按需 cherry-pick 合入并记进 `CHANGELOG.md`。
+- **同步上游**：技能名与目录名直接用上游原名，与上游当前 `main` 对齐；整批同步过的版本记录在 `CHANGELOG.md`，之后上游出新版本按需 cherry-pick 合入并记录。
 - **正文恒英文**：每个技能单份 `SKILL.md`，正文是上游英文原版（DSH 专属化）。frontmatter 同时声明英文 `description` 与中文 `description_zh`，门禁断言两条描述各带自己的 `Superpower Skill:` 前缀。代码、命令、路径、变量名保持原文不译。
 - **i18n 边界**：面板 UI 文案必须走 `zh`/`en` 词典与 `t()` 取词，禁止渲染路径裸字符串。语言按钮只切技能描述与按钮自身文案，面板其余 UI 跟随宿主界面语言。
 - **不引自建服务**：插件与技能正文不提供 HTTP / WebSocket 服务。可视化协作走宿主官方文档预览，配置写入走官方 `configForms` 通道。
@@ -85,7 +85,7 @@ python scripts/browser/verify-model-perception.py \
 # 1. 确认门禁全绿，且工作区干净
 git status --short                 # 应无输出
 
-# 2. 升版本号（patch 例：7.5.9）
+# 2. 升版本号（patch 例：<x.y.z>）
 #    编辑 package.json 的 version，字段值须与 tag 完全一致
 
 # 3. 写 CHANGELOG
@@ -93,16 +93,16 @@ git status --short                 # 应无输出
 #    release.yml 靠这个标题切出段落生成 GitHub Release 正文
 
 # 4. 更新文档
-#    README.md 的版本沿革与常见问题、CONTEXT.md 的当前版本、CLAUDE.md 的决策日志
+#    常见问题里如果提到版本一律以 npm view 当前发布为准，CLAUDE.md 决策日志补一段
 
 # 5. 提交并推送
 git add -A
-git commit -m "chore(release): v7.5.9 — <本次变更摘要>"
+git commit -m "chore(release): v<x.y.z> — <本次变更摘要>"
 git push origin main
 
 # 6. 打标签并推送（触发 CI 发布）
-git tag -a v7.5.9 -m "v7.5.9"
-git push origin v7.5.9
+git tag -a v<x.y.z> -m "v<x.y.z>"
+git push origin v<x.y.z>
 
 # 7. 观察流水线
 #    https://github.com/Wenaixi/dsh-superpower/actions

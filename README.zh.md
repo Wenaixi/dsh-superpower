@@ -30,7 +30,7 @@ dsh --profile web --dump-config | grep -A2 "@wenaixi/dsh-superpower"
 dsh --profile web  # 进会话，技能自动可用
 ```
 
-要锁版本就在包名后加 `@<version>`（`@wenaixi/dsh-superpower@7.5.8`）或 `#v7.5.8`。
+要锁版本就在包名后加 `@<version>` 或 `#v<version>`（具体版本以 `npm view @wenaixi/dsh-superpower version` 当前发布为准）。
 
 
 本地开发或离线安装：
