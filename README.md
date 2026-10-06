@@ -10,7 +10,7 @@
 
 <img src="./icon.png" alt="@wenaixi/dsh-superpower" width="128" height="128">
 
-A DSH port of [obra/superpowers](https://github.com/obra/superpowers). 15 skills are injected into `ctx.skills`. Skill bodies are the official English originals; the panel switches each skill's name and description between Chinese and English.
+A DSH port of [obra/superpowers](https://github.com/obra/superpowers). 15 skills are injected into `ctx.skills`. Skill bodies are the official English originals; the panel switches the description each skill shows in the model catalog and the slash-command (`/`) skill menu between Chinese and English, while skill names stay as upstream English.
 
 ## Install
 
