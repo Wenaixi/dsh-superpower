@@ -111,7 +111,7 @@ with sync_playwright() as pw:
     if dlg and dlg.query_selector('button'):
         dlg.query_selector('button').evaluate(CLICK); page.wait_for_timeout(2500)
     page.get_by_label('插件', exact=True).first.evaluate(CLICK); page.wait_for_timeout(6000)
-    page.get_by_text('@wenaixi/dsh-superpower', exact=True).first.evaluate(CLICK); page.wait_for_timeout(7000)
+    page.get_by_text('Superpowers 技能套件', exact=True).first.evaluate(CLICK); page.wait_for_timeout(7000)
 
     ui = lambda: page.evaluate(PROBE)
 

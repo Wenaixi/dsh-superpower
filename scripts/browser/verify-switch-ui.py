@@ -46,7 +46,6 @@ PROBE = """
     });
   }
   return rows;
-  return rows;
 }
 """
 
@@ -132,7 +131,7 @@ with sync_playwright() as pw:
     page.wait_for_timeout(6000)
     page.screenshot(path='%s/02-plugins.png' % OUT)
 
-    card = page.get_by_text('@wenaixi/dsh-superpower', exact=True).first
+    card = page.get_by_text('Superpowers 技能套件', exact=True).first
     ok('本包卡片出现在插件页', card.is_visible())
     card.evaluate(CLICK)
     page.wait_for_timeout(7000)
@@ -144,11 +143,11 @@ with sync_playwright() as pw:
     ok('技能名与 skills/ 目录逐字一致', [r['name'] for r in rows] == EXPECTED)
     ok('面板开关总数 15（每行一个）',
        page.evaluate('() => document.querySelectorAll(' + json.dumps(SWITCH) + ').length') == 15)
-    ok('详情页标题显示版本号', 'v7.4.0' in body)
+    ok('详情页标题显示版本号', 'v7.5.1' in body)
     ok('面板标题为「技能开关」', '技能开关' in body)
     meta = page.inner_text('[class*="spSwMeta"]')
     ok('元信息三项齐全',
-       all(k in meta for k in ('provider', 'superpowers', 'rank', '10', 'source', 'bundled')), meta)
+       all(k in meta for k in ('提供方', 'superpowers', '优先级', '10', '来源', 'bundled', '面板版本')), meta)
     ok('三个批量按钮齐全', all(t in body for t in ('全部开启', '全部关闭', '恢复默认')))
     page.screenshot(path='%s/04-panel.png' % OUT, full_page=True)
 
@@ -195,16 +194,23 @@ with sync_playwright() as pw:
        'on=%d/%d' % (sum(1 for r in after if r['on']), len(after)))
     page.screenshot(path='%s/08-all-on.png' % OUT, full_page=True)
 
-    # 语言切换：默认中文描述 -> 点 English -> 描述变英文 -> 回读落盘 -> 点中文恢复
+    # 语言切换：归一到中文 -> 点 English -> 描述变英文 -> 回读落盘 -> 点中文恢复
+    zh_btn = 'li[class*="spSwItem"] [class*="spSwLang"] [aria-pressed="false"]:first-child'
+    en_btn = 'li[class*="spSwItem"] [class*="spSwLang"] [aria-pressed="false"]:last-child'
+    # 若上次运行残留 language=en，先把语言归零到中文，保证断言从已知状态开始
+    desc_now = page.inner_text('[class*="spSwDesc"]').strip()
+    if 'Superpower Skill：' not in desc_now:
+        page.click(zh_btn, timeout=15000)
+        settle('归零到中文', lambda _: 'Superpower Skill：' in page.inner_text('[class*="spSwDesc"]'), 30000)
     zh_desc = page.inner_text('[class*="spSwDesc"]').strip()
     ok('语言切换初始为中文描述', 'Superpower Skill：' in zh_desc[:80], zh_desc[:60])
-    page.click('li[class*="spSwItem"] [class*="spSwLang"] [aria-pressed="false"]:last-child', timeout=15000)
-    settle(lambda: 'Superpower Skill:' in page.inner_text('[class*="spSwDesc"]'), '语言切换后描述为英文', 30000)
+    page.click(en_btn, timeout=15000)
+    settle('语言切换后描述为英文', lambda _: 'Superpower Skill:' in page.inner_text('[class*="spSwDesc"]'), 30000)
     ok('语言切换后描述为英文', 'Superpower Skill:' in page.inner_text('[class*="spSwDesc"]'), page.inner_text('[class*="spSwDesc"]')[:60])
     patch = read_patch()
-    ok('语言偏好写入 cordis.patch.yml', 'language' in patch, ' '.join(patch.split())[-120:])
-    page.click('li[class*="spSwItem"] [class*="spSwLang"] [aria-pressed="false"]:first-child', timeout=15000)
-    settle(lambda: 'Superpower Skill：' in page.inner_text('[class*="spSwDesc"]'), '语言切回中文', 30000)
+    ok('语言偏好写入 cordis.patch.yml', 'language' in patch and 'en' in patch, ' '.join(patch.split())[-120:])
+    page.click(zh_btn, timeout=15000)
+    settle('语言切回中文', lambda _: 'Superpower Skill：' in page.inner_text('[class*="spSwDesc"]'), 30000)
     ok('语言切回中文', 'Superpower Skill：' in page.inner_text('[class*="spSwDesc"]'), page.inner_text('[class*="spSwDesc"]')[:60])
 
     # 搜索
