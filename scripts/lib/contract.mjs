@@ -41,12 +41,6 @@ export class SkillContractChecker {
     'skills/systematic-debugging/test-pressure-2.md',
     'skills/writing-skills/SKILL.md',
     // 英文配对文件与中文版同源豁免：占位路径/流程路径文字
-    'skills/brainstorming/visual-companion.en.md',
-    'skills/diagnosing-superpowers/prompts/scrub.en.md',
-    'skills/diagnosing-superpowers/references/github-issues.en.md',
-    'skills/diagnosing-superpowers/templates/bundle-README.en.md',
-    'skills/systematic-debugging/test-pressure-2.en.md',
-    'skills/writing-skills/SKILL.en.md',
   ])
 
   static ORPHAN_EXEMPT = new Set([
@@ -57,18 +51,12 @@ export class SkillContractChecker {
     'skills/systematic-debugging/test-academic.md',
     'skills/systematic-debugging/CREATION-LOG.md',
     // 英文配对孤儿与中文版同源豁免
-    'skills/brainstorming/spec-document-reviewer-prompt.en.md',
-    'skills/systematic-debugging/test-pressure-1.en.md',
-    'skills/systematic-debugging/test-pressure-2.en.md',
-    'skills/systematic-debugging/test-pressure-3.en.md',
-    'skills/systematic-debugging/test-academic.en.md',
-    'skills/systematic-debugging/CREATION-LOG.en.md',
   ])
 
   static HOST_DOCS = new Set(['SKILL.md', 'AGENTS.md', 'CLAUDE.md', 'TODO.md', 'README.md'])
   static RESOURCE_SUBS = ['references', 'prompts', 'templates', 'scripts', 'examples', '']
 
-  static BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md', 'skills/writing-skills/SKILL.en.md'])
+  static BARE_CALL_EXEMPT = new Set(['skills/writing-skills/SKILL.md'])
 
   /** 技能正文里禁止再出现的自建服务痕迹：可视化已改走宿主官方文档预览。 */
   static FORBIDDEN_SERVICE_MARKERS = ['start-server.sh', 'stop-server.sh', 'server.cjs', 'helper.js']
@@ -112,15 +100,44 @@ export class SkillContractChecker {
    * 英文 frontmatter 的 description 必须带 "Superpower Skill: " 前缀且不含中文；
    * 中文 SKILL.md 与英文 SKILL.en.md 的 frontmatter.name 必须一致。
    */
+    /**
+   * 技能文件双语契约：每个技能目录的 SKILL.md 必须同时声明英文 description 与中文
+   * description_zh；英文描述带 "Superpower Skill: " 前缀且不含中文，中文描述带
+   * "Superpower Skill：" 前缀且含中文；frontmatter.name 与目录名一致。
+   */
+  /**
+   * README 语言面契约：README.md 默认英文（正文不得含中文标题），
+   * README.zh.md 为中文版，两者顶部都有互跳链接。
+   */
+  checkReadmeLanguage() {
+    const issues = []
+    const read = (rel) => {
+      try { return readFileSync(join(this.rootDir, rel), 'utf8') } catch { return '' }
+    }
+    const en = read('README.md')
+    const zh = read('README.zh.md')
+    if (!en) issues.push('README.md 缺失')
+    // 标题行扫描在剥离代码块之后进行：README 内嵌的 bash/JS 代码块常以 # 开头，
+    // 不剥离会把代码块误判为 Markdown 标题。
+    const stripCode = (s) => s.replace(/```[sS]*?```/g, '')
+    if (/^#{1,3}[ ]*[一-鿿]/m.test(stripCode(en))) {
+      issues.push('README.md 含中文标题，默认文档应为英文')
+    }
+    if (!zh) issues.push('README.zh.md 缺失')
+    if (en && !en.includes('[中文](./README.zh.md)')) issues.push('README.md 缺少指向 README.zh.md 的切换链接')
+    if (zh && !zh.includes('[English](./README.md)')) issues.push('README.zh.md 缺少指向 README.md 的切换链接')
+    return issues
+  }
+
   async checkBilingualPairing(dir = this.skillDir) {
     const issues = []
     const entries = await readdir(dir, { withFileTypes: true })
     for (const entry of entries) {
       if (!entry.isDirectory() || entry.name.startsWith('.')) continue
       const skillDir = join(dir, entry.name)
-      const enPath = join(skillDir, 'SKILL.en.md')
-      if (!existsSync(enPath)) {
-        issues.push('技能 ' + entry.name + ' 缺少 SKILL.en.md')
+      const zhPath = join(skillDir, 'SKILL.md')
+      if (!existsSync(zhPath)) {
+        issues.push('技能 ' + entry.name + ' 缺少 SKILL.md')
         continue
       }
       const parseFm = (file) => {
@@ -138,46 +155,27 @@ export class SkillContractChecker {
           return null
         }
       }
-      const zh = parseFm(join(skillDir, 'SKILL.md'))
-      const en = parseFm(enPath)
-      if (!en) {
-        issues.push('技能 ' + entry.name + ' 的 SKILL.en.md frontmatter 无法解析')
+      const fm = parseFm(zhPath)
+      if (!fm) {
+        issues.push('技能 ' + entry.name + ' 的 SKILL.md frontmatter 无法解析')
         continue
       }
-      if (!en.description || !en.description.startsWith('Superpower Skill: ')) {
-        issues.push('技能 ' + entry.name + ' 的英文描述缺少 "Superpower Skill: " 前缀')
+      if (fm.name && fm.name !== entry.name) {
+        issues.push('技能 ' + entry.name + ' 的 frontmatter.name 与目录名不一致: ' + fm.name)
       }
-      if (/[\u4e00-\u9fff]/.test(en.description || '')) {
+      if (!fm.description || !fm.description.startsWith('Superpower Skill: ')) {
+        issues.push('技能 ' + entry.name + ' 的英文描述（description）缺少 "Superpower Skill: " 前缀')
+      }
+      if (/[\u4e00-\u9fff]/.test(fm.description || '')) {
         issues.push('技能 ' + entry.name + ' 的英文描述包含中文')
       }
-      if (zh && en.name && zh.name !== en.name) {
-        issues.push('技能 ' + entry.name + ' 的中英文 frontmatter.name 不一致: ' + zh.name + ' vs ' + en.name)
+      if (!fm.description_zh || !fm.description_zh.startsWith('Superpower Skill：')) {
+        issues.push('技能 ' + entry.name + ' 的中文描述（description_zh）缺少 "Superpower Skill：" 前缀')
+      }
+      if (!/[\u4e00-\u9fff]/.test(fm.description_zh || '')) {
+        issues.push('技能 ' + entry.name + ' 的中文描述不含中文')
       }
     }
-    return issues
-  }
-
-  /**
-   * README 语言面契约：README.md 默认英文（正文不得含中文标题），
-   * README.zh.md 为中文版，两者顶部都有互跳链接。
-   */
-  checkReadmeLanguage() {
-    const issues = []
-    const read = (rel) => {
-      try { return readFileSync(join(this.rootDir, rel), 'utf8') } catch { return '' }
-    }
-    const en = read('README.md')
-    const zh = read('README.zh.md')
-    if (!en) issues.push('README.md 缺失')
-    // 标题行扫描在剥离代码块之后进行：README 内嵌的 bash/JS 代码块常以 # 开头，
-    // 不剥离会把代码块误判为 Markdown 标题。
-    const stripCode = (s) => s.replace(/\`\`\`[\s\S]*?\`\`\`/g, '')
-    if (/^#{1,3}[ ]*[\u4e00-\u9fff]/m.test(stripCode(en))) {
-      issues.push('README.md 含中文标题，默认文档应为英文')
-    }
-    if (!zh) issues.push('README.zh.md 缺失')
-    if (en && !en.includes('[中文](./README.zh.md)')) issues.push('README.md 缺少指向 README.zh.md 的切换链接')
-    if (zh && !zh.includes('[English](./README.md)')) issues.push('README.zh.md 缺少指向 README.md 的切换链接')
     return issues
   }
 

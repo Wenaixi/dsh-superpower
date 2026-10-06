@@ -143,7 +143,7 @@ for (const ri of readmeIssues) {
 console.log('[verify] readme-language check ' + (readmeIssues.length === 0 ? 'PASS' : 'FAIL: ' + readmeIssues.length + ' issue(s)') + '\n')
 if (readmeIssues.length > 0) ok = false
 
-// (2.46) 中英配对契约：每个技能必须有 SKILL.en.md，英文描述带 Superpower Skill: 前缀且不含中文
+// (2.46) 技能文件双语契约：SKILL.md 同时声明英文 description 与中文 description_zh
 console.log('[verify] bilingual-pairing check')
 const bilingualIssues = await contract.checkBilingualPairing()
 for (const bi of bilingualIssues) {

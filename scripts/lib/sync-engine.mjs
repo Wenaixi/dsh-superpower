@@ -169,11 +169,18 @@ export class SyncEngine {
           diagnostics.push(`FAIL [frontmatter.name不一致] ${rel}: 上游 "${du.name}" 本地 "${dl.name}"`)
           fails++
         }
-        if (!/^Superpower Skill：/.test(dl.description)) {
-          diagnostics.push(`FAIL [description前缀缺失] ${rel}: "${dl.description.slice(0, 40)}"`)
+        if (!/^Superpower Skill: /.test(dl.description)) {
+          diagnostics.push(`FAIL [description英文前缀缺失] ${rel}: "${dl.description.slice(0, 40)}"`)
           fails++
-        } else if (!/[\u4e00-\u9fff]/.test(dl.description)) {
-          diagnostics.push(`FAIL [description未中文化] ${rel}`)
+        } else if (/[\u4e00-\u9fff]/.test(dl.description)) {
+          diagnostics.push(`FAIL [description含中文] ${rel}`)
+          fails++
+        }
+        if (!/^Superpower Skill：/.test(dl.descriptionZh)) {
+          diagnostics.push(`FAIL [description_zh前缀缺失] ${rel}: "${dl.descriptionZh.slice(0, 40)}"`)
+          fails++
+        } else if (!/[\u4e00-\u9fff]/.test(dl.descriptionZh)) {
+          diagnostics.push(`FAIL [description_zh未中文化] ${rel}`)
           fails++
         }
       }

@@ -199,14 +199,14 @@ async function loadPlugin(raw) {
   const zhSkill = await zhCtx.skills.get('brainstorming')
   check(
     state,
-    '[语言偏好] 默认中文：描述以中文前缀开头',
+    '[语言偏好] 默认：描述为中文前缀',
     typeof zhSkill?.description === 'string' && zhSkill.description.startsWith('Superpower Skill：'),
     true,
   )
   check(
     state,
-    '[语言偏好] 默认中文：正文为中文',
-    /[\u4e00-\u9fff]/.test(zhSkill?.content ?? ''),
+    '[语言偏好] 默认：正文恒为英文（SKILL.md 正文）',
+    !/[\u4e00-\u9fff]/.test(zhSkill?.content ?? ''),
     true,
   )
 
@@ -214,19 +214,19 @@ async function loadPlugin(raw) {
   const enSkill = await enCtx.skills.get('brainstorming')
   check(
     state,
-    '[语言偏好] language=en：描述以 Superpower Skill: 英文前缀开头',
+    '[语言偏好] language=en：描述切为英文前缀',
     typeof enSkill?.description === 'string' && enSkill.description.startsWith('Superpower Skill: '),
     true,
   )
   check(
     state,
-    '[语言偏好] language=en：正文为英文（正文来自 SKILL.en.md）',
-    /ALWAYS find root cause|creative work|Brainstorming/i.test(enSkill?.content ?? '') || !/[\u4e00-\u9fff]/.test(enSkill?.content ?? ''),
+    '[语言偏好] language=en：正文仍为英文',
+    !/[\u4e00-\u9fff]/.test(enSkill?.content ?? ''),
     true,
   )
   check(
     state,
-    '[语言偏好] language=en：开关 invocation 不受影响',
+    '[语言偏好] 开关 invocation 不受影响',
     enSkill?.invocation.modelInvocable === true && enSkill?.invocation.userInvocable === true,
     true,
   )

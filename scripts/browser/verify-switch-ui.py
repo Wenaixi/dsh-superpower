@@ -195,17 +195,17 @@ with sync_playwright() as pw:
        'on=%d/%d' % (sum(1 for r in after if r['on']), len(after)))
     page.screenshot(path='%s/08-all-on.png' % OUT, full_page=True)
 
-    # 语言切换：点 English -> 描述变英文 -> 回读落盘 -> 点中文恢复
+    # 语言切换：默认中文描述 -> 点 English -> 描述变英文 -> 回读落盘 -> 点中文恢复
     zh_desc = page.inner_text('[class*="spSwDesc"]').strip()
-    ok('语言切换初始为中文描述', 'Skill' not in zh_desc[:60] or 'Superpower' not in zh_desc[:60], zh_desc[:50])
+    ok('语言切换初始为中文描述', 'Superpower Skill：' in zh_desc[:80], zh_desc[:60])
     page.click('li[class*="spSwItem"] [class*="spSwLang"] [aria-pressed="false"]:last-child', timeout=15000)
     settle(lambda: 'Superpower Skill:' in page.inner_text('[class*="spSwDesc"]'), '语言切换后描述为英文', 30000)
     ok('语言切换后描述为英文', 'Superpower Skill:' in page.inner_text('[class*="spSwDesc"]'), page.inner_text('[class*="spSwDesc"]')[:60])
     patch = read_patch()
     ok('语言偏好写入 cordis.patch.yml', 'language' in patch, ' '.join(patch.split())[-120:])
     page.click('li[class*="spSwItem"] [class*="spSwLang"] [aria-pressed="false"]:first-child', timeout=15000)
-    settle(lambda: 'Superpower Skill:' not in page.inner_text('[class*="spSwDesc"]'), '语言切回中文', 30000)
-    ok('语言切回中文', 'Superpower Skill:' not in page.inner_text('[class*="spSwDesc"]'), page.inner_text('[class*="spSwDesc"]')[:50])
+    settle(lambda: 'Superpower Skill：' in page.inner_text('[class*="spSwDesc"]'), '语言切回中文', 30000)
+    ok('语言切回中文', 'Superpower Skill：' in page.inner_text('[class*="spSwDesc"]'), page.inner_text('[class*="spSwDesc"]')[:60])
 
     # 搜索
     box = page.get_by_label('按名称或描述过滤技能').first
