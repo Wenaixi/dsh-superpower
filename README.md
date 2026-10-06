@@ -170,39 +170,9 @@ scripts/            # gates, precedence runs, switch runs, upstream sync review,
 scripts/build-client.mjs      # copies the client artifact, then checks the inline catalog against skills/
 ```
 
-## Version history
+## Changelog
 
-Since `v7.0.0` skill names follow upstream naming (no `superpower-` prefix) and the bundle syncs upstream `obra/superpowers v6.4.2`; the plugin became DSH-only, dropping compatibility layers for Claude Code, Codex, Gemini CLI, and other hosts. npm `7.0.0` was published before that specialization and is deprecated.
-
-`v7.1.0` extracted the `SkillCatalog` and `SkillDocument` deep modules and pushed boundary self-tests down into the modules themselves.
-
-`v7.1.1` fixed the official filesystem precedence script failing to locate `@deepseek-ai/dsh-skill-filesystem` under the pnpm isolated layout.
-
-`v7.2.0` added the skill switch panel, turning the plugin into a dual-face form (Host side registers skills, browser side renders the panel) and adding the icon and card metadata.
-
-`v7.3.0` upgraded snapshot invalidation to a three-key aggregate fingerprint (directory mtime + root directory names + per-skill SKILL.md mtime), closing two blind windows (content edits and incremental creation); the skill-count magic number became an exported constant; the bare-call guard regex was corrected against the real data domain and its self-test blind spot closed; client manifest comparison became name-keyed.
-
-`v7.2.1` fixed the panel's language boundary: skill content (names and descriptions) stayed Chinese with no per-skill translation; all panel UI copy (titles, buttons, hints, meta labels) moved into `zh`/`en` dictionaries and follows the Host UI language through the official locale registry. The provider/rank/source labels stopped being hardcoded English.
-
-`v7.4.0` merged each skill's two switches into one and converged configuration onto a single `disabled` table; brainstorming's visual collaboration moved to DSH's official document preview and the bundled HTTP server scripts were removed.
-
-`v7.4.1` fixed switch saves failing: the `dsh-settings` write gate validates every `op.path` against a volatile node, and dropping `.volatile()` from the two legacy fields made the whole `mutate` batch fail; restoring the marker fixed it. The panel header gained a panel-build label.
-
-`v7.5.0` shipped every skill with an English body (`SKILL.en.md`, upstream original adapted for DSH) beside the Chinese one, added a per-skill `中文 / English` switch, made English descriptions always start with `Superpower Skill: `, routed the same language preference to the model-side catalog and body, and made README.md English by default with a Chinese twin.
-
-`v7.5.8` eliminated silent failure in the language bar (renders `spSwLangFailure` alerts on mutation issues instead of failing silently) and solidified hot-reload resilience.
-
-`v7.5.7` fixed the panel version label and added a visible scope note.: it switches the `Superpower Skill:` text users and the model see, the button label, and nothing else — the rest of the panel stays in the Host UI language, and skill bodies remain the English originals.: the panel's own copy (title, bulk buttons, search box, hints, meta labels) switches with the skill descriptions instead of following the Host UI language.
-
-`v7.5.4` republished under a fresh version: the 7.5.3 release hit an npm staged-publish conflict; the code is identical to 7.5.3.
-
-`v7.5.3` fixed the language button label: it now shows the target language based on the effective language (falling back to the Host language when the preference is unset), so an untouched panel correctly offers `English` and clicking it actually switches.
-
-`v7.5.2` moved the language switch to a single button at the top of the panel: it now controls all 15 skills at once, and while the `language` preference is unset the descriptions follow the Host UI language (settings language); once set, they stay fixed.
-
-`v7.5.1` makes skill bodies the official English originals (single `SKILL.md` per skill, DSH-adapted), keeps Chinese as the panel language via `description_zh`, so the language switch changes only the description the model sees. The `中文 / English` switch, the `Superpower Skill: ` prefixes, and the bilingual README remain.
-
-Full history in [CHANGELOG.md](./CHANGELOG.md).
+Release notes live in [CHANGELOG.md](./CHANGELOG.md), newest first, one section per version.
 
 ## FAQ
 
