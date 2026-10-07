@@ -191,32 +191,46 @@ with sync_playwright() as pw:
        'on=%d/%d' % (sum(1 for r in after if r['on']), len(after)))
     page.screenshot(path='%s/08-all-on.png' % OUT, full_page=True)
 
-    # 语言切换：面板顶部一个全局按钮（intro 之下）——中文态显示 English，点击切英文，再点切回
-    lang_bar = '[class*="spSwLangBar"] [class*="spSwLangBtn"]'
+    # 语言切换：面板顶部三段选择器（中文 / English / 跟随宿主（自动））
+    lang_bar = '[class*="spSwLangBar"]'
     desc_sel = '[class*="spSwDesc"]'
-    row_btn = '[class*="spSwItem"] [class*="spSwLangBtn"]'
-    ok('每行不再有语言按钮', page.evaluate('() => document.querySelectorAll(' + json.dumps(row_btn) + ').length') == 0)
-    ok('顶部有且只有一个语言按钮', page.evaluate('() => document.querySelectorAll(' + json.dumps(lang_bar) + ').length') == 1)
-    # 若上次运行残留 language=en，先归零到中文
-    desc_now = page.inner_text(desc_sel).strip()
-    if 'Superpower Skill：' not in desc_now:
-        page.click(lang_bar, timeout=15000)
-        settle('归零到中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
-    btn_text = page.inner_text(lang_bar).strip()
-    note_el = page.query_selector('[class*="spSwLangNote"]')
-    ok('语言栏可见说明存在', note_el is not None and '仅切换技能描述' in note_el.inner_text())
-    ok('无语言切换失败报错', page.query_selector('[class*="spSwLangFailure"]') is None)
-    ok('中文态按钮文案为 English', btn_text == 'English', btn_text)
-    page.click(lang_bar, timeout=15000)
-    settle('语言切换后描述为英文', lambda _: 'Superpower Skill:' in page.inner_text(desc_sel), 30000)
-    ok('语言切换后描述为英文', 'Superpower Skill:' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
+    ok('顶部语言切换栏存在', page.query_selector(lang_bar) is not None)
+    tabs = page.query_selector_all(lang_bar + ' [role="tab"]')
+    ok('语言选择器为三段选项', len(tabs) == 3, '实际选项数: %d' % len(tabs))
+    row_tabs = '[class*="spSwItem"] [role="tab"]'
+    ok('每行不再有语言切换选项', page.evaluate('() => document.querySelectorAll(' + json.dumps(row_tabs) + ').length') == 0)
+    # 若上次运行残留 language 字段，先归零到跟随宿主（自动）
     patch = read_patch()
-    ok('语言偏好写入 cordis.patch.yml', 'language' in patch and 'en' in patch, ' '.join(patch.split())[-120:])
-    btn_text = page.inner_text(lang_bar).strip()
-    ok('英文态按钮文案为中文', btn_text == '中文', btn_text)
-    page.click(lang_bar, timeout=15000)
-    settle('语言切回中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
-    ok('语言切回中文', 'Superpower Skill：' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
+    if 'language' in patch:
+        page.get_by_text('跟随宿主（自动）', exact=True).click()
+        settle('归零到跟随宿主', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
+    note_el = page.query_selector('[class*="spSwLangNote"]')
+    ok('未配置态显示跟随宿主界面语言提示', note_el is not None and '当前跟随宿主界面语言' in note_el.inner_text())
+    ok('无语言切换失败报错', page.query_selector('[class*="spSwLangFailure"]') is None)
+    # 1. 切换到 English
+    page.get_by_text('English', exact=True).click()
+    settle('语言切为英文后描述为英文', lambda _: 'Superpower Skill:' in page.inner_text(desc_sel), 30000)
+    ok('语言切换后描述为英文前缀', 'Superpower Skill:' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
+    patch = read_patch()
+    ok('显式英文写入 cordis.patch.yml', 'language' in patch and 'en' in patch, ' '.join(patch.split())[-120:])
+    note_el = page.query_selector('[class*="spSwLangNote"]')
+    ok('显式配置态显示英文原版正文提示', note_el is not None and '仅切换技能描述' in note_el.inner_text())
+    # 2. 切换回 跟随宿主（自动）
+    page.get_by_text('跟随宿主（自动）', exact=True).click()
+    settle('切回跟随宿主后描述回中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
+    ok('切回跟随宿主后描述回中文', 'Superpower Skill：' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
+    patch = read_patch()
+    ok('跟随宿主后从 cordis.patch.yml 移除 language 字段', 'language' not in patch, ' '.join(patch.split())[-120:])
+    # 3. 显式切换到 中文
+    page.get_by_text('中文', exact=True).click()
+    settle('显式切中文后描述为中文', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
+    ok('显式切中文后描述为中文', 'Superpower Skill：' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
+    patch = read_patch()
+    ok('显式中文写入 cordis.patch.yml', 'language' in patch and 'zh' in patch, ' '.join(patch.split())[-120:])
+    # 4. 收尾归零至 跟随宿主（自动）
+    page.get_by_text('跟随宿主（自动）', exact=True).click()
+    settle('收尾归零至跟随宿主', lambda _: 'Superpower Skill：' in page.inner_text(desc_sel), 30000)
+    ok('收尾归零至跟随宿主', 'Superpower Skill：' in page.inner_text(desc_sel), page.inner_text(desc_sel)[:60])
 
     # 搜索
     box = page.get_by_label('按名称或描述过滤技能').first

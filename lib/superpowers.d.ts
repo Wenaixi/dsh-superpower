@@ -20,6 +20,11 @@ declare module '@deepseek-ai/cordis' {
          * @mode emit
          */
         'loader/volatile-update'(paths: readonly (readonly string[])[]): void;
+        /**
+         * 宿主配置重载通知（在 profile 补丁应用后广播），宿主界面语言变更经此收敛。
+         * @mode emit
+         */
+        'app-boot/config-reload'(): void;
     }
 }
 export declare const Config: Schema<Config>;
