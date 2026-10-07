@@ -40,6 +40,11 @@ declare module '@deepseek-ai/cordis' {
      * @mode emit
      */
     'loader/volatile-update'(paths: readonly (readonly string[])[]): void
+    /**
+     * 宿主配置重载通知（在 profile 补丁应用后广播），宿主界面语言变更经此收敛。
+     * @mode emit
+     */
+    'app-boot/config-reload'(): void
   }
 }
 
@@ -245,8 +250,18 @@ export function apply(ctx: Context, config: Config): void {
       activeProvider?.invalidate()
     })
 
+    // 宿主语言变更的收敛点：locale.preference 属另一个 profile 条目，它的 loader/volatile-update
+    // 只在那条插件自己的 fiber 上广播，本插件收不到。宿主每次应用补丁后广播
+    // app-boot/config-reload，在此让技能目录失效并清空 hostLanguageCache：
+    // 未配置语言的用户切换宿主语言后，模型侧目录与斜杠菜单才跟着换语言。
+    const disposeReload = ctx.on('app-boot/config-reload', () => {
+      ctx.logger.debug('[superpowers] host config reloaded, invalidating catalog (host language may have changed)')
+      activeProvider?.invalidate()
+    })
+
     return () => {
       // 逆序释放：先摘监听，再注销 provider，最后清理自身快照
+      disposeReload()
       disposeVolatile()
       disposeListener()
       disposeProvider()
