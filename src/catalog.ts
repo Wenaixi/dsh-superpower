@@ -109,6 +109,8 @@ export class SkillCatalog {
   invalidate(): void {
     this.cachedCandidates = null
     this.fingerprint = null
+    this.lastScanProviderName = undefined
+    this.lastScanRank = undefined
     this.lastScanLanguage = undefined
     this.entriesByName.clear()
     this.entriesByDir.clear()
@@ -147,7 +149,8 @@ export class SkillCatalog {
         if (current !== mtimeMs) return true
       }
       return false
-    } catch {
+    } catch (err: unknown) {
+      if (signal?.aborted || (err as DOMException)?.name === 'AbortError') throw err
       return true
     }
   }
@@ -336,14 +339,13 @@ export class SkillCatalog {
       directoryName: dirName,
       skillPath: locator.path,
       document: doc,
-      ...(options?.language === 'en' && doc.path !== locator.path ? {} : {}),
       nameDrift: doc.name !== dirName,
     }
     this.entriesByName.set(doc.name, updatedEntry)
     this.entriesByDir.set(dirName, updatedEntry)
     this.cachedCandidates = null // 快照失效，以便下一轮刷新
 
-    return doc.toDefinition(providerName)
+    return doc.toDefinition(providerName, language)
   }
 
   /**

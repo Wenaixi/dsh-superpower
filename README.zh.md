@@ -78,7 +78,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 
 官方注册表在同层重名时按 `rank` 从小到大裁决。本包 rank 是 10，比 `dsh-skill-filesystem` 的项目级和用户级（100–500）以及官方内置 bundled（600）都小，所以只要有同名技能，本包这份生效，不会有两套规则打架。
 
-## 技能开关
+## 技能开关与语言偏好
 
 插件管理页里点开 `@wenaixi/dsh-superpower` 卡片，详情页底部就是开关面板。每个技能一个开关，关掉即两侧同时不可见：
 
@@ -90,7 +90,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 - 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
 - 状态写在 profile 的 `cordis.patch.yml` 的 `disabled` 字段里，跟着 profile 一起备份迁移，重装插件不丢。
 - 只影响本包这 15 个技能，不碰官方和第三方插件提供的技能。
-- 语言切换：面板顶部（说明文案之下）提供「中文 / English / 跟随宿主（自动）」三段式选择器，一次切换全部 15 个技能描述（英文 `description` 与中文 `description_zh`）的显示语言，即模型目录与斜杠唤出技能栏里看到的描述文本；技能名与正文都不变。控件只影响 `Superpower Skill:` 后面的文本：面板其余 UI（标题、批量按钮、搜索框、提示、meta 标签）跟随宿主界面语言，技能正文恒为英文原版。两种描述分别以 `Superpower Skill: ` / `Superpower Skill：` 开头。未配置时描述动态跟随宿主界面语言（设置里选的语言），并显示提示；显式选择中文或 English 后锁定，选择「跟随宿主（自动）」即可随时清除锁定、恢复跟随宿主。偏好保存在 profile 的 `language` 字段中（跟随宿主时自动 unset）。
+- 语言切换：面板顶部（说明文案之下）提供「中文 / English / 跟随宿主（自动）」三段式选择器，一次切换全部 15 个技能描述（英文 `description` 与中文 `description_zh`）的显示语言，即模型目录与斜杠唤出技能栏里看到的描述文本；技能名与正文都不变。控件只影响 `Superpower Skill:` 后面的文本：面板其余 UI（标题、批量按钮、搜索框、提示）跟随宿主界面语言，技能正文恒为英文原版。两种描述分别以 `Superpower Skill: ` / `Superpower Skill：` 开头。未配置时描述动态跟随宿主界面语言（设置里选的语言），并显示提示；显式选择中文或 English 后锁定，选择「跟随宿主（自动）」即可随时清除锁定、恢复跟随宿主。偏好保存在 profile 的 `language` 字段中（跟随宿主时自动 unset）。
 
 
 ## 使用

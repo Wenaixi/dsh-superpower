@@ -89,17 +89,6 @@ export const Config = Schema.object({
   // 断言只是让声明发射改写这个 specifier，不改变任何运行时行为。
   .description('@wenaixi/dsh-superpower 插件配置') as unknown as Schema<Config>
 
-/**
- * 宿主注入的 volatile 配置引用形态。
- *
- * 本地声明而非从 @deepseek-ai/cosmokit 导入：该包只是 schemastery 的传递依赖，
- * 在 pnpm isolated 布局下不在本包的 node_modules 直连路径上，导入它需要额外声明
- * 一条 peer 并把产物类型签名绑到 .pnpm 内部路径，收益仅是一个只用到 get() 的形状。
- */
-interface VolatileRef<T> {
-  get(): T
-}
-
 export interface Config {
   providerName: string
   skillDir?: string
@@ -154,6 +143,7 @@ class SuperpowersProvider implements SkillProvider {
   private readonly control: SkillProviderControl
   private readonly currentSwitches: () => SkillSwitches
   private hostLanguageCache: 'zh' | 'en' | undefined
+  private hostLanguageResolved = false
 
   constructor(ctx: Context, control: SkillProviderControl, config: Config) {
     assertNotRuntimeProvider(config.providerName)
@@ -172,7 +162,7 @@ class SuperpowersProvider implements SkillProvider {
    * 由调用方回退到 zh。结果缓存，locale preference 变更经 loader/volatile-update 清空。
    */
   hostLanguage(): 'zh' | 'en' | undefined {
-    if (this.hostLanguageCache !== undefined) return this.hostLanguageCache
+    if (this.hostLanguageResolved) return this.hostLanguageCache
     let locale: 'zh' | 'en' | undefined
     try {
       const described = this.ctx.get('settings')?.describe()
@@ -185,6 +175,7 @@ class SuperpowersProvider implements SkillProvider {
     }
     // ponytail: 结果缓存 + volatile-update 失效；describe 每次全量扫描，缓存避免每轮 list 重扫
     this.hostLanguageCache = locale
+    this.hostLanguageResolved = true
     return locale
   }
 
@@ -196,6 +187,7 @@ class SuperpowersProvider implements SkillProvider {
     this.control.invalidate()
     this.catalog.invalidate()
     this.hostLanguageCache = undefined
+    this.hostLanguageResolved = false
   }
 
   async list(options: SkillLookupOptions): Promise<readonly SkillCandidate[]> {

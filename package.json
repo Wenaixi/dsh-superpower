@@ -12,6 +12,7 @@
     "icon.png",
     "cordis.patch.yml",
     "README.md",
+    "README.zh.md",
     "LICENSE"
   ],
   "publishConfig": {

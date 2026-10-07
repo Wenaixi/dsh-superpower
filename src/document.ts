@@ -45,11 +45,6 @@ function stringField(data: Record<string, unknown>, key: string): string | undef
   return typeof v === 'string' && v.length > 0 ? v : undefined
 }
 
-function optionalString(data: Record<string, unknown>, key: string): Record<string, string> {
-  const v = data[key]
-  return typeof v === 'string' && v.length > 0 ? { [key]: v } : {}
-}
-
 function frontmatterBoolean(data: Record<string, unknown>, key: string): boolean | undefined {
   if (!Object.hasOwn(data, key)) return undefined
   const v = data[key]

@@ -21,7 +21,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, extname, join, relative, resolve } from 'node:path'
-import { spawnSync } from 'node:child_process'
+import vm from 'node:vm'
 
 export class SkillContractChecker {
   constructor(rootDir) {
@@ -40,7 +40,6 @@ export class SkillContractChecker {
     'skills/diagnosing-superpowers/templates/bundle-README.md',
     'skills/systematic-debugging/test-pressure-2.md',
     'skills/writing-skills/SKILL.md',
-    // 英文配对文件与中文版同源豁免：占位路径/流程路径文字
   ])
 
   static ORPHAN_EXEMPT = new Set([
@@ -50,7 +49,6 @@ export class SkillContractChecker {
     'skills/systematic-debugging/test-pressure-3.md',
     'skills/systematic-debugging/test-academic.md',
     'skills/systematic-debugging/CREATION-LOG.md',
-    // 英文配对孤儿与中文版同源豁免
   ])
 
   static HOST_DOCS = new Set(['SKILL.md', 'AGENTS.md', 'CLAUDE.md', 'TODO.md', 'README.md'])
@@ -106,8 +104,8 @@ export class SkillContractChecker {
     if (!en) issues.push('README.md 缺失')
     // 标题行扫描在剥离代码块之后进行：README 内嵌的 bash/JS 代码块常以 # 开头，
     // 不剥离会把代码块误判为 Markdown 标题。
-    const stripCode = (s) => s.replace(/```[sS]*?```/g, '')
-    if (/^#{1,3}[ ]*[一-鿿]/m.test(stripCode(en))) {
+    const stripCode = (s) => s.replace(/```[\s\S]*?```/g, '')
+    if (/(?:^|\n)#{1,6}\s+.*[\u4e00-\u9fa5]/m.test(stripCode(en))) {
       issues.push('README.md 含中文标题，默认文档应为英文')
     }
     if (!zh) issues.push('README.zh.md 缺失')
@@ -443,12 +441,12 @@ export class SkillContractChecker {
       return results
     }
 
-    // (1) 语法合法性
-    const check = spawnSync(process.execPath, ['--check', join(this.rootDir, clientRel)], { encoding: 'utf8' })
-    if (check.status !== 0) {
-      record(clientRel, false, 'node --check 失败: ' + (check.stderr.trim() || 'syntax error'))
-    } else {
+    // (1) 语法合法性（纯内存解析，彻底免疫沙箱管道 EPERM）
+    try {
+      new vm.Script(source, { filename: clientRel })
       record(clientRel, true)
+    } catch (err) {
+      record(clientRel, false, '语法校验失败: ' + (err?.message ?? String(err)))
     }
 
     // (2) 官方 CJS factory 形态：必须是 ModuleLoader.load + factory，且不得写成 ESM
@@ -538,6 +536,9 @@ export class SkillContractChecker {
     }
     if (!source.includes("spSwLangFailure") || !source.includes("failures['language']")) {
       i18nIssues.push("语言栏缺少对 failures['language'] 失败状态的渲染（spSwLangFailure），存在静默失败风险")
+    }
+    if (!source.includes("console.error('[dsh-superpower] form.mutate failed:'")) {
+      i18nIssues.push("submit 失败分支缺少控制台堆栈输出（console.error('[dsh-superpower] form.mutate failed:')），违反防静默失败纪律")
     }
     if (source.includes('spSwLangBtn') || /SP_LANG_ZH|SP_LANG_EN/.test(source)) {
       i18nIssues.push('仍保留旧版单按钮 spSwLangBtn 或目标语言字面量常量，应彻底清理')

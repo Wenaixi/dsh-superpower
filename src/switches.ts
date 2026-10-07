@@ -94,10 +94,7 @@ export function applySwitches<T extends { name: string; invocation: SkillInvocat
  * @returns 普通对象字典；非对象或缺省时为空字典
  */
 function unwrapDictionary(value: unknown): Record<string, boolean> {
-  const unwrapped =
-    typeof (value as MaybeVolatile | undefined)?.get === 'function'
-      ? (value as MaybeVolatile).get!()
-      : value
+  const unwrapped = unwrapValue(value)
   if (typeof unwrapped !== 'object' || unwrapped === null || Array.isArray(unwrapped)) return {}
   return { ...(unwrapped as Record<string, boolean>) }
 }
