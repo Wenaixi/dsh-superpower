@@ -525,18 +525,26 @@ export class SkillContractChecker {
         i18nIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declared + ' 处）')
       }
     }
-    // (4.6) 语言切换按钮契约：单按钮显示目标语言字面量（SP_LANG_ZH/SP_LANG_EN），
-    //       不得回退到双按钮 aria-pressed 形态；langTitle tooltip 必须经 t()；
-    //       技能描述的英文取词只能经 skillText()（面板渲染路径不得出现裸 descriptionEn 字面量）。
-    if (!source.includes("var SP_LANG_ZH = '中文'") || !source.includes("var SP_LANG_EN = 'English'")) {
-      i18nIssues.push('缺少 SP_LANG_ZH / SP_LANG_EN 目标语言字面量常量')
+    // (4.6) 语言切换契约：三段式 SegmentedControl（中文 / English / 跟随宿主自动）。
+    //       readLanguage 必须保留三态（undefined = 跟随宿主，不得折叠为 zh）；
+    //       auto 段必须常驻且写 unset；set 写入 zh/en；静默失败防御保留；不得退回旧单按钮或双按钮形态。
+    if (!source.includes('h(P.SegmentedControl')) {
+      i18nIssues.push('语言切换必须使用三段式 SegmentedControl')
+    }
+    if (!source.includes("value: 'zh'") || !source.includes("value: 'en'") || !source.includes("value: 'auto'")) {
+      i18nIssues.push('语言切换选项必须包含 zh、en、auto 三段')
+    }
+    if (!source.includes("op: 'unset', path: [LANGUAGE_FIELD]")) {
+      i18nIssues.push('auto（跟随宿主）选项必须提交 unset 操作')
     }
     if (!source.includes("t('langTitle')")) {
       i18nIssues.push("语言切换缺少 t('langTitle') 取词调用")
     }
-    const declaredTitle = (source.match(/langTitle: '/g) || []).length
-    if (declaredTitle < 2) {
-      i18nIssues.push('键 langTitle 未在 zh/en 两本字典同时声明（当前 ' + declaredTitle + ' 处）')
+    for (const key of ['langTitle', 'langZh', 'langEn', 'langAuto', 'langUnsetHint']) {
+      const declared = (source.match(new RegExp(key + ": '", 'g')) || []).length
+      if (declared < 2) {
+        i18nIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declared + ' 处）')
+      }
     }
     if (!source.includes("className: 'spSwLangBar'")) {
       i18nIssues.push('面板缺少顶部全局语言栏 spSwLangBar')
@@ -544,14 +552,14 @@ export class SkillContractChecker {
     if (!source.includes("spSwLangFailure") || !source.includes("failures['language']")) {
       i18nIssues.push("语言栏缺少对 failures['language'] 失败状态的渲染（spSwLangFailure），存在静默失败风险")
     }
-    if (!/h\('button', \{\s*className: 'spSwLangBtn'/.test(source)) {
-      i18nIssues.push('面板缺少单个 spSwLangBtn 语言切换按钮')
+    if (source.includes('spSwLangBtn') || /SP_LANG_ZH|SP_LANG_EN/.test(source)) {
+      i18nIssues.push('仍保留旧版单按钮 spSwLangBtn 或目标语言字面量常量，应彻底清理')
     }
-    if (/spSwItem[\s\S]{0,600}className: 'spSwLangBtn'/.test(source)) {
-      i18nIssues.push('语言按钮出现在技能行内，应上移到面板顶部全局一个')
+    if (/aria-pressed/.test(source)) {
+      i18nIssues.push('存在已废弃的双按钮语言切换形态（aria-pressed）')
     }
-    if (/spSwLang\s*\{|spSwLang"|aria-pressed/.test(source)) {
-      i18nIssues.push('存在双按钮语言切换形态（spSwLang 组 / aria-pressed），应改为单按钮')
+    if (/value\[LANGUAGE_FIELD\] === 'en' \? 'en' : 'zh'/.test(source)) {
+      i18nIssues.push('readLanguage 仍将未配置态折叠为 zh，必须返回 undefined（跟随宿主）')
     }
     const bareEnDesc = /h('p', { className: 'spSwDesc' }, skill.descriptionEn)/.exec(source)
     if (bareEnDesc !== null) {
