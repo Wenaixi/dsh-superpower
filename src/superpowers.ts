@@ -175,8 +175,9 @@ class SuperpowersProvider implements SkillProvider {
     if (this.hostLanguageCache !== undefined) return this.hostLanguageCache
     let locale: 'zh' | 'en' | undefined
     try {
-      const forms = (this.ctx.get('settings')?.describe() ?? []) as { ns?: string; value?: unknown }[]
-      const entry = forms.find((d) => d.ns === 'locale')
+      const described = this.ctx.get('settings')?.describe()
+      const forms = (Array.isArray(described) ? described : (described as { namespaces?: unknown })?.namespaces ?? []) as { ns?: string; value?: unknown }[]
+      const entry = forms.find((d) => d !== null && typeof d === 'object' && d.ns === 'locale')
       const preference = (entry?.value as { preference?: unknown } | undefined)?.preference
       locale = preference === 'en' ? 'en' : preference === 'zh' ? 'zh' : undefined
     } catch {

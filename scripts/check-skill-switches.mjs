@@ -253,4 +253,45 @@ async function loadPlugin(raw) {
   check(state, '[语言语义] language=en 返回 en', outEn.language, 'en')
 }
 
+// ---------------------------------------------------------------------------
+// 场景 8：宿主界面语言变更被实时跟随（app-boot/config-reload 事件驱动失效与重扫）
+// ---------------------------------------------------------------------------
+{
+  const ctx = await freshRegistry()
+  let currentLocale = 'en'
+  ctx.provide('settings')
+  ctx.settings = {
+    describe: () => ({
+      namespaces: [{ ns: 'locale', value: { preference: currentLocale } }],
+    }),
+  }
+  const config = resolveConfig(
+    { name: superpowers.name, inject: superpowers.inject, Config: superpowers.Config, apply: superpowers.apply },
+    { providerName: 'superpowers' },
+  )
+  await ctx.plugin({ name: superpowers.name, inject: superpowers.inject, apply: superpowers.apply }, config)
+
+  // 1. 未配置 language 时，自动跟随当前宿主语言（en）
+  const skillEn = await ctx.skills.get('brainstorming')
+  check(
+    state,
+    '[宿主语言跟随] 初始跟随宿主 en：描述为英文前缀',
+    typeof skillEn?.description === 'string' && skillEn.description.startsWith('Superpower Skill: '),
+    true,
+  )
+
+  // 2. 宿主切换语言为 zh，并广播 app-boot/config-reload 事件
+  currentLocale = 'zh'
+  await ctx.emit('app-boot/config-reload')
+
+  // 3. 验证目录已失效，新读取的技能描述自动切换为中文前缀
+  const skillZh = await ctx.skills.get('brainstorming')
+  check(
+    state,
+    '[宿主语言跟随] 宿主切 zh + 重载：描述实时刷新为中文前缀',
+    typeof skillZh?.description === 'string' && skillZh.description.startsWith('Superpower Skill：'),
+    true,
+  )
+}
+
 exitByFailed('技能开关端到端实测', state)
