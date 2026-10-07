@@ -33,6 +33,7 @@ yarn-error.log*
 .superpowers/
 .worktrees/
 .private-journal/
+.local/
 
 # 测试与覆盖率
 coverage/
