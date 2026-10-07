@@ -140,7 +140,9 @@ with sync_playwright() as pw:
     ok('技能名与 skills/ 目录逐字一致', [r['name'] for r in rows] == EXPECTED)
     ok('面板开关总数 15（每行一个）',
        page.evaluate('() => document.querySelectorAll(' + json.dumps(SWITCH) + ').length') == 15)
-    ok('详情页标题显示版本号', 'v7.5.8' in body)
+    with open('package.json', 'r', encoding='utf-8') as f:
+        pkg_ver = json.load(f)['version']
+    ok('详情页标题显示版本号', ('v%s' % pkg_ver) in body or pkg_ver in body)
     ok('面板标题为「技能开关」', '技能开关' in body)
     meta = page.inner_text('[class*="spSwMeta"]')
     ok('元信息三项齐全',
