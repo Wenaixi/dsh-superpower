@@ -85,7 +85,7 @@ dsh plugin --profile web remove @wenaixi/dsh-superpower
 - 模型不再在可用技能目录里看到它，`skill` 工具调用也会被拒；
 - 你也没法再从斜杠命令补全或命令行技能清单里调它。
 
-面板上方还有全部开启、全部关闭、恢复默认三个批量操作和一个搜索框。页头标着本包的 `provider`、`rank`、`source`，排查同名覆盖时用得上。
+面板上方还有全部开启、全部关闭、恢复默认三个批量操作和一个搜索框。
 
 - 拨动后立即生效，模型的下一轮对话就能看到新目录；当前这一轮不受影响。
 - 状态写在 profile 的 `cordis.patch.yml` 的 `disabled` 字段里，跟着 profile 一起备份迁移，重装插件不丢。

@@ -84,7 +84,7 @@ Open the `@wenaixi/dsh-superpower` card in the plugin manager; the panel sits at
 
 - One switch per skill. Off means both sides lose it: the model no longer sees it in the available-skill catalog and `skill` tool calls are rejected; you can no longer reach it from slash-command completion or the CLI skill list.
 - A 3-state segmented control (`中文 / English / 跟随宿主（自动）`) at the top of the panel switches the description language of all 15 skills at once. It changes only the `Superpower Skill:` text: the rest of the panel stays in the Host UI language and skill bodies stay English. Both descriptions carry the `Superpower Skill:` / `Superpower Skill：` prefix. When unset, descriptions follow the Host UI language (the language chosen in settings) and the control displays an indicator; picking `中文` or `English` locks the selection, and picking `跟随宿主（自动）` resets to following the Host. The choice is stored as a `language` preference in the profile (unset when following the Host).
-- The panel header also carries enable-all, disable-all, restore-defaults, and a search box. The head line shows this bundle's `provider`, `rank`, `source`, and panel build.
+- The panel header carries enable-all, disable-all, restore-defaults, and a search box.
 - Changes take effect immediately; the running turn is unaffected and the next turn sees the new catalog and language.
 - State lives in the profile's `cordis.patch.yml` (`disabled` and `language` tables) and travels with the profile.
 - Only this bundle's 15 skills are affected; official and third-party skills are untouched.

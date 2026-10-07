@@ -507,23 +507,10 @@ export class SkillContractChecker {
       record(sourceRel, true, '样式注入契约齐全')
     }
 
-    // (4.5) 界面文案必须全部经 t() 取词。面板 UI 的 i18n 是硬契约：渲染路径一旦
-    //       出现硬编码的裸标签字符串，界面语言切换时该处便成为单语孤岛且无任何报错，
-    //       只能靠静态断言挡住。技能目录（SKILL_CATALOG）与样式字符串属数据与样式，
-    //       不在本断言范围内。
+    // (4.5) 界面文案必须全部经 t() 取词，且已废弃的元信息栏彻底清除。
     const i18nIssues = []
-    const bareMetaLabel = /spSwMetaItem' }, '[a-zA-Z]+'/.exec(source)
-    if (bareMetaLabel !== null) {
-      i18nIssues.push('meta 区存在未走 t() 的硬编码标签 ' + bareMetaLabel[0])
-    }
-    for (const key of ['provider', 'rank', 'source']) {
-      if (!source.includes("t('" + key + "')")) {
-        i18nIssues.push("meta 区缺少 t('" + key + "') 取词调用")
-      }
-      const declared = (source.match(new RegExp(key + ": '", 'g')) || []).length
-      if (declared < 2) {
-        i18nIssues.push('键 ' + key + ' 未在 zh/en 两本字典同时声明（当前 ' + declared + ' 处）')
-      }
+    if (source.includes('spSwMeta') || source.includes('spSwMetaItem')) {
+      i18nIssues.push('已废弃的元信息栏 spSwMeta 仍残留，应彻底删除')
     }
     // (4.6) 语言切换契约：三段式 SegmentedControl（中文 / English / 跟随宿主自动）。
     //       readLanguage 必须保留三态（undefined = 跟随宿主，不得折叠为 zh）；

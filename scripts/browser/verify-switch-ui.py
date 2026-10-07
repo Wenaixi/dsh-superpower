@@ -144,9 +144,7 @@ with sync_playwright() as pw:
         pkg_ver = json.load(f)['version']
     ok('详情页标题显示版本号', ('v%s' % pkg_ver) in body or pkg_ver in body)
     ok('面板标题为「技能开关」', '技能开关' in body)
-    meta = page.inner_text('[class*="spSwMeta"]')
-    ok('元信息三项齐全',
-       all(k in meta for k in ('提供方', 'superpowers', '优先级', '10', '来源', 'bundled', '面板版本')), meta)
+    ok('元信息栏已移除', page.query_selector('[class*="spSwMeta"]') is None)
     ok('三个批量按钮齐全', all(t in body for t in ('全部开启', '全部关闭', '恢复默认')))
     page.screenshot(path='%s/04-panel.png' % OUT, full_page=True)
 
