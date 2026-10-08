@@ -198,4 +198,5 @@ Issue 和 PR 都欢迎。详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 致谢
 
+- 上游 [obra/superpowers](https://github.com/obra/superpowers)
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的三角色插件架构

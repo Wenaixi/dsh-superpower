@@ -195,4 +195,5 @@ Issues and PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Credits
 
+- Upstream [obra/superpowers](https://github.com/obra/superpowers)
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) for the three-role plugin architecture
