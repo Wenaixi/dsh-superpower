@@ -195,5 +195,4 @@ Issues and PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Credits
 
-- Upstream [obra/superpowers](https://github.com/obra/superpowers) by [Jesse Vincent](https://blog.fsck.com) and [Prime Radiant](https://primeradiant.com), also MIT licensed
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) for the three-role plugin architecture

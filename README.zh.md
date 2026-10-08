@@ -198,5 +198,4 @@ Issue 和 PR 都欢迎。详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 致谢
 
-- 上游 [obra/superpowers](https://github.com/obra/superpowers)，作者 [Jesse Vincent](https://blog.fsck.com) 与 [Prime Radiant](https://primeradiant.com)，同为 MIT 协议
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的三角色插件架构
