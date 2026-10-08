@@ -1,10 +1,8 @@
 # 更新日志
 
-v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步上游 v6.4.2。
-
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [7.6.0] - 2026-10-08
+## [7.7.0] - 2026-10-08
 
 ### 变更
 
@@ -29,7 +27,7 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 - **修复客户端历史禁言表原子迁移缺陷**：`src/client.js` 补齐对 `modelDisabled`/`userDisabled` 历史旧表的读取并集回退；在单技能开关操作时原子性地将历史禁用项迁移写入新表 `disabled`，彻底杜绝单次开关导致历史禁用项被误清空抹除的隐患。
 - **SkillCatalog 增加并发重入屏障**：引入 `scanPromise` 合并并发重入扫描，杜绝并发查询时 Map 被反复清空导致的假重名与技能丢失。
 - **补全 npm 发布白名单遗漏**：`package.json` 的 `"files"` 数组补全 `"README.zh.md"`，彻底根除发布后线上点击中文说明 404 死链。
-- **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、明确语言切换只改技能描述（技能名与正文均不随语言变化）、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数与包体积更新为 7.6.0 实测口径；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的坏命令；计划文档复选框回填为已完成。
+- **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、明确语言切换只改技能描述（技能名与正文均不随语言变化）、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数与包体积更新为 7.7.0 实测口径；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的坏命令；计划文档复选框回填为已完成。
 - **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释；去掉误留的重复 `checkBilingualPairing` 实现。
 
 ### 测试
@@ -426,7 +424,7 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
-[7.6.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.6.0
+[7.7.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.7.0
 [7.5.8]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.8
 [7.5.7]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.7
 [7.5.6]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.6

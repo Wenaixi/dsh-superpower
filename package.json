@@ -1,6 +1,6 @@
 {
   "name": "@wenaixi/dsh-superpower",
-  "version": "7.6.0",
+  "version": "7.7.0",
   "description": "DeepSeek Harness plugin: 15 obra/superpowers engineering skills, bilingual descriptions, per-skill toggles | DeepSeek Harness 插件：15 个 obra/superpowers 工程纪律技能，技能描述中英双语自由切换，每一个技能本身自由开关",
   "type": "module",
   "main": "lib/superpowers.js",
