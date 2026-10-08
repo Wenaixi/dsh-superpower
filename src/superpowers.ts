@@ -201,14 +201,15 @@ class SuperpowersProvider implements SkillProvider {
   }
 
   async get(candidate: SkillCandidate, options: SkillLookupOptions): Promise<SkillDefinition | undefined> {
+    const switches = this.currentSwitches()
     const definition = await this.catalog.getDefinition(candidate, this.name, {
       signal: options.signal,
       logger: this.ctx.logger,
-      language: this.currentSwitches().language ?? this.hostLanguage(),
+      language: switches.language ?? this.hostLanguage(),
     })
     // 加载路径同样套用：skill 工具在 get 之后二次校验 isModelInvocable，
     // 只改 list 的候选会让模型目录消失但工具调用仍成功，语义撕裂。
-    return definition === undefined ? undefined : applySwitches(definition, this.currentSwitches())
+    return definition === undefined ? undefined : applySwitches(definition, switches)
   }
 }
 

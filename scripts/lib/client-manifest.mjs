@@ -36,8 +36,39 @@ function extractCatalogLiteral(source) {
   const arrayStart = source.indexOf('[', markerIndex)
   if (arrayStart < 0) return { error: 'SKILL_CATALOG 声明后未找到数组字面量起始符' }
 
-  // 朴素边界：同一条声明语句内的首个 ']'。求值失败即判定不配平。
-  const arrayEnd = source.indexOf(']', arrayStart)
+  // 配平边界：跳过字符串字面量，找到与 arrayStart 配对的闭合 ']'
+  let depth = 0
+  let arrayEnd = -1
+  let inString = null
+  let escaped = false
+  for (let i = arrayStart; i < source.length; i++) {
+    const ch = source[i]
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (ch === '\\') {
+      escaped = true
+      continue
+    }
+    if (inString !== null) {
+      if (ch === inString) inString = null
+      continue
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      inString = ch
+      continue
+    }
+    if (ch === '[') {
+      depth++
+    } else if (ch === ']') {
+      depth--
+      if (depth === 0) {
+        arrayEnd = i
+        break
+      }
+    }
+  }
   if (arrayEnd < 0) return { error: 'SKILL_CATALOG 数组字面量未闭合' }
 
   const literal = source.slice(arrayStart, arrayEnd + 1)

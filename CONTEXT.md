@@ -96,4 +96,4 @@
 
 - **平台**：仅支持 DSH（DeepSeek Harness）；非 DSH 平台兼容层已全部移除
 - **发布纪律**：改 `package.json#version` 必须同步打 annotated tag 并推送；npm 禁止 unpublish，装包一律用最新版，历史上发布早于平台专属化改造的旧版本已 `npm deprecate`
-- **打包产物**：`npm pack --dry-run` 实测 86 个文件（package size 184.4 kB，unpacked 506.9 kB），随包只含 `lib/`、`skills/`、`locale/`、`icon.png`、`cordis.patch.yml`、README 双份与 LICENSE，全树扫描无非 DSH 平台残留
+- **打包产物**：`npm pack --dry-run` 实测 86 个文件（package size ~187 kB，unpacked ~520 kB），随包只含 `lib/`、`skills/`、`locale/`、`icon.png`、`cordis.patch.yml`、README 双份与 LICENSE，全树扫描无非 DSH 平台残留

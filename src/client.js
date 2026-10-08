@@ -167,12 +167,22 @@ window.__ModuleLoader__.load({
       return raw === 'zh' || raw === 'en' ? raw : undefined;
     }
 
-    function switchOps(names, op) {
+    function switchOps(names, op, legacyCarry) {
       var list = Array.isArray(names) ? names : [names];
-      var ops = list.map(function (name) {
-        return op === 'disable'
-          ? { op: 'set', path: [DISABLED_FIELD, name], value: true }
-          : { op: 'unset', path: [DISABLED_FIELD, name] };
+      var ops = [];
+      if (legacyCarry) {
+        Object.keys(legacyCarry).forEach(function (key) {
+          if (legacyCarry[key] === true && list.indexOf(key) < 0) {
+            ops.push({ op: 'set', path: [DISABLED_FIELD, key], value: true });
+          }
+        });
+      }
+      list.forEach(function (name) {
+        if (op === 'disable') {
+          ops.push({ op: 'set', path: [DISABLED_FIELD, name], value: true });
+        } else {
+          ops.push({ op: 'unset', path: [DISABLED_FIELD, name] });
+        }
       });
       return ops.concat(LEGACY_FIELDS.map(function (field) {
         return { op: 'unset', path: [field] };
@@ -184,7 +194,7 @@ window.__ModuleLoader__.load({
      *
      * 用户只要在面板动过一次开关，profile 里就只剩 disabled 一个字段。
      */
-    function submit(form, t, names, op, setPending, setFailures, opsOverride) {
+    function submit(form, t, names, op, setPending, setFailures, opsOverride, legacyCarry) {
       var clear = function (prev) {
         var next = {};
         Object.keys(prev).forEach(function (key) {
@@ -197,7 +207,7 @@ window.__ModuleLoader__.load({
         names.forEach(function (name) { next[name] = true; });
         return next;
       });
-      var ops = opsOverride || switchOps(names, op);
+      var ops = opsOverride || switchOps(names, op, legacyCarry);
       var work = form.mutate(ops).then(function (accepted) {
         if (accepted === false) throw new Error(t('writeFailed'));
       });
@@ -245,9 +255,11 @@ window.__ModuleLoader__.load({
       }
 
       var value = state.value || {};
-      /* disabled 为空而旧表非空时，宿主侧 readSwitches 已把旧值并进来，
-         这里读到的就是等效状态；面板不区分自己是读的新表还是旧表。 */
-      var disabled = value[DISABLED_FIELD] || {}
+      var rawDisabled = value[DISABLED_FIELD] || {};
+      var legacyActive = Object.keys(rawDisabled).length === 0;
+      var disabled = !legacyActive
+        ? rawDisabled
+        : Object.assign({}, value.modelDisabled || {}, value.userDisabled || {});
       var language = readLanguage(value);
       var langConfigured = language !== undefined;
       var langValue = langConfigured ? language : 'auto';
@@ -307,7 +319,7 @@ window.__ModuleLoader__.load({
               label: t('invocable') + ' ' + skill.name,
               title: t('invocableHint'),
               onChange: function (next) {
-                submit(form, t, [skill.name], next ? 'enable' : 'disable', setPending, setFailures);
+                submit(form, t, [skill.name], next ? 'enable' : 'disable', setPending, setFailures, null, legacyActive ? disabled : null);
               },
             })));
       });

@@ -68,7 +68,6 @@ export declare class SkillCatalog {
     #private;
     readonly skillDir: string;
     private readonly entriesByName;
-    private readonly entriesByDir;
     private readonly duplicates;
     private readonly missingSkillMd;
     private readonly loadErrors;
@@ -77,6 +76,7 @@ export declare class SkillCatalog {
     private lastScanProviderName?;
     private lastScanRank?;
     private lastScanLanguage?;
+    private scanPromise;
     constructor(skillDir: string);
     /**
      * 从指定目录异步扫描并构建已预热的 SkillCatalog 深度实例。
@@ -94,7 +94,7 @@ export declare class SkillCatalog {
      */
     private isDirModified;
     /**
-     * 执行全量目录遍历与技能索引构建。
+     * 执行全量目录遍历与技能索引构建（含并发重入合并屏障）。
      */
     scan(options?: CatalogLookupOptions): Promise<void>;
     /**

@@ -11,7 +11,7 @@
 
 import { mkdtemp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill'
 import { SkillDocument, type SpecificationTestResult } from './document.js'
 import { SkillSwitches } from './switches.js'
@@ -77,7 +77,6 @@ export interface CatalogIntegrityReport {
 export class SkillCatalog {
   readonly skillDir: string
   private readonly entriesByName = new Map<string, CatalogEntry>()
-  private readonly entriesByDir = new Map<string, CatalogEntry>()
   private readonly duplicates: string[] = []
   private readonly missingSkillMd: string[] = []
   private readonly loadErrors: { path: string; error: string }[] = []
@@ -88,6 +87,7 @@ export class SkillCatalog {
   private lastScanProviderName?: string
   private lastScanRank?: number
   private lastScanLanguage?: 'zh' | 'en'
+  private scanPromise: Promise<void> | null = null
 
   constructor(skillDir: string) {
     this.skillDir = skillDir
@@ -107,13 +107,13 @@ export class SkillCatalog {
    * 清空快照与索引，强制下一轮查询重新从磁盘装载。
    */
   invalidate(): void {
+    this.scanPromise = null
     this.cachedCandidates = null
     this.fingerprint = null
     this.lastScanProviderName = undefined
     this.lastScanRank = undefined
     this.lastScanLanguage = undefined
     this.entriesByName.clear()
-    this.entriesByDir.clear()
     this.duplicates.length = 0
     this.missingSkillMd.length = 0
     this.loadErrors.length = 0
@@ -165,9 +165,17 @@ export class SkillCatalog {
   }
 
   /**
-   * 执行全量目录遍历与技能索引构建。
+   * 执行全量目录遍历与技能索引构建（含并发重入合并屏障）。
    */
   async scan(options?: CatalogLookupOptions): Promise<void> {
+    if (this.scanPromise !== null) return this.scanPromise
+    this.scanPromise = this.#scanInternal(options).finally(() => {
+      this.scanPromise = null
+    })
+    return this.scanPromise
+  }
+
+  async #scanInternal(options?: CatalogLookupOptions): Promise<void> {
     const signal = options?.signal
     const logger = options?.logger
 
@@ -202,7 +210,6 @@ export class SkillCatalog {
 
     // 重置内存临时状态
     this.entriesByName.clear()
-    this.entriesByDir.clear()
     this.duplicates.length = 0
     this.missingSkillMd.length = 0
     this.loadErrors.length = 0
@@ -256,7 +263,6 @@ export class SkillCatalog {
       }
 
       this.entriesByName.set(doc.name, catalogEntry)
-      this.entriesByDir.set(entry.name, catalogEntry)
     }
 
     // 指纹在 scan 末尾一次性写入：中途 abort 抛出即不写，状态仍为上一轮的完整指纹，
@@ -277,16 +283,18 @@ export class SkillCatalog {
 
     const language = options?.language === 'en' ? 'en' : 'zh'
     const needsRebuild = this.lastScanLanguage !== language
-    const needsScan =
+    const needsDiskScan =
       options?.forceScan ||
       this.cachedCandidates === null ||
-      needsRebuild ||
       this.lastScanProviderName !== providerName ||
       this.lastScanRank !== rank ||
       (await this.isDirModified(options?.signal))
 
-    if (needsScan) {
+    if (needsDiskScan) {
       await this.scan(options)
+    }
+
+    if (needsDiskScan || needsRebuild) {
       const list: SkillCandidate[] = []
       for (const entry of this.entriesByName.values()) {
         list.push(entry.document.toCandidate(providerName, rank, language))
@@ -334,7 +342,7 @@ export class SkillCatalog {
     }
 
     // 自愈回写：将重新读取解析出的文档更新进内部索引，保持状态严格一致
-    const dirName = cached?.directoryName ?? candidate.name
+    const dirName = cached?.directoryName ?? basename(dirname(locator.path))
     const updatedEntry: CatalogEntry = {
       directoryName: dirName,
       skillPath: locator.path,
@@ -342,7 +350,6 @@ export class SkillCatalog {
       nameDrift: doc.name !== dirName,
     }
     this.entriesByName.set(doc.name, updatedEntry)
-    this.entriesByDir.set(dirName, updatedEntry)
     this.cachedCandidates = null // 快照失效，以便下一轮刷新
 
     return doc.toDefinition(providerName, language)

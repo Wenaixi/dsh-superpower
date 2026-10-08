@@ -4,6 +4,8 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
 ## [7.6.0] - 2026-10-07
 
 ### 变更
@@ -396,11 +398,28 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 - 构建 `tsc -p tsconfig.build.json -> lib/`，`pnpm typecheck` 通过，`scripts/verify.mjs` 冒烟 14 技能全绿
 - `dsh --profile demo --dump-config` 可见 `# == dsh-superpower` 层
 
-## [更早版本]
+## 更早版本
 
 上游 `v6.2.0` / `v6.1.x` / `v6.0.x` 等变更见上游仓库 Release Notes。上游 `package.json#version` 变更时，本仓库同步 bump。
 
 [7.6.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.6.0
+[7.5.8]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.8
+[7.5.7]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.7
+[7.5.6]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.6
+[7.5.5]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.5
+[7.5.4]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.4
+[7.5.3]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.3
+[7.5.2]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.2
+[7.5.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.1
+[7.5.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.5.0
+[7.4.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.4.1
+[7.4.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.4.0
+[7.3.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.3.0
+[7.2.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.2.1
+[7.2.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.2.0
+[7.1.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.1.1
+[7.1.0]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.1.0
+[7.0.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v7.0.1
 [6.3.1]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.1
 [6.3.0-dsh.10]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.10
 [6.3.0-dsh.9]: https://github.com/Wenaixi/dsh-superpower/releases/tag/v6.3.0-dsh.9
