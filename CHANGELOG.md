@@ -4,12 +4,12 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
-
 ## [7.6.0] - 2026-10-08
 
 ### 变更
 
+- **客户端重构深模块 SwitchPanelModel**：将原本散落的 8 参 `submit` 函数、单/批原子 ops 构造、旧表 `legacyCarry` 继承、`disposed` 守卫与错误堆栈输出彻底封闭在深模块类 `SwitchPanelModel` 门后；React 组件仅通过 1 行代码接入 `React.useSyncExternalStore`，蜕变为纯渲染器，从根源杜绝并发渲染状态撕裂。
+- **批量操作单次原子批处理**：将「全部开启」、「全部关闭」、「恢复默认」由原先的 15 次并发 `form.mutate` 重构为单次原子批处理 `form.mutate(allOps)`，RPC payload 从 45 条压减至 17 条操作，彻底杜绝宿主版本 `revision` 乐观锁冲突与状态撕裂（State Tearing）。
 - **语言切换升级为三段式选择器（中文 / English / 跟随宿主自动）**：参考 `dsh-ponytail` 的语言切换与宿主语言识别实现，将面板顶部的单语言按钮升级为 `SegmentedControl` 三段式控件。未配置时高亮「跟随宿主（自动）」并显示当前跟随的宿主界面语言；显式选择中文或 English 时锁定，选择「跟随宿主（自动）」时写 `unset` 自动清除锁定、恢复跟随宿主。
 - **强化斜杠「/」唤出与模型可见作用域说明**：在选择器正上方新增独立标题「技能介绍语言（用户『/』唤出菜单及模型可见）」，下方详细说明明确指出仅切换输入「/」唤出时展示的技能介绍（用户与模型可见），技能正文保持英文原版不变。
 - **彻底移除面板中的元信息行**：删除面板中的 `spSwMeta` 行（提供方/优先级/来源/面板版本），使配置面板视觉更清爽紧凑，消除冗余信息。
@@ -18,18 +18,35 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 ### 修复
 
+- **根除 Windows 沙箱管道 EPERM 崩溃**：`scripts/lib/contract.mjs` 改用 Node 原生 `node:vm` 模块（`new vm.Script(source)`）纯内存编译解析替代跨进程 `spawnSync('node --check')`，0 管道触碰，耗时仅 1.17ms，彻底免疫沙箱命名管道权限拦截。
+- **修复冷读取语言丢失 Bug**：`src/catalog.ts` 的 `getDefinition` 自愈冷重读时补齐透传归一化 `language` 参数，使冷读与热读双语表现 100% 同构。
+- **修复宿主语言缺省态缓存穿透漏洞**：`src/superpowers.ts` 引入 `hostLanguageResolved` 布尔标志位，彻底消除 `undefined` 缺省态下每轮重复全量反射扫描 `settings.describe()` 的高危性能损耗。
+- **修复取消信号吞没缺陷**：`src/catalog.ts` 的 `isDirModified` 优先 rethrow `AbortError`，保障协作式取消信号畅通穿透。
+- **消灭客户端静默失败**：在 `submit` 错误处理分支补齐 `console.error('[dsh-superpower] form.mutate failed:', error)` 原生堆栈输出，并在静态门禁中建立硬性守护断言。
+- **客户端 HMR 样式热更新覆盖**：样式单例注入优化为“存在则更新 `textContent`，不存在才 `appendChild`”，兼顾 DOM 单例回收与开发期样式毫秒级热覆盖。
 - **修复浏览器端未配置态语言语义折叠 bug**：`readLanguage()` 缺项时保留 `undefined`，消除此前将缺项折叠为 `'zh'` 导致面板无法表达跟随宿主且与 Host 侧三态撕裂的问题。
 - **宿主语言变更实时生效**：Host 侧新增监听 `app-boot/config-reload` 事件，在宿主应用配置补丁（如界面语言修改）后即时让目录与 `hostLanguageCache` 失效并重扫，解决未配置态下宿主切语言后模型侧描述不刷新的问题。
 - **修复客户端历史禁言表原子迁移缺陷**：`src/client.js` 补齐对 `modelDisabled`/`userDisabled` 历史旧表的读取并集回退；在单技能开关操作时原子性地将历史禁用项迁移写入新表 `disabled`，彻底杜绝单次开关导致历史禁用项被误清空抹除的隐患。
 - **SkillCatalog 增加并发重入屏障**：引入 `scanPromise` 合并并发重入扫描，杜绝并发查询时 Map 被反复清空导致的假重名与技能丢失。
+- **补全 npm 发布白名单遗漏**：`package.json` 的 `"files"` 数组补全 `"README.zh.md"`，彻底根除发布后线上点击中文说明 404 死链。
 - **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、明确语言切换只改技能描述（技能名与正文均不随语言变化）、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数与包体积更新为 7.6.0 实测口径；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的坏命令；计划文档复选框回填为已完成。
 - **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释；去掉误留的重复 `checkBilingualPairing` 实现。
 
+### 测试
+
+- **新增极速纯 Node 脱机状态机单测**：新增 `scripts/client.test.mjs`，依托 `node:test` + `node:vm` 纯内存沙箱，零 DOM 依赖、零浏览器进程，50ms 内完成全量状态机 8 大核心边界契约覆盖。
+- **入库会话更新与 Prompt Cache 保全实证探针**：`scripts/verify-session-catalog-update.mjs` 纳入版本管理，实机验证已存在会话条目更新机制与历史上下文缓存保全。
+
 ### 清理
 
-- **深度清理仓库**：删除根目录 12 个历史 `*.tgz`、`undefined/temp/`、`.verify-shots/` 与已完工的 `.superpowers/` SDD 账本；工作区体积大幅瘦身。
+- **移除 docs/ 历史计划目录**：彻底删除已归档的历史计划目录 `docs/`，保持工作区轻量纯净。
+- **深度清理临时文件**：删除根目录 12 个历史 `*.tgz`、`undefined/temp/`、`.verify-shots/`、`.cache-repos/` 与已完工的 `.superpowers/` SDD 账本，累计释放超过 56 MB 空间。
 - **git 忽略补齐**：新增编辑器残留、本地私有配置、Playwright 产物、`reports/` 以及 `undefined/`、`.local/` 兜底防复发。
-- **清理无用死代码**：彻底移除 `SkillCatalog` 中从未被读取的死属性 `entriesByDir`。
+- **清理无用死代码**：彻底移除 `SkillCatalog` 中从未被读取的死属性 `entriesByDir`、L339 空展开、`src/document.ts` 孤立未引用的 `optionalString` 函数以及 `src/superpowers.ts` 冗余的 `VolatileRef` 接口。
+
+### 致谢
+
+- **致谢对齐**：中英文 README 保留上游开源项目 `obra/superpowers` 的链接引用，去除个人作者与协议声明；并正式追加对 `dsh-plugin-dev` 权威技能库的致谢。
 
 ### 文档
 

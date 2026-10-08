@@ -21,10 +21,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/build-client.mjs",
     "typecheck": "tsc --noEmit",
+    "test": "node --test scripts/*.test.mjs",
     "lint": "eslint src --ext .ts 2>&1 || echo \"(no eslint config — skipped)\"",
     "prepare": "npm run build",
     "prepack": "npm run build",
-    "verify": "node scripts/verify.mjs && node scripts/check-skill-switches.mjs"
+    "verify": "pnpm test && node scripts/verify.mjs && node scripts/check-skill-switches.mjs"
   },
   "dsh": {
     "bundle": {
