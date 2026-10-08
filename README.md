@@ -197,3 +197,4 @@ Issues and PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 - Upstream [obra/superpowers](https://github.com/obra/superpowers)
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) for the three-role plugin architecture
+- [dsh-plugin-dev](https://github.com/Wenaixi/dsh-plugin-dev) for DSH plugin development standards, architecture references, and verification methodologies

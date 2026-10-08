@@ -200,3 +200,4 @@ Issue 和 PR 都欢迎。详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 - 上游 [obra/superpowers](https://github.com/obra/superpowers)
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的三角色插件架构
+- [dsh-plugin-dev](https://github.com/Wenaixi/dsh-plugin-dev) 提供的 DSH 插件开发规范、架构参考与真机验收工程方法
