@@ -6,23 +6,30 @@ v6.3.1 起脱离上游独立演进，v7.0.0 起回归上游命名并整批同步
 
 ## [Unreleased]
 
-## [7.6.0] - 2026-10-07
+## [7.6.0] - 2026-10-08
 
 ### 变更
 
 - **语言切换升级为三段式选择器（中文 / English / 跟随宿主自动）**：参考 `dsh-ponytail` 的语言切换与宿主语言识别实现，将面板顶部的单语言按钮升级为 `SegmentedControl` 三段式控件。未配置时高亮「跟随宿主（自动）」并显示当前跟随的宿主界面语言；显式选择中文或 English 时锁定，选择「跟随宿主（自动）」时写 `unset` 自动清除锁定、恢复跟随宿主。
-- **修复浏览器端未配置态语言语义折叠 bug**：`readLanguage()` 缺项时保留 `undefined`，消除此前将缺项折叠为 `'zh'` 导致面板无法表达跟随宿主且与 Host 侧三态撕裂的问题。
-- **宿主语言变更实时生效**：Host 侧新增监听 `app-boot/config-reload` 事件，在宿主应用配置补丁（如界面语言修改）后即时让目录与 `hostLanguageCache` 失效并重扫，解决未配置态下宿主切语言后模型侧描述不刷新的问题。
-
-### 清理
-
-- **深度清理仓库**：删除根目录 12 个历史 `*.tgz`（v7.0.0 至 v7.5.8 各一）、`undefined/temp/`（一次 pnpm 把临时目录拼成 `undefined` 字面量留下的 13 个文件）、`.verify-shots/`（约 175 MB 截图）与已完工的 `.superpowers/` SDD 账本；工作区从约 176 MB 降到 0.12 MB。
-- **git 忽略补齐**：新增编辑器残留（`*.orig`/`*.rej`/`*.bak`/`.history/`）、本地私有配置（`*.local.json` 等）、Playwright 产物（`test-results/`、`playwright-report/`）、`reports/`，以及 `undefined/` 兜底防复发。已用 `git check-ignore -v` 逐条验证命中，且无已跟踪文件被误伤。
+- **强化斜杠「/」唤出与模型可见作用域说明**：在选择器正上方新增独立标题「技能介绍语言（用户『/』唤出菜单及模型可见）」，下方详细说明明确指出仅切换输入「/」唤出时展示的技能介绍（用户与模型可见），技能正文保持英文原版不变。
+- **彻底移除面板中的元信息行**：删除面板中的 `spSwMeta` 行（提供方/优先级/来源/面板版本），使配置面板视觉更清爽紧凑，消除冗余信息。
+- **统一项目与 GitHub 仓库标准中英双语简介**：`package.json` 与 GitHub 线上仓库统一为 `DeepSeek Harness plugin: 15 obra/superpowers engineering skills, bilingual descriptions, per-skill toggles | DeepSeek Harness 插件：15 个 obra/superpowers 工程纪律技能，技能描述中英双语自由切换，每一个技能本身自由开关`；`locale/zh.json` 与 `locale/en.json` 保持严格的中英文分立呈现。
+- **SkillCatalog 语言切换零重复 I/O 优化**：在仅切换语言时复用已解析的内存 `entriesByName` 生成新快照，消除重复的磁盘 Markdown I/O。
 
 ### 修复
 
-- **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、语言按钮作用域段去重并补上「按钮显示目标语言」语义、明确语言切换只改技能描述（技能名与正文均不随语言变化）、锁版本示例从过时的 7.2.0 更新为 7.5.8、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数错误口径（更新为 `npm pack` 实测 86 文件），并补上缺失的 SkillSwitches 词汇条目；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的 PowerShell 塞 bash 坏命令、同步上游步骤里的中文化旧流程；计划文档 28 个复选框回填为已完成并加状态注记。
-- **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释，其中一段还在要求早已删除的 `SKILL.en.md` 配对；顺带去掉误留的重复 `checkBilingualPairing` 实现。
+- **修复浏览器端未配置态语言语义折叠 bug**：`readLanguage()` 缺项时保留 `undefined`，消除此前将缺项折叠为 `'zh'` 导致面板无法表达跟随宿主且与 Host 侧三态撕裂的问题。
+- **宿主语言变更实时生效**：Host 侧新增监听 `app-boot/config-reload` 事件，在宿主应用配置补丁（如界面语言修改）后即时让目录与 `hostLanguageCache` 失效并重扫，解决未配置态下宿主切语言后模型侧描述不刷新的问题。
+- **修复客户端历史禁言表原子迁移缺陷**：`src/client.js` 补齐对 `modelDisabled`/`userDisabled` 历史旧表的读取并集回退；在单技能开关操作时原子性地将历史禁用项迁移写入新表 `disabled`，彻底杜绝单次开关导致历史禁用项被误清空抹除的隐患。
+- **SkillCatalog 增加并发重入屏障**：引入 `scanPromise` 合并并发重入扫描，杜绝并发查询时 Map 被反复清空导致的假重名与技能丢失。
+- **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、明确语言切换只改技能描述（技能名与正文均不随语言变化）、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数与包体积更新为 7.6.0 实测口径；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的坏命令；计划文档复选框回填为已完成。
+- **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释；去掉误留的重复 `checkBilingualPairing` 实现。
+
+### 清理
+
+- **深度清理仓库**：删除根目录 12 个历史 `*.tgz`、`undefined/temp/`、`.verify-shots/` 与已完工的 `.superpowers/` SDD 账本；工作区体积大幅瘦身。
+- **git 忽略补齐**：新增编辑器残留、本地私有配置、Playwright 产物、`reports/` 以及 `undefined/`、`.local/` 兜底防复发。
+- **清理无用死代码**：彻底移除 `SkillCatalog` 中从未被读取的死属性 `entriesByDir`。
 
 ### 文档
 
