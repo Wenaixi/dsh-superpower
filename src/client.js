@@ -31,6 +31,7 @@ window.__ModuleLoader__.load({
     var PACKAGE_NAME = '@wenaixi/dsh-superpower';
     var NS = 'dsh-superpower';
     var DISABLED_FIELD = 'disabled';
+    var LANGUAGE_FIELD = 'language';
     /* v7.3.0 及之前的双侧禁言表。面板写入成功后会把它们 unset，
        这里仍需列出：迁移那批操作的路径必须与 schema 里的字段名逐字一致。 */
     var LEGACY_FIELDS = ['modelDisabled', 'userDisabled'];
@@ -148,17 +149,6 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * 组装一次写入的全部操作：主写入 + 两条清理旧表的 unset。
-     *
-     * 清理动作与主写合在同一次 mutate 里，因为 ConfigForm 的 mutate 是一批
-     * 操作共享一个 revision 栅栏、一次校验、一次持久化决策。这样不存在
-     * 「新表写了一部分、旧表还留着」的中间态，也省掉每技能一次额外往返。
-     * op 为 enable 时 unset 路径即恢复继承的默认值。
-     */
-    /* 语言偏好字段：'zh' | 'en' 显式固定；缺失时跟随宿主界面语言（locale active）。 */
-    var LANGUAGE_FIELD = 'language';
-
-    /**
      * 读取当前语言偏好（三态）：'zh'/'en' 显式值原样；缺项为 undefined（跟随宿主）。
      * 与宿主侧 readSwitches 同规则，缺失绝不折叠成 zh —— 否则面板无法表达「跟随宿主」。
      */
@@ -167,86 +157,230 @@ window.__ModuleLoader__.load({
       return raw === 'zh' || raw === 'en' ? raw : undefined;
     }
 
-    function switchOps(names, op, legacyCarry) {
-      var list = Array.isArray(names) ? names : [names];
-      var ops = [];
-      if (legacyCarry) {
-        Object.keys(legacyCarry).forEach(function (key) {
-          if (legacyCarry[key] === true && list.indexOf(key) < 0) {
-            ops.push({ op: 'set', path: [DISABLED_FIELD, key], value: true });
+    /**
+     * 客户端配置控制器深度模块 (Deep Module)：
+     * 将 DSH ConfigForm 订阅、批处理 ops 拍平、旧表原子继承、disposed 拦截与堆栈归集彻底封闭在门后。
+     */
+    class SwitchPanelModel {
+      constructor(scope, options) {
+        this.scope = scope;
+        this.t = (options && options.t) || ((k) => k);
+        this.allNames = (options && options.allNames) || [];
+        this.listeners = new Set();
+        this.pending = {};
+        this.failures = {};
+        this.unsubscribe = null;
+        this._bindScope(scope);
+      }
+
+      _bindScope(scope) {
+        if (this.scope !== scope) {
+          if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
           }
+          this.scope = scope;
+        }
+        if (this.scope && typeof this.scope.subscribe === 'function' && !this.unsubscribe) {
+          this.unsubscribe = this.scope.subscribe(() => this._notify());
+        }
+      }
+
+      updateScope(nextScope) {
+        this._bindScope(nextScope);
+        this._notify();
+      }
+
+      subscribe(listener) {
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+      }
+
+      _notify() {
+        this.listeners.forEach((fn) => {
+          try { fn(); } catch (e) {}
         });
       }
-      list.forEach(function (name) {
-        if (op === 'disable') {
-          ops.push({ op: 'set', path: [DISABLED_FIELD, name], value: true });
-        } else {
-          ops.push({ op: 'unset', path: [DISABLED_FIELD, name] });
+
+      getSnapshot() {
+        var snap = (this.scope && typeof this.scope.getSnapshot === 'function')
+          ? this.scope.getSnapshot()
+          : { status: 'loading', writable: false, value: {} };
+        var value = snap.value || {};
+        var rawDisabled = value[DISABLED_FIELD] || {};
+        var legacyActive = Object.keys(rawDisabled).length === 0;
+        var disabled = !legacyActive
+          ? rawDisabled
+          : Object.assign({}, value.modelDisabled || {}, value.userDisabled || {});
+        var language = readLanguage(value);
+
+        return {
+          status: snap.status || 'ready',
+          writable: snap.writable !== false && snap.mode !== 'memory',
+          disabled: disabled,
+          legacyActive: legacyActive,
+          language: language,
+          langConfigured: language !== undefined,
+          langValue: language !== undefined ? language : 'auto',
+          pending: this.pending,
+          failures: this.failures,
+        };
+      }
+
+      _buildOps(names, op, legacyCarry) {
+        var list = Array.isArray(names) ? names : [names];
+        var ops = [];
+        if (legacyCarry) {
+          Object.keys(legacyCarry).forEach(function (key) {
+            if (legacyCarry[key] === true && list.indexOf(key) < 0) {
+              ops.push({ op: 'set', path: [DISABLED_FIELD, key], value: true });
+            }
+          });
         }
-      });
-      return ops.concat(LEGACY_FIELDS.map(function (field) {
-        return { op: 'unset', path: [field] };
-      }));
+        list.forEach(function (name) {
+          if (op === 'disable') {
+            ops.push({ op: 'set', path: [DISABLED_FIELD, name], value: true });
+          } else {
+            ops.push({ op: 'unset', path: [DISABLED_FIELD, name] });
+          }
+        });
+        return ops.concat(LEGACY_FIELDS.map(function (field) {
+          return { op: 'unset', path: [field] };
+        }));
+      }
+
+      async _submit(names, ops) {
+        if (!this.scope || this.scope.disposed || typeof this.scope.mutate !== 'function') {
+          var err = new Error(this.t('hostUnavailable'));
+          console.error('[dsh-superpower] form.mutate failed:', err);
+          this._setFailures(names, this.t('writeFailed') + ': ' + err.message);
+          return false;
+        }
+
+        this._setPending(names, true);
+        this._clearFailures(names);
+
+        try {
+          var accepted = await this.scope.mutate(ops);
+          if (accepted === false) {
+            throw new Error(this.t('writeFailed'));
+          }
+          this._clearFailures(names);
+          return true;
+        } catch (error) {
+          console.error('[dsh-superpower] form.mutate failed:', error);
+          var msg = this.t('writeFailed') + ': ' + String(error && error.message ? error.message : error);
+          this._setFailures(names, msg);
+          return false;
+        } finally {
+          this._setPending(names, false);
+        }
+      }
+
+      _setPending(names, isPending) {
+        var next = Object.assign({}, this.pending);
+        names.forEach(function (name) {
+          if (isPending) next[name] = true;
+          else delete next[name];
+        });
+        this.pending = next;
+        this._notify();
+      }
+
+      _setFailures(names, message) {
+        var next = Object.assign({}, this.failures);
+        names.forEach(function (name) { next[name] = message; });
+        this.failures = next;
+        this._notify();
+      }
+
+      _clearFailures(names) {
+        var next = Object.assign({}, this.failures);
+        var changed = false;
+        names.forEach(function (name) {
+          if (next[name]) {
+            delete next[name];
+            changed = true;
+          }
+        });
+        if (changed) {
+          this.failures = next;
+          this._notify();
+        }
+      }
+
+      toggle(name, nextState) {
+        var snap = this.getSnapshot();
+        var op = nextState ? 'enable' : 'disable';
+        var legacyCarry = snap.legacyActive ? snap.disabled : null;
+        var ops = this._buildOps([name], op, legacyCarry);
+        return this._submit([name], ops);
+      }
+
+      setLanguage(next) {
+        var ops = next === 'auto'
+          ? [{ op: 'unset', path: [LANGUAGE_FIELD] }]
+          : [{ op: 'set', path: [LANGUAGE_FIELD], value: next }];
+        return this._submit(['language'], ops);
+      }
+
+      enableAll() {
+        var ops = this._buildOps(this.allNames, 'enable');
+        return this._submit(this.allNames, ops);
+      }
+
+      disableAll() {
+        var ops = this._buildOps(this.allNames, 'disable');
+        return this._submit(this.allNames, ops);
+      }
+
+      resetAll() {
+        // Q2 裁决：恢复默认纯粹重置技能禁言表，保持语言偏好正交独立
+        return this.enableAll();
+      }
+
+      dispose() {
+        if (this.unsubscribe) {
+          this.unsubscribe();
+          this.unsubscribe = null;
+        }
+        this.listeners.clear();
+      }
     }
 
     /**
-     * 提交一批写入并按技能名归集失败原因。settle 后清掉这些技能的忙碌态。
+     * 技能开关面板 (View)。纯渲染视图，完全由 SwitchPanelModel 控制器驱动。
      *
-     * 用户只要在面板动过一次开关，profile 里就只剩 disabled 一个字段。
-     */
-    function submit(form, t, names, op, setPending, setFailures, opsOverride, legacyCarry) {
-      var clear = function (prev) {
-        var next = {};
-        Object.keys(prev).forEach(function (key) {
-          if (names.indexOf(key) < 0) next[key] = prev[key];
-        });
-        return next;
-      };
-      setPending(function (prev) {
-        var next = clear(prev);
-        names.forEach(function (name) { next[name] = true; });
-        return next;
-      });
-      var ops = opsOverride || switchOps(names, op, legacyCarry);
-      var work = form.mutate(ops).then(function (accepted) {
-        if (accepted === false) throw new Error(t('writeFailed'));
-      });
-      work.then(function () {
-        setFailures(clear);
-      }, function (error) {
-        console.error('[dsh-superpower] form.mutate failed:', error);
-        setFailures(function (prev) {
-          var next = clear(prev);
-          var message = t('writeFailed') + ': ' + String(error && error.message ? error.message : error);
-          names.forEach(function (name) { next[name] = message; });
-          return next;
-        });
-      }).then(function () {
-        setPending(clear);
-      });
-    }
-
-    /**
-     * 技能开关面板。每个技能一个开关，同时决定模型可见性与用户可调用性。
-     *
-     * props.useSwitches 来自 inject 面绑定好的 ConfigForm 选择器 hook；
-     * props.actions 是本面板独占的写操作面。
+     * props.actions.form 是本面板绑定的 ConfigForm 控制器。
      */
     function SkillSwitchPanel(props) {
       var t = props.t;
       var form = props.actions.form;
-      var state = props.useSwitches(function (value) { return value; });
       var hostActive = props.useLocaleActive(function (v) { return v && v.preference === 'en' ? 'en' : 'zh'; });
+      var allNames = SKILL_CATALOG.map(function (skill) { return skill.name; });
+
+      var modelRef = React.useRef(null);
+      if (!modelRef.current) {
+        modelRef.current = new SwitchPanelModel(form, { t: t, allNames: allNames });
+      } else {
+        modelRef.current.updateScope(form);
+      }
+
+      React.useEffect(() => {
+        return () => {
+          if (modelRef.current) modelRef.current.dispose();
+        };
+      }, []);
+
+      var state = React.useSyncExternalStore(
+        (listener) => modelRef.current.subscribe(listener),
+        () => modelRef.current.getSnapshot()
+      );
+      var controller = modelRef.current;
 
       var keywordState = React.useState('');
       var keyword = keywordState[0];
       var setKeyword = keywordState[1];
-      var pendingState = React.useState({});
-      var pending = pendingState[0];
-      var setPending = pendingState[1];
-      var failuresState = React.useState({});
-      var failures = failuresState[0];
-      var setFailures = failuresState[1];
 
       if (state.status !== 'ready') {
         return h('div', { className: 'spSw' },
@@ -254,33 +388,18 @@ window.__ModuleLoader__.load({
           h('p', { className: 'spSwIntro' }, t('hostUnavailable')));
       }
 
-      var value = state.value || {};
-      var rawDisabled = value[DISABLED_FIELD] || {};
-      var legacyActive = Object.keys(rawDisabled).length === 0;
-      var disabled = !legacyActive
-        ? rawDisabled
-        : Object.assign({}, value.modelDisabled || {}, value.userDisabled || {});
-      var language = readLanguage(value);
-      var langConfigured = language !== undefined;
-      var langValue = langConfigured ? language : 'auto';
+      var disabled = state.disabled;
+      var language = state.language;
+      var langConfigured = state.langConfigured;
+      var langValue = state.langValue;
       var langOptions = [
         { value: 'zh', label: t('langZh') },
         { value: 'en', label: t('langEn') },
         { value: 'auto', label: t('langAuto') },
       ];
-      var setLang = function (next) {
-        if (next === 'auto') {
-          submit(form, t, ['language'], 'enable', setPending, setFailures,
-            [{ op: 'unset', path: [LANGUAGE_FIELD] }]);
-        } else {
-          submit(form, t, ['language'], 'enable', setPending, setFailures,
-            [{ op: 'set', path: [LANGUAGE_FIELD], value: next }]);
-        }
-      };
-      var writable = state.writable !== false && state.mode !== 'memory';
+      var writable = state.writable;
 
       var lower = keyword.trim().toLowerCase();
-      /* 描述取词：按当前语言偏好取对应语言文本，两侧都参与搜索过滤。 */
       var skillText = function (skill) {
         var effective = language === undefined ? hostActive : language;
         return effective === 'en' && skill.descriptionEn ? skill.descriptionEn : skill.description;
@@ -294,17 +413,9 @@ window.__ModuleLoader__.load({
               || (skill.descriptionEn || '').toLowerCase().indexOf(lower) >= 0;
           });
 
-      var allNames = SKILL_CATALOG.map(function (skill) { return skill.name; });
-      var batchEnable = function () {
-        submit(form, t, allNames, 'enable', setPending, setFailures);
-      };
-      var batchDisable = function () {
-        submit(form, t, allNames, 'disable', setPending, setFailures);
-      };
-
       var rows = shown.map(function (skill) {
-        var busy = !!pending[skill.name] || !writable;
-        var failure = failures[skill.name];
+        var busy = !!state.pending[skill.name] || !writable;
+        var failure = state.failures[skill.name];
         var on = !isBlocked(disabled, skill.name);
         return h('li', { key: skill.name, className: 'spSwItem' },
           h('div', { className: 'spSwMain' },
@@ -319,7 +430,7 @@ window.__ModuleLoader__.load({
               label: t('invocable') + ' ' + skill.name,
               title: t('invocableHint'),
               onChange: function (next) {
-                submit(form, t, [skill.name], next ? 'enable' : 'disable', setPending, setFailures, null, legacyActive ? disabled : null);
+                controller.toggle(skill.name, next);
               },
             })));
       });
@@ -334,13 +445,13 @@ window.__ModuleLoader__.load({
             label: t('langTitle'),
             value: langValue,
             options: langOptions,
-            disabled: !writable || !!pending['language'],
-            onChange: setLang,
+            disabled: !writable || !!state.pending['language'],
+            onChange: function (next) { controller.setLanguage(next); },
           }),
           !langConfigured
             ? h('p', { className: 'spSwLangNote' }, t('langUnsetHint', { lang: t(hostActive === 'en' ? 'langEn' : 'langZh') }))
             : h('p', { className: 'spSwLangNote' }, t('langNote')),
-          failures['language'] ? h('span', { className: 'spSwLangFailure', role: 'alert' }, failures['language']) : null),
+          state.failures['language'] ? h('span', { className: 'spSwLangFailure', role: 'alert' }, state.failures['language']) : null),
 
         h('div', { className: 'spSwBar' },
           h(P.Button, {
@@ -348,21 +459,21 @@ window.__ModuleLoader__.load({
             size: 'sm',
             disabled: !writable,
             title: t('resetHint'),
-            onClick: batchEnable,
+            onClick: function () { controller.enableAll(); },
           }, t('enableAll')),
           h(P.Button, {
             variant: 'outline',
             size: 'sm',
             disabled: !writable,
             title: t('disableAllHint'),
-            onClick: batchDisable,
+            onClick: function () { controller.disableAll(); },
           }, t('disableAll')),
           h(P.Button, {
             variant: 'ghost',
             size: 'sm',
             disabled: !writable,
             title: t('resetHint'),
-            onClick: batchEnable,
+            onClick: function () { controller.resetAll(); },
           }, t('resetAll')),
           h(P.Input, {
             className: 'spSwSearch',
@@ -421,6 +532,7 @@ window.__ModuleLoader__.load({
 
     exports.apply = apply;
     exports.inject = ['slots', 'configForms', 'locale'];
+    exports.SwitchPanelModel = SwitchPanelModel;
     return module.exports;
   },
 });
