@@ -13,71 +13,81 @@
 
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import vm from 'node:vm'
 import { SkillCatalog } from '../../lib/superpowers.js'
 
-const CATALOG_MARKER = 'const SKILL_CATALOG ='
-
 /**
- * 从 src/client.js 源码中提取 SKILL_CATALOG 数组字面量并求值。
+ * 从 src/client.js 源码中纯内存沙箱提取 SKILL_CATALOG 数组。
  *
- * 提取不靠手写括号配平：SKILL_CATALOG 是模块级 const 声明，数组在同一条
- * 语句内闭合；取声明后第一个 ']' 作为朴素边界，再用 new Function 求值并
- * 断言 Array.isArray——求值失败即报错，任何边界误判都会在此暴露。
- * 手写配平版本的单引号分支（char === ''）缺陷使字符串内方括号参与配平，
- * 当前数据恰好无方括号而幸存，属于零守卫的隐藏陷阱，故移除。
+ * 彻底抛弃手写字符深度配平与 new Function 拼接（历史实现存在单双引号反斜杠误判陷阱）。
+ * 遵循 dsh-plugin-dev 纯内存 AST / 沙箱执行规范，利用 Node 原生 node:vm 在纯内存
+ * 环境下安全执行 client.js 工厂函数，直接截获导出的 SKILL_CATALOG 常量。
  *
  * @param {string} source - src/client.js 全文
  * @returns {{ skills: Array } | { error: string }}
  */
 function extractCatalogLiteral(source) {
-  const markerIndex = source.indexOf(CATALOG_MARKER)
-  if (markerIndex < 0) return { error: 'src/client.js 中未找到 SKILL_CATALOG 声明' }
+  let loadedSkills = null
+  let loadError = null
 
-  const arrayStart = source.indexOf('[', markerIndex)
-  if (arrayStart < 0) return { error: 'SKILL_CATALOG 声明后未找到数组字面量起始符' }
-
-  // 配平边界：跳过字符串字面量，找到与 arrayStart 配对的闭合 ']'
-  let depth = 0
-  let arrayEnd = -1
-  let inString = null
-  let escaped = false
-  for (let i = arrayStart; i < source.length; i++) {
-    const ch = source[i]
-    if (escaped) {
-      escaped = false
-      continue
-    }
-    if (ch === '\\') {
-      escaped = true
-      continue
-    }
-    if (inString !== null) {
-      if (ch === inString) inString = null
-      continue
-    }
-    if (ch === "'" || ch === '"' || ch === '`') {
-      inString = ch
-      continue
-    }
-    if (ch === '[') {
-      depth++
-    } else if (ch === ']') {
-      depth--
-      if (depth === 0) {
-        arrayEnd = i
-        break
-      }
-    }
+  const mockReact = {
+    createElement: () => null,
+    useState: (v) => [v, () => {}],
+    useEffect: () => {},
+    useMemo: (fn) => fn(),
+    useCallback: (fn) => fn,
+    useSyncExternalStore: () => ({}),
   }
-  if (arrayEnd < 0) return { error: 'SKILL_CATALOG 数组字面量未闭合' }
 
-  const literal = source.slice(arrayStart, arrayEnd + 1)
+  const mockRequire = (id) => {
+    if (id === 'react') return mockReact
+    if (id === '@deepseek-ai/dsh-client-ui-primitives') return {}
+    return {}
+  }
+
+  const sandbox = {
+    window: {
+      __ModuleLoader__: {
+        load: (entry) => {
+          if (entry && typeof entry.factory === 'function') {
+            try {
+              const exports = entry.factory(mockRequire)
+              if (exports && Array.isArray(exports.SKILL_CATALOG)) {
+                loadedSkills = exports.SKILL_CATALOG
+              }
+            } catch (err) {
+              loadError = err
+            }
+          }
+        },
+      },
+    },
+    document: {
+      querySelector: () => null,
+      createElement: () => ({ setAttribute: () => {}, textContent: '' }),
+      head: { appendChild: () => {} },
+    },
+    console: {
+      log: () => {},
+      warn: () => {},
+      error: () => {},
+    },
+  }
+
   try {
-    const skills = new Function('return ' + literal)()
-    if (!Array.isArray(skills)) return { error: 'SKILL_CATALOG 求值结果不是数组' }
-    return { skills }
+    vm.createContext(sandbox)
+    const script = new vm.Script(source, { filename: 'src/client.js' })
+    script.runInContext(sandbox)
+
+    if (Array.isArray(loadedSkills)) {
+      return { skills: loadedSkills }
+    }
+    if (loadError) {
+      return { error: 'src/client.js 工厂执行失败: ' + (loadError.message ?? String(loadError)) }
+    }
+    return { error: 'src/client.js 未能通过沙箱导出有效的 SKILL_CATALOG 数组' }
   } catch (error) {
-    return { error: 'SKILL_CATALOG 字面量无法解析：' + (error?.message ?? String(error)) }
+    return { error: '纯内存 node:vm 解析 src/client.js 语法失败: ' + (error?.message ?? String(error)) }
   }
 }
 
