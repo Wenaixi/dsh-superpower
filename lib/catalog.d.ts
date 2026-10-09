@@ -10,6 +10,7 @@
  */
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill';
 import { SkillDocument, type SpecificationTestResult } from './document.js';
+import { SkillSwitches } from './switches.js';
 export interface CatalogLogger {
     warn(msg: string): void;
     debug?(msg: string): void;
@@ -19,6 +20,8 @@ export interface CatalogLookupOptions {
     signal?: AbortSignal;
     logger?: CatalogLogger;
     forceScan?: boolean;
+    language?: 'zh' | 'en';
+    switches?: SkillSwitches;
 }
 export interface CatalogEntry {
     directoryName: string;
@@ -108,9 +111,7 @@ export declare class SkillCatalog {
      * 根据候选技能的 locator 与名称解析出完整 SkillDefinition。
      * 优先命中内存缓存；若发生热重读，自动自愈更新回内存映射，消除状态撕裂缝隙。
      */
-    getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions & {
-        language?: 'zh' | 'en';
-    }): Promise<SkillDefinition | undefined>;
+    getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions): Promise<SkillDefinition | undefined>;
     /**
      * 执行 SkillCatalog 自身边界契约自检（排重与漂移探测）。
      */

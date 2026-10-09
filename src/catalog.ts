@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import type { SkillCandidate, SkillDefinition } from '@deepseek-ai/dsh-skill'
 import { SkillDocument, type SpecificationTestResult } from './document.js'
-import { SkillSwitches } from './switches.js'
+import { applySwitches, SkillSwitches } from './switches.js'
 
 export interface CatalogLogger {
   warn(msg: string): void
@@ -26,6 +26,8 @@ export interface CatalogLookupOptions {
   signal?: AbortSignal
   logger?: CatalogLogger
   forceScan?: boolean
+  language?: 'zh' | 'en'
+  switches?: SkillSwitches
 }
 
 export interface CatalogEntry {
@@ -305,23 +307,29 @@ export class SkillCatalog {
       this.lastScanLanguage = language
     }
 
-    return this.cachedCandidates!
+    const candidates = this.cachedCandidates!
+    return options?.switches ? candidates.map((candidate) => applySwitches(candidate, options.switches!)) : candidates
   }
 
   /**
    * 根据候选技能的 locator 与名称解析出完整 SkillDefinition。
    * 优先命中内存缓存；若发生热重读，自动自愈更新回内存映射，消除状态撕裂缝隙。
    */
-  async getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions & { language?: 'zh' | 'en' }): Promise<SkillDefinition | undefined> {
+  async getDefinition(candidate: SkillCandidate, providerName: string, options?: CatalogLookupOptions): Promise<SkillDefinition | undefined> {
     options?.signal?.throwIfAborted()
     const language = options?.language === 'en' ? 'en' : 'zh'
     const locator = candidate.locator as { path: string; directory: string } | undefined
     if (!locator?.path) return undefined
 
+    const returnDefinition = (def: SkillDefinition | undefined): SkillDefinition | undefined => {
+      if (def === undefined || !options?.switches) return def
+      return applySwitches(def, options.switches)
+    }
+
     // 优先命中内存缓存
     const cached = this.entriesByName.get(candidate.name)
     if (cached && cached.skillPath === locator.path) {
-      return cached.document.toDefinition(providerName, language)
+      return returnDefinition(cached.document.toDefinition(providerName, language))
     }
 
     // 若缓存未命中则重新从文件读取
@@ -352,7 +360,7 @@ export class SkillCatalog {
     this.entriesByName.set(doc.name, updatedEntry)
     this.cachedCandidates = null // 快照失效，以便下一轮刷新
 
-    return doc.toDefinition(providerName, language)
+    return returnDefinition(doc.toDefinition(providerName, language))
   }
 
   /**
