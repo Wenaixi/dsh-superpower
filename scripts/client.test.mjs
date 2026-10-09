@@ -279,3 +279,47 @@ test('TC-08: 错误捕获、disposed 拦截与堆栈输出', async () => {
   assert.equal(res, false)
   disposedModel.dispose()
 })
+
+test('TC-09: 搜索状态机流转与多语言可见条目派生', async () => {
+  const { SwitchPanelModel, allNames } = await loadClientModel()
+  const form = createMockConfigForm({})
+  const model = new SwitchPanelModel(form, { allNames })
+
+  // 1. 初始状态
+  assert.equal(model.getSnapshot().keyword, '', '初始搜索关键字应为空')
+  const initialSkills = model.getVisibleSkills('zh')
+  assert.equal(initialSkills.length, 15, '初始应展示全量 15 个技能')
+  assert.equal(initialSkills[0].displayText, initialSkills[0].description, '默认中文环境下展示中文描述')
+
+  // 2. 响应式订阅通知
+  let notified = false
+  const unsubscribe = model.subscribe(() => { notified = true })
+  model.setKeyword('brain')
+  assert.equal(notified, true, 'setKeyword 必须触发订阅通知')
+  assert.equal(model.getSnapshot().keyword, 'brain')
+  unsubscribe()
+
+  // 3. 中文关键词检索
+  model.setKeyword('创意')
+  const zhResults = model.getVisibleSkills('zh')
+  assert.equal(zhResults.length, 1)
+  assert.equal(zhResults[0].name, 'brainstorming')
+  assert.ok(zhResults[0].displayText.includes('创意工作前必用'))
+
+  // 4. 英文关键词大小写不敏感检索 + 宿主英文环境
+  model.setKeyword('BRAIN')
+  const enResults = model.getVisibleSkills('en')
+  assert.equal(enResults.length, 1)
+  assert.equal(enResults[0].name, 'brainstorming')
+  assert.ok(enResults[0].displayText.includes('creative work'), '英文环境下展示英文描述')
+
+  // 5. 无匹配项返回空列表
+  model.setKeyword('nonexistent-keyword-404')
+  assert.equal(model.getVisibleSkills('zh').length, 0, '无匹配结果时应返回空列表')
+
+  // 6. 清空搜索恢复全量
+  model.setKeyword('')
+  assert.equal(model.getVisibleSkills('zh').length, 15, '清空搜索后恢复全量 15 个技能')
+
+  model.dispose()
+})

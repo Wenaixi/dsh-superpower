@@ -22,6 +22,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, extname, join, relative, resolve } from 'node:path'
 import vm from 'node:vm'
+import { SkillDocument } from '../../lib/superpowers.js'
 
 export class SkillContractChecker {
   constructor(rootDir) {
@@ -130,39 +131,29 @@ export class SkillContractChecker {
         issues.push('技能 ' + entry.name + ' 缺少 SKILL.md')
         continue
       }
-      const parseFm = (file) => {
-        try {
-          const raw = readFileSync(file, 'utf8')
-          const m = raw.match(/^---[\r\n]+([\s\S]*?)[\r\n]+---/)
-          if (!m) return null
-          const data = {}
-          for (const line of m[1].split(/\r?\n/)) {
-            const kv = line.match(/^([\w-]+):\s*(.*)$/)
-            if (kv) data[kv[1]] = kv[2].replace(/^"|"$/g, '')
-          }
-          return data
-        } catch {
-          return null
-        }
-      }
-      const fm = parseFm(zhPath)
-      if (!fm) {
+      let doc
+      try {
+        doc = await SkillDocument.fromFile(zhPath)
+      } catch {
         issues.push('技能 ' + entry.name + ' 的 SKILL.md frontmatter 无法解析')
         continue
       }
-      if (fm.name && fm.name !== entry.name) {
-        issues.push('技能 ' + entry.name + ' 的 frontmatter.name 与目录名不一致: ' + fm.name)
+      if (doc.name !== entry.name) {
+        issues.push('技能 ' + entry.name + ' 的 frontmatter.name 与目录名不一致: ' + doc.name)
       }
-      if (!fm.description || !fm.description.startsWith('Superpower Skill: ')) {
+      if (!doc.description || !doc.description.startsWith('Superpower Skill: ')) {
         issues.push('技能 ' + entry.name + ' 的英文描述（description）缺少 "Superpower Skill: " 前缀')
       }
-      if (/[\u4e00-\u9fff]/.test(fm.description || '')) {
+      if (/[\u4e00-\u9fff]/.test(doc.description || '')) {
         issues.push('技能 ' + entry.name + ' 的英文描述包含中文')
       }
-      if (!fm.description_zh || !fm.description_zh.startsWith('Superpower Skill：')) {
+      const descZh = typeof doc.rawFrontmatterData['description_zh'] === 'string'
+        ? doc.rawFrontmatterData['description_zh']
+        : ''
+      if (!descZh || !descZh.startsWith('Superpower Skill：')) {
         issues.push('技能 ' + entry.name + ' 的中文描述（description_zh）缺少 "Superpower Skill：" 前缀')
       }
-      if (!/[\u4e00-\u9fff]/.test(fm.description_zh || '')) {
+      if (!/[\u4e00-\u9fff]/.test(descZh)) {
         issues.push('技能 ' + entry.name + ' 的中文描述不含中文')
       }
     }
