@@ -7,16 +7,17 @@
 ## 核心领域概念与深度模块
 
 ### 1. SkillCatalog (技能编目)
-- **定位**: 深度模块 (Deep Module)，位于 `src/catalog.ts`，负责技能集合的发现、轻量 mtime 版本探测、不可变快照缓存与自愈索引。
+- **定位**: 深度模块 (Deep Module)，位于 `src/catalog.ts`，负责技能集合的发现、轻量 mtime 版本探测、不可变快照缓存与自愈索引，以及统一编目领域门面。
 - **职责**:
   - 扫描文件系统中的技能目录，过滤隐藏文件与非技能目录；
   - 探测每个子目录下的 `SKILL.md` 文件存活性；
   - 委托 `SkillDocument` 解析文档，执行名称去重与名称漂移（Directory Name vs Frontmatter Name）校验；
   - 维护版本化不可变快照 (`cachedCandidates`)，未发生变动时 0 额外磁盘 I/O（失效判据为三键聚合指纹：目录 mtime + 根级目录名集合 + 各 SKILL.md mtime，覆盖正文编辑与增量新建技能两类窗口）；
   - 在 `getDefinition` 热重读时自动回写内部内存映射，彻底消灭状态撕裂隔离缝；
+  - 统一编目领域门面：在 `listCandidates` 与 `getDefinition` 接口中原生支持 `switches` 策略并在模块内部原子完成开关覆盖（`applySwitches`），对外呈现最终不可变视图，彻底消灭外部调用方（如 `SuperpowersProvider`）的手动循环映射胶水代码；
   - 对外暴露极简的 `invalidate()` 接口，深度联动 Cordis `skills/change` 事件；
   - 对外提供 `verifyIntegrity()` 完整性体检接口，供测试脚本与治理流程复用。
-- **接缝 (Seams)**: 位于物理文件系统 I/O 与 Cordis 运行时 Provider 之间，将复杂的文件探测和异常处理完全封装在门后。
+- **接缝 (Seams)**: 位于物理文件系统 I/O 与 Cordis 运行时 Provider 之间，将复杂的文件探测、多语言取词与开关覆盖策略完全封装在门后。
 
 ### 2. SkillDocument (技能文档)
 - **定位**: 深度模块 (Deep Module)，位于 `src/document.ts`，负责单个技能 Markdown 文档的解析、清洗与契约转换。
@@ -89,6 +90,15 @@
   - 暴露高阶断言函数 `assertPriorityArbitration()`，将自研桩与官方 filesystem 实测脚本中的重复样板代码消除 40% 以上；
   - 将复杂的正反双向注册生命周期封装在极简声明式调用之后。
 - **接缝 (Seams)**: 位于 Cordis `SkillRegistry` 与具体集成测试脚本之间。
+
+### 11. ClientManifest (客户端双面清单纯内存提取器)
+- **定位**: 深度模块 (Deep Module)，位于 `scripts/lib/client-manifest.mjs`，负责客户端内联清单与物理 `skills/` 目录的双向一致性门禁。
+- **职责**:
+  - 利用 Node 原生 `node:vm` 纯内存沙箱安全执行 `src/client.js` 模块工厂，通过标准模块导出契约截获 `SKILL_CATALOG` 常量；
+  - 彻底消灭字符级括号配平与 `new Function` 拼接求值，0 外部进程、0 命名管道触碰，彻底免疫 Windows 沙箱管道限制；
+  - 与物理磁盘编目进行双向严格比对（缺技能、多技能、双语描述漂移），守住「`skills/` 是唯一事实源」的不变量；
+  - 断言 `src/client.js` 与构建产物 `lib/client.js` 的绝对一致性。
+- **接缝 (Seams)**: 位于浏览器端内联镜像与服务端物理编目之间。
 
 ---
 
