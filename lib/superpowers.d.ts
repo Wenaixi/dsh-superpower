@@ -11,7 +11,7 @@ import { SkillCatalog } from './catalog.js';
 import { SkillDocument } from './document.js';
 export { SkillCatalog, EXPECTED_SKILL_COUNT, type SpecificationReport } from './catalog.js';
 export { SkillDocument, type SpecificationTestResult } from './document.js';
-export { SkillSwitches, applySwitches, readSwitches } from './switches.js';
+export { SkillSwitches, applySwitches, extractCleanDisabled, extractCleanLanguage, extractCleanSwitches, isConfigCorrupted, readSwitches, type CleanSwitchesExtraction, } from './switches.js';
 declare module '@deepseek-ai/cordis' {
     interface Events {
         /**
