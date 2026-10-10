@@ -2,6 +2,14 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.7.1] - 2026-10-10
+
+### 修复
+
+- **修复取消信号误吞与脏状态漏洞**：`src/catalog.ts` 的 `#scanInternal` 循环与 `getDefinition` 补齐 `signal?.aborted || (err as DOMException)?.name === 'AbortError'` 守卫并立即 rethrow，彻底杜绝取消信号被误当成「文档解析失败」记入 `loadErrors` 脏状态或静默返回 `undefined`；并在 `SkillCatalog.selfTest()` 中新增 2 组边界自检断言，自检总数扩充至 28 项。
+- **客户端构建先验后写原子时序**：重构 `scripts/build-client.mjs` 为「先执行 `checkSkillCatalogDrift` 校验清单漂移，零漂移后才写入磁盘产物，最后以 `assertClientManifest` 核验落地」的原子时序，消除二次重复校验，坚决杜绝因源码清单漂移导致磁盘产物被提前脏覆盖污染。
+- **解耦无用符号导入并开启严格类型检查**：解耦 `src/superpowers.ts` 中未直接消费的 import，向外重导出纯粹委托给 `export ... from`；在 `tsconfig.json` 中强制开启 `noUnusedLocals: true` 与 `noUnusedParameters: true`，消除死代码。
+
 ## [7.7.0] - 2026-10-08
 
 ### 变更
