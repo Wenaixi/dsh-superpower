@@ -240,6 +240,7 @@ export class SkillCatalog {
       try {
         doc = await SkillDocument.fromFile(skillPath, signal)
       } catch (err: unknown) {
+        if (signal?.aborted || (err as DOMException)?.name === 'AbortError') throw err
         const msg = String((err as Error)?.message ?? err)
         logger?.warn(`[SkillCatalog] skip ${skillPath}: parse failed — ${msg}`)
         this.loadErrors.push({ path: skillPath, error: msg })
@@ -337,7 +338,7 @@ export class SkillCatalog {
     try {
       doc = await SkillDocument.fromFile(locator.path, options?.signal)
     } catch (err: unknown) {
-      if ((err as DOMException)?.name === 'AbortError') throw err
+      if (options?.signal?.aborted || (err as DOMException)?.name === 'AbortError') throw err
       const code = (err as NodeJS.ErrnoException)?.code
       if (code === 'ENOENT') return undefined
       options?.logger?.warn(`[SkillCatalog] get ${candidate.name}: read failed (${code ?? String(err)})`)
@@ -500,6 +501,54 @@ await runCheck('verifyIntegrity.ok 计入缺失 SKILL.md', async () => {
         const cat = await SkillCatalog.fromDirectory(base)
         if (cat.verifyIntegrity().ok !== false) throw new Error('ok 未计入 missingSkillMd')
         if (cat.verifyIntegrity().missingSkillMd.length !== 1) throw new Error('missingSkillMd 收集数量不对')
+      } finally {
+        await rm(base, { recursive: true, force: true }).catch(() => {})
+      }
+    })
+
+    await runCheck('scan 取消穿透且不留脏错误', async () => {
+      const base = await mkdtemp(join(tmpdir(), 'sp-abort-'))
+      try {
+        await mkdir(join(base, 'demo'))
+        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: d\n---\nbody')
+        const cat = new SkillCatalog(base)
+        const ctrl = new AbortController()
+        ctrl.abort()
+        let threw: unknown = null
+        try {
+          await cat.scan({ signal: ctrl.signal })
+        } catch (err: unknown) {
+          threw = err
+        }
+        if (!threw || (threw as DOMException)?.name !== 'AbortError') {
+          throw new Error('scan 未能重抛 AbortError: ' + String(threw))
+        }
+        if (cat.verifyIntegrity().errors.length !== 0) {
+          throw new Error('取消异常被意外计入 loadErrors 脏状态')
+        }
+      } finally {
+        await rm(base, { recursive: true, force: true }).catch(() => {})
+      }
+    })
+
+    await runCheck('getDefinition 自定义原因中止穿透', async () => {
+      const base = await mkdtemp(join(tmpdir(), 'sp-getabort-'))
+      try {
+        await mkdir(join(base, 'demo'))
+        await writeFile(join(base, 'demo', 'SKILL.md'), '---\nname: demo\ndescription: d\n---\nbody')
+        const cat = await SkillCatalog.fromDirectory(base)
+        const candidate = (await cat.listCandidates('probe', 10))[0]!
+        const ctrl = new AbortController()
+        ctrl.abort(new Error('custom-timeout-reason'))
+        let threw: unknown = null
+        try {
+          await cat.getDefinition(candidate, 'probe', { signal: ctrl.signal })
+        } catch (err: unknown) {
+          threw = err
+        }
+        if (!threw || (threw as Error)?.message !== 'custom-timeout-reason') {
+          throw new Error('未能正确重抛自定义中止原因: ' + String(threw))
+        }
       } finally {
         await rm(base, { recursive: true, force: true }).catch(() => {})
       }

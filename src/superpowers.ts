@@ -20,13 +20,9 @@ import Schema from '@deepseek-ai/schemastery'
 import { SkillCatalog } from './catalog.js'
 import { SkillDocument } from './document.js'
 import {
-  applySwitches,
   extractCleanDisabled,
   extractCleanLanguage,
-  extractCleanSwitches,
-  isConfigCorrupted,
   readSwitches,
-  type CleanSwitchesExtraction,
   type SkillSwitches,
 } from './switches.js'
 
