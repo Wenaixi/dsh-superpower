@@ -323,3 +323,29 @@ test('TC-09: 搜索状态机流转与多语言可见条目派生', async () => {
 
   model.dispose()
 })
+test('TC-10: getSnapshot 引用稳定性与 React useSyncExternalStore 缓存契约 (防界面卡死崩溃)', async () => {
+  const { SwitchPanelModel, allNames } = await loadClientModel()
+  const form = createMockConfigForm({ disabled: { brainstorming: true } })
+  const model = new SwitchPanelModel(form, { allNames })
+
+  // 1. 核心断言：连续两次读取快照必须引用恒等，防止 React 18 useSyncExternalStore 无限重渲染死循环
+  const snap1 = model.getSnapshot()
+  const snap2 = model.getSnapshot()
+  assert.equal(snap1, snap2, '未发生任何配置变更时，getSnapshot 返回的引用必须严格恒等')
+  assert.equal(snap1.disabled, snap2.disabled, '内部嵌套的 disabled 字典引用也必须保持稳定')
+
+  // 2. 核心断言：updateScope 传入相同 scope 时绝不能触发 _notify 广播
+  let notified = false
+  const off = model.subscribe(() => { notified = true })
+  model.updateScope(form)
+  assert.equal(notified, false, 'updateScope 传入相同 form 时绝不能触发订阅广播，防止 render 期无限循环')
+  off()
+
+  // 3. 核心断言：当真正发生数据变动时，快照必须更新为新引用
+  await model.toggle('brainstorming', true)
+  const snap3 = model.getSnapshot()
+  assert.notEqual(snap1, snap3, '数据发生真实变更后，快照必须更新为新引用')
+  assert.equal(snap3.disabled['brainstorming'], undefined)
+
+  model.dispose()
+})
