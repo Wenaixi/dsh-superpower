@@ -2,6 +2,14 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [7.7.2] - 2026-10-11
+
+### 修复
+
+- **修复客户端 useSyncExternalStore 引用不稳定导致界面卡死崩溃**：为前端控制器 `SwitchPanelModel` 引入事件驱动快照缓存机制（`_cachedSnapshot`），未发生状态跃迁时 `getSnapshot()` 返回严格恒等的对象引用，消除 React 18 判定外部存储变动而陷入的无限递归重渲染死循环；在 `updateScope(nextScope)` 中补齐 `this.scope !== nextScope` 恒等守卫，严禁在 render 周期内无条件调用 `_notify()` 向 React 订阅者派发同步更新信号；并在组件顶层添加表单属性解构防空保护。
+- **修复 Schemastery 跨端 Schema.transform 序列化硬伤导致配置通道不可用**：在 `src/superpowers.ts` 中将 `disabled` 与 `language` 声明由 `Schema.transform(...)` 还原为跨端原生的 `Schema.any().default(...).volatile()`；彻底消灭由于 `schema.toJSON()` 丢失函数回调导致浏览器客户端 `settingsSchema.rehydrate` 执行 `validate` 时抛出 `TypeError: callback is not a function` 的硬伤，使 `ConfigFormController.prototype.decode(view)` 顺利解析通过并置为 `ready`，彻底恢复技能开关面板的正常挂载展示。
+- **完善客户端状态机回归测试**：在 `scripts/client.test.mjs` 中新增测试用例 `TC-10`，严格断言 `getSnapshot()` 的引用恒等性与 `updateScope` 相同引用下的零无谓广播，确保 React 18 契约长效稳固。
+
 ## [7.7.1] - 2026-10-10
 
 ### 修复
