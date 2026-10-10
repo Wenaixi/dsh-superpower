@@ -20,8 +20,6 @@ import Schema from '@deepseek-ai/schemastery'
 import { SkillCatalog } from './catalog.js'
 import { SkillDocument } from './document.js'
 import {
-  extractCleanDisabled,
-  extractCleanLanguage,
   readSwitches,
   type SkillSwitches,
 } from './switches.js'
@@ -80,16 +78,16 @@ export const Config = Schema.object({
    * 容灾自愈：经 Schema.transform 拦截，任何非对象、数字布尔值或脏键均被自动清洗为
    * 纯净合法的 Record<string, boolean>，彻底消除 Cordis Loader 的 invalid config 崩溃。
    */
-  disabled: Schema.transform(Schema.any(), (val) => extractCleanDisabled(val)).default({}).volatile(),
+  disabled: Schema.any().default({}).volatile(),
   /**
    * 技能正文与描述的显示语言偏好：'zh' 中文（默认）或 'en' 英文。
    * volatile 字段：面板可经 ConfigForm 通道写入，改后随 loader/volatile-update 事件
    * 让 Provider 在下轮 list/get 读到新语言。
    *
-   * 容灾自愈：经 Schema.transform 拦截，支持从非标区域语言代码（如 'zh-CN', 'en-US'）
-   * 中自愈归一化，无效输入自动回退为 undefined（跟随宿主）。
+   * 容灾自愈：Schema 保持 any 声明以确保跨端 JSON-RPC 序列化与客户端 rehydrate 零抛错，
+   * 实际读取由 readSwitches/extractCleanLanguage 纯函数在运行时安全归一化。
    */
-  language: Schema.transform(Schema.any(), (val) => extractCleanLanguage(val)).default(undefined).volatile(),
+  language: Schema.any().default(undefined).volatile(),
   /**
    * 已废弃的模型侧禁言表，面板不再写入，只在迁移批里被 unset 清空。
    *
