@@ -45,7 +45,8 @@ export declare function extractCleanDisabled(value: unknown): Record<string, boo
 export declare function isConfigCorrupted(config: unknown): boolean;
 /**
  * 容灾提取完整技能开关与语言偏好。
- * 兼容 volatile 引用、普通对象、新旧表回退以及脏数据自愈清洗。
+ * 兼容 volatile 引用、普通对象与脏数据自愈清洗，纯净读取单一 disabled 字典与 language 偏好，
+ * 绝不回退或读取历史旧版废弃字段。
  */
 export declare function extractCleanSwitches(config: unknown): SkillSwitches;
 /**

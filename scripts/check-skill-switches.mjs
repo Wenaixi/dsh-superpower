@@ -101,7 +101,7 @@ async function loadPlugin(raw) {
 }
 
 // ---------------------------------------------------------------------------
-// 场景 3：v7.3.0 的两张分侧禁言表在升级后并集生效
+// 场景 3：绝不兼容旧版，外部传入 modelDisabled/userDisabled 时坚决忽略不予生效
 // ---------------------------------------------------------------------------
 {
   const { ctx } = await loadPlugin({ modelDisabled: { brainstorming: true }, userDisabled: { 'writing-plans': true } })
@@ -110,47 +110,47 @@ async function loadPlugin(raw) {
 
   check(
     state,
-    '[旧表并集] 旧模型侧表中的 brainstorming 两侧均关闭',
-    byName.get('brainstorming')?.invocation.modelInvocable === false &&
-      byName.get('brainstorming')?.invocation.userInvocable === false,
+    '[绝不兼容旧表] modelDisabled 中的 brainstorming 保持全开',
+    byName.get('brainstorming')?.invocation.modelInvocable === true &&
+      byName.get('brainstorming')?.invocation.userInvocable === true,
     true,
   )
   check(
     state,
-    '[旧表并集] 旧用户侧表中的 writing-plans 两侧均关闭',
-    byName.get('writing-plans')?.invocation.modelInvocable === false &&
-      byName.get('writing-plans')?.invocation.userInvocable === false,
+    '[绝不兼容旧表] userDisabled 中的 writing-plans 保持全开',
+    byName.get('writing-plans')?.invocation.modelInvocable === true &&
+      byName.get('writing-plans')?.invocation.userInvocable === true,
     true,
   )
-  const others = snapshot.skills.filter((skill) => skill.name !== 'brainstorming' && skill.name !== 'writing-plans')
   check(
     state,
-    '[旧表并集] 其余技能不受旧表牵连',
-    others.every((skill) => skill.invocation.modelInvocable && skill.invocation.userInvocable),
+    '[绝不兼容旧表] 所有技能均保持默认开启状态',
+    snapshot.skills.every((skill) => skill.invocation.modelInvocable && skill.invocation.userInvocable),
     true,
   )
 }
 
 // ---------------------------------------------------------------------------
-// 场景 4：新表非空时旧表失效（用户已在面板操作过，旧值即过期）
+// 场景 4：单一 disabled 字典为全系统唯一事实源
 // ---------------------------------------------------------------------------
 {
   const { ctx } = await loadPlugin({
     disabled: { brainstorming: true },
-    modelDisabled: { brainstorming: true, 'writing-plans': true },
+    modelDisabled: { 'writing-plans': true },
   })
   const snapshot = await ctx.skills.snapshot()
   const byName = new Map(snapshot.skills.map((skill) => [skill.name, skill]))
+
   check(
     state,
-    '[新表优先] disabled 中的 brainstorming 两侧关闭',
+    '[单一真源] disabled 中的 brainstorming 两侧关闭',
     byName.get('brainstorming')?.invocation.modelInvocable === false &&
       byName.get('brainstorming')?.invocation.userInvocable === false,
     true,
   )
   check(
     state,
-    '[新表优先] 仅存在于旧表的 writing-plans 回到开启',
+    '[单一真源] 仅存在于旧表的 writing-plans 保持全开',
     byName.get('writing-plans')?.invocation.modelInvocable === true &&
       byName.get('writing-plans')?.invocation.userInvocable === true,
     true,

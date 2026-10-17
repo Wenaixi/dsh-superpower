@@ -151,8 +151,8 @@ test('TC-R04: 非标语言代码自愈归一化', () => {
   assert.equal(extractCleanLanguage(123), undefined)
 })
 
-test('TC-R05: 新旧表碎片合并与容灾优先级', () => {
-  // 1. 新表有合法项时，优先只取新表
+test('TC-R05: 绝不兼容旧版，历史旧表完全被忽略，单一 disabled 字典为唯一真源', () => {
+  // 1. 新表有合法项时，优先只取新表，旧表完全忽略
   const configWithBoth = {
     disabled: { 'brainstorming': 'true' },
     modelDisabled: { 'systematic-debugging': true },
@@ -161,14 +161,14 @@ test('TC-R05: 新旧表碎片合并与容灾优先级', () => {
   const out1 = extractCleanSwitches(configWithBoth)
   assert.deepEqual(Object.keys(out1.disabled), ['brainstorming'])
 
-  // 2. 新表损坏或为空时，容灾合并两张旧表有效项
+  // 2. 新表损坏或为空时，坚决不回退合并两张旧表
   const configCorruptedNew = {
     disabled: 'corrupted-non-object',
     modelDisabled: { 'systematic-debugging': 'true' },
     userDisabled: { 'writing-plans': 1, 'bad-skill': true },
   }
   const out2 = extractCleanSwitches(configCorruptedNew)
-  assert.deepEqual(Object.keys(out2.disabled).sort(), ['systematic-debugging', 'writing-plans'])
+  assert.deepEqual(Object.keys(out2.disabled), [], '绝不回退读取旧表')
 })
 
 test('TC-R06: 自愈幂等性严格断言', () => {
@@ -186,7 +186,6 @@ test('TC-R07: 客户端 SwitchPanelModel 损坏感知与自动重生派发', asy
   const corruptForm = createMockConfigForm({
     disabled: { 'brainstorming': 'true', 'unknown-skill': true },
     language: 'zh-CN',
-    modelDisabled: { 'old': true },
   })
   const model = new SwitchPanelModel(corruptForm)
 
@@ -199,13 +198,13 @@ test('TC-R07: 客户端 SwitchPanelModel 损坏感知与自动重生派发', asy
   const repairOps = model.buildRepairOps()
   assert.ok(repairOps.length > 0, '必须生成规范化修复 operations')
 
-  // 断言修复 ops 中包含对合法项的规范 set，对旧字段的 unset
+  // 断言修复 ops 中包含对合法项的规范 set，对未知脏键的 unset
   const setBrain = repairOps.find((o) => o.op === 'set' && o.path[1] === 'brainstorming')
   assert.ok(setBrain, '必须包含对 brainstorming 的规范化 set')
   const unsetUnknown = repairOps.find((o) => o.op === 'unset' && o.path[1] === 'unknown-skill')
   assert.ok(unsetUnknown, '必须包含对未知脏键的 unset')
-  const unsetOldModel = repairOps.find((o) => o.op === 'unset' && o.path[0] === 'modelDisabled')
-  assert.ok(unsetOldModel, '必须彻底 unset 废弃旧表')
+  const hasLegacyOp = repairOps.some((o) => o.path[0] === 'modelDisabled' || o.path[0] === 'userDisabled')
+  assert.equal(hasLegacyOp, false, '自愈 ops 绝不能触碰历史废弃旧字段')
 
   // 触发自动重生，将规范结构持久化回写
   const ok = await model.repairConfig()
@@ -220,14 +219,14 @@ test('TC-R07: 客户端 SwitchPanelModel 损坏感知与自动重生派发', asy
   model.dispose()
 })
 
-test('TC-R08: Cordis 真实宿主 Loader 防崩断言', async () => {
+test('TC-R08: Cordis 真实宿主 Loader 防崩断言与纯净自愈', async () => {
   const ctx = await freshRegistry()
-  // 注入严重损坏的配置：disabled 为字符串，language 为非法类型，注入废弃字段
+  // 注入包含非标类型、脏语言码、未知键以及废弃旧字段的极端损坏配置
   const corruptConfig = {
-    disabled: 'corrupted-string-that-previously-crashed-cordis',
+    disabled: { 'brainstorming': 'true', 'unknown-bad-key': 123 },
     language: 'zh-CN',
-    modelDisabled: { 'brainstorming': 'true' },
-    userDisabled: [1, 2, 3],
+    modelDisabled: { 'writing-plans': true }, // 废弃旧表，必须被完全忽略
+    userDisabled: [1, 2, 3],                  // 废弃旧表，必须被完全忽略
   }
 
   // 必须 100% 成功加载插件，绝不抛出 invalid config 异常
@@ -245,8 +244,12 @@ test('TC-R08: Cordis 真实宿主 Loader 防崩断言', async () => {
   const candidates = await ctx.skills.list()
   assert.equal(candidates.length, 15, '技能提供者必须正常提供 15 个技能')
 
-  // 验证从旧表和脏语言中成功自愈提取出 brainstorming 禁用与中文描述
+  // 验证从非标 disabled 中成功自愈提取出 brainstorming 禁用与中文描述
   const brain = candidates.find((c) => c.name === 'brainstorming')
   assert.equal(brain.invocation.modelInvocable, false, '自愈提取后 brainstorming 必须正确处于禁用态')
   assert.ok(brain.description.startsWith('Superpower Skill：'), '自愈提取后语言必须正确归一化为中文')
+
+  // 核心断言：废弃旧表中的 writing-plans 绝不生效，依然保持全开
+  const writing = candidates.find((c) => c.name === 'writing-plans')
+  assert.equal(writing.invocation.modelInvocable, true, '废弃旧表项绝不生效，保持全开')
 })

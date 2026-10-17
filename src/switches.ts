@@ -129,7 +129,8 @@ export function isConfigCorrupted(config: unknown): boolean {
 
 /**
  * 容灾提取完整技能开关与语言偏好。
- * 兼容 volatile 引用、普通对象、新旧表回退以及脏数据自愈清洗。
+ * 兼容 volatile 引用、普通对象与脏数据自愈清洗，纯净读取单一 disabled 字典与 language 偏好，
+ * 绝不回退或读取历史旧版废弃字段。
  */
 export function extractCleanSwitches(config: unknown): SkillSwitches {
   if (config === null || config === undefined) {
@@ -144,16 +145,7 @@ export function extractCleanSwitches(config: unknown): SkillSwitches {
   const disabled = extractCleanDisabled(record['disabled'])
   const language = extractCleanLanguage(record['language'])
 
-  if (Object.keys(disabled).length > 0) {
-    return { disabled, language }
-  }
-
-  // 新表为空时，容灾扫描旧表并提取并集
-  const legacyModel = extractCleanDisabled(record['modelDisabled'])
-  const legacyUser = extractCleanDisabled(record['userDisabled'])
-  const legacy = { ...legacyModel, ...legacyUser }
-
-  return { disabled: legacy, language }
+  return { disabled, language }
 }
 
 /**
@@ -220,14 +212,25 @@ export const SkillSwitches = {
       if (!out.invocation.modelInvocable) throw new Error('无关键误伤了本技能')
     })
 
-    await run('新表非空时忽略旧表', () => {
+    await run('忽略旧版废弃字段，仅以 disabled 为唯一事实源', () => {
       const out = readSwitches({
         disabled: { 'brainstorming': true },
         modelDisabled: { 'systematic-debugging': true },
         userDisabled: { 'writing-plans': true },
       })
       if (Object.keys(out.disabled).length !== 1 || out.disabled['brainstorming'] !== true) {
-        throw new Error('disabled 非空却仍读到了旧表的键')
+        throw new Error('disabled 未能独占事实源')
+      }
+    })
+
+    await run('disabled 为空时坚决不回退合并旧表', () => {
+      const out = readSwitches({
+        disabled: {},
+        modelDisabled: { 'brainstorming': true },
+        userDisabled: { 'writing-plans': true, 'systematic-debugging': true },
+      })
+      if (Object.keys(out.disabled).length !== 0) {
+        throw new Error('disabled 为空时错误回退了旧表字段')
       }
     })
 
@@ -244,18 +247,6 @@ export const SkillSwitches = {
     await run('language 不影响禁言表', () => {
       const out = readSwitches({ language: 'en', disabled: { 'brainstorming': true } })
       if (Object.keys(out.disabled).length !== 1) throw new Error('language 读取影响禁言表')
-    })
-
-    await run('新表为空时并入两张旧表', () => {
-      const out = readSwitches({
-        disabled: {},
-        modelDisabled: { 'brainstorming': true },
-        userDisabled: { 'writing-plans': true, 'systematic-debugging': true },
-      })
-      const keys = Object.keys(out.disabled).sort()
-      if (keys.length !== 3 || keys.join(',') !== 'brainstorming,systematic-debugging,writing-plans') {
-        throw new Error('旧表并集不完整，实际 ' + keys.join(','))
-      }
     })
 
     // -----------------------------------------------------------------------

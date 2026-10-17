@@ -35,10 +35,6 @@ export interface Config {
     language: Volatile<'zh' | 'en' | undefined>;
     /** 唯一的开关写入目标：键为技能名，值为 true 时模型与用户两侧同时关闭 */
     disabled: Volatile<Record<string, boolean>>;
-    /** 已废弃的历史禁言表，面板不再写入，只在迁移批里被 unset 清空 */
-    modelDisabled: Volatile<Record<string, boolean>>;
-    /** 已废弃的历史禁言表，理由同 modelDisabled */
-    userDisabled: Volatile<Record<string, boolean>>;
 }
 export declare const name = "superpowers";
 export declare const inject: readonly ["skills"];

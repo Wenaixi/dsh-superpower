@@ -618,15 +618,11 @@ export class SkillContractChecker {
       record(manifestRel, true, '图标与卡片元数据契约齐全')
     }
 
-    // (6) 单开关契约。v7.4.0 起每个技能只有一个开关，旧的两张分侧表只作为
-    //     一次性 unset 的目标保留在 LEGACY_FIELDS 里。面板若悄悄恢复双开关，
-    //     用户会看到两列语义重叠的开关，而模型侧行为不变——只有静态断言挡得住。
+    // (6) 单开关契约与旧版彻底绝缘契约。
+    //     每个技能只有一个开关，严禁出现历史旧版 modelDisabled/userDisabled/LEGACY_FIELDS 引用。
     const switchIssues = []
-    // 只查渲染路径与写入路径之外的整份产物：LEGACY_FIELDS 里的名字是必须的。
-    const legacyDeclared = (source.match(/var[ ]+LEGACY_FIELDS[ ]*=[ ]*\[[^\]]*\]/s) ?? [''])[0]
-    const withoutLegacyList = source.replace(legacyDeclared, '')
-    if (/['"]modelDisabled['"]/.test(withoutLegacyList) || /['"]userDisabled['"]/.test(withoutLegacyList)) {
-      switchIssues.push('客户端出现 modelDisabled/userDisabled 的直接引用，应统一走 LEGACY_FIELDS')
+    if (/['"]modelDisabled['"]/.test(source) || /['"]userDisabled['"]/.test(source) || /LEGACY_FIELDS/.test(source)) {
+      switchIssues.push('客户端出现 modelDisabled/userDisabled/LEGACY_FIELDS 废弃引用，必须彻底移除旧版兼容残留')
     }
     if (source.includes('spSwToggles')) {
       switchIssues.push('客户端仍保留双开关布局类名 spSwToggles')
@@ -645,11 +641,8 @@ export class SkillContractChecker {
     } else {
       record(sourceRel, true, '单开关契约齐全')
     }
-
     return results
   }
-
-  // -------------------------------------------------------------------------
   // 7. 技能正文不得复活自建 HTTP 服务
   // -------------------------------------------------------------------------
 

@@ -32,9 +32,6 @@ window.__ModuleLoader__.load({
     var NS = 'dsh-superpower';
     var DISABLED_FIELD = 'disabled';
     var LANGUAGE_FIELD = 'language';
-    /* v7.3.0 及之前的双侧禁言表。面板写入成功后会把它们 unset，
-       这里仍需列出：迁移那批操作的路径必须与 schema 里的字段名逐字一致。 */
-    var LEGACY_FIELDS = ['modelDisabled', 'userDisabled'];
 
     /**
      * 面板渲染所需的技能清单，按 skills/ 目录名升序。
@@ -287,20 +284,7 @@ window.__ModuleLoader__.load({
           : { status: 'loading', writable: false, value: {} };
 
         var value = snap.value || {};
-        var rawDisabled = value[DISABLED_FIELD];
-        var cleanDisabled = extractCleanDisabled(rawDisabled);
-        var rawDisabledExists = rawDisabled && typeof rawDisabled === 'object' && !Array.isArray(rawDisabled);
-        var legacyActive = !rawDisabledExists || Object.keys(cleanDisabled).length === 0;
-
-        var disabled;
-        if (!legacyActive && rawDisabledExists) {
-          disabled = cleanDisabled;
-        } else {
-          var legModel = extractCleanDisabled(value.modelDisabled);
-          var legUser = extractCleanDisabled(value.userDisabled);
-          disabled = Object.assign({}, legModel, legUser);
-        }
-
+        var disabled = extractCleanDisabled(value[DISABLED_FIELD]);
         var language = readLanguage(value);
         var corrupted = isConfigCorrupted(value);
 
@@ -308,7 +292,6 @@ window.__ModuleLoader__.load({
           status: snap.status || 'ready',
           writable: snap.writable !== false && snap.mode !== 'memory',
           disabled: disabled,
-          legacyActive: legacyActive,
           language: language,
           langConfigured: language !== undefined,
           langValue: language !== undefined ? language : 'auto',
@@ -343,9 +326,6 @@ window.__ModuleLoader__.load({
         } else if (rawValue[LANGUAGE_FIELD] !== undefined) {
           ops.push({ op: 'unset', path: [LANGUAGE_FIELD] });
         }
-        LEGACY_FIELDS.forEach(function (field) {
-          ops.push({ op: 'unset', path: [field] });
-        });
         return ops;
       }
 
@@ -400,16 +380,9 @@ window.__ModuleLoader__.load({
         });
       }
 
-      _buildOps(names, op, legacyCarry) {
+      _buildOps(names, op) {
         var list = Array.isArray(names) ? names : [names];
         var ops = [];
-        if (legacyCarry) {
-          Object.keys(legacyCarry).forEach(function (key) {
-            if (legacyCarry[key] === true && list.indexOf(key) < 0) {
-              ops.push({ op: 'set', path: [DISABLED_FIELD, key], value: true });
-            }
-          });
-        }
         list.forEach(function (name) {
           if (op === 'disable') {
             ops.push({ op: 'set', path: [DISABLED_FIELD, name], value: true });
@@ -417,9 +390,7 @@ window.__ModuleLoader__.load({
             ops.push({ op: 'unset', path: [DISABLED_FIELD, name] });
           }
         });
-        return ops.concat(LEGACY_FIELDS.map(function (field) {
-          return { op: 'unset', path: [field] };
-        }));
+        return ops;
       }
 
       async _submit(names, ops) {
@@ -486,10 +457,8 @@ window.__ModuleLoader__.load({
       }
 
       toggle(name, nextState) {
-        var snap = this.getSnapshot();
         var op = nextState ? 'enable' : 'disable';
-        var legacyCarry = snap.legacyActive ? snap.disabled : null;
-        var ops = this._buildOps([name], op, legacyCarry);
+        var ops = this._buildOps([name], op);
         return this._submit([name], ops);
       }
 

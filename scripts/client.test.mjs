@@ -121,14 +121,13 @@ test('TC-01: 初始快照与状态映射', async () => {
   assert.equal(snap.langValue, 'auto')
   assert.equal(snap.langConfigured, false)
   assert.equal(snap.language, undefined)
-  assert.equal(snap.legacyActive, true)
   assert.deepEqual(Object.keys(snap.disabled), [])
   assert.deepEqual(Object.keys(snap.pending), [])
   assert.deepEqual(Object.keys(snap.failures), [])
   model.dispose()
 })
 
-test('TC-02: 单开关禁用与原子三段式 ops 构造', async () => {
+test('TC-02: 单开关禁用与原子单操作 ops 构造', async () => {
   const { SwitchPanelModel, allNames } = await loadClientModel()
   const form = createMockConfigForm({})
   const model = new SwitchPanelModel(form, { allNames })
@@ -138,10 +137,8 @@ test('TC-02: 单开关禁用与原子三段式 ops 构造', async () => {
 
   assert.equal(form.__historyOps.length, 1)
   const ops = form.__historyOps[0]
-  assert.equal(ops.length, 3) // 1 set + 2 legacy unsets
+  assert.equal(ops.length, 1, '纯净单操作：仅生成 1 个 set 操作')
   assert.deepEqual(ops[0], { op: 'set', path: ['disabled', 'brainstorming'], value: true })
-  assert.deepEqual(ops[1], { op: 'unset', path: ['modelDisabled'] })
-  assert.deepEqual(ops[2], { op: 'unset', path: ['userDisabled'] })
 
   const snap = model.getSnapshot()
   assert.equal(snap.disabled['brainstorming'], true)
@@ -157,36 +154,33 @@ test('TC-03: 单开关启用与 unset 契约', async () => {
   assert.equal(ok, true)
 
   const ops = form.__historyOps[0]
+  assert.equal(ops.length, 1, '纯净单操作：仅生成 1 个 unset 操作')
   assert.deepEqual(ops[0], { op: 'unset', path: ['disabled', 'brainstorming'] })
   const snap = model.getSnapshot()
   assert.equal(snap.disabled['brainstorming'], undefined)
   model.dispose()
 })
 
-test('TC-04: 旧表回退态下的原子继承 (legacyCarry)', async () => {
+test('TC-04: 绝不兼容旧版，配置中残留旧表时坚决不予读取和继承', async () => {
   const { SwitchPanelModel, allNames } = await loadClientModel()
-  // 模拟旧版本升级：disabled 为空，modelDisabled 存在 writing-plans
+  // 模拟配置中残留旧版历史字段 modelDisabled
   const form = createMockConfigForm({ modelDisabled: { 'writing-plans': true } })
   const model = new SwitchPanelModel(form, { allNames })
 
-  assert.equal(model.getSnapshot().legacyActive, true)
-  assert.equal(model.getSnapshot().disabled['writing-plans'], true)
+  // 严格断言：disabled 保持为空，旧表绝不生效
+  assert.equal(model.getSnapshot().disabled['writing-plans'], undefined)
+  assert.deepEqual(Object.keys(model.getSnapshot().disabled), [])
 
-  // 用户关闭 brainstorming，断言 writing-plans 必须原子继承写入 disabled
+  // 用户操作单开关时，纯粹仅生成当前目标的 1 个操作，绝不继承或扩散旧表内容
   await model.toggle('brainstorming', false)
 
   const ops = form.__historyOps[0]
-  const carryOp = ops.find(o => o.path[0] === 'disabled' && o.path[1] === 'writing-plans')
-  assert.ok(carryOp, '必须生成 writing-plans 的继承 set 操作')
-  assert.equal(carryOp.op, 'set')
-  assert.equal(carryOp.value, true)
-
-  const newOp = ops.find(o => o.path[0] === 'disabled' && o.path[1] === 'brainstorming')
-  assert.ok(newOp, '必须生成当前关闭项的操作')
+  assert.equal(ops.length, 1, '仅生成 1 条当前操作')
+  assert.deepEqual(ops[0], { op: 'set', path: ['disabled', 'brainstorming'], value: true })
 
   const snap = model.getSnapshot()
-  assert.equal(snap.disabled['writing-plans'], true)
   assert.equal(snap.disabled['brainstorming'], true)
+  assert.equal(snap.disabled['writing-plans'], undefined)
   model.dispose()
 })
 
@@ -199,13 +193,13 @@ test('TC-05: 批量操作原子批处理 (allOps 拍平，非 15 次并发)', as
   await model.disableAll()
   assert.equal(form.__historyOps.length, 1, '必须仅发起 1 次原子 mutate 调用')
   const ops = form.__historyOps[0]
-  assert.equal(ops.length, 17, '必须是 15 个 set + 2 个 legacy unsets')
+  assert.equal(ops.length, 15, '纯粹 15 个 set，零历史旧表污染')
 
   // 全部开启
   await model.enableAll()
   assert.equal(form.__historyOps.length, 2)
   const enableOps = form.__historyOps[1]
-  assert.equal(enableOps.length, 17, '必须是 15 个 unset + 2 个 legacy unsets')
+  assert.equal(enableOps.length, 15, '纯粹 15 个 unset，零历史旧表污染')
   model.dispose()
 })
 
