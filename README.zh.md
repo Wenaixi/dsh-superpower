@@ -4,7 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/@wenaixi%2Fdsh-superpower?label=npm)](https://www.npmjs.com/package/@wenaixi/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-[![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
+[![DSH](https://img.shields.io/badge/DSH-v0.2.1--rc.2-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-5FA04E)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D11-F69220)](https://pnpm.io)
 
@@ -14,7 +14,7 @@
 
 ## 安装
 
-需要 dsh 本体（`npm i -g @deepseek-ai/dsh`），Node 与 pnpm 的版本要求见上方徽章。下面以 `web` profile 为例，换个 profile 名字即可。
+需要 dsh 本体（已适配最新 `v0.2.1-rc.2` / `>=0.2.0-rc.2`，安装命令：`npm i -g @deepseek-ai/dsh`），Node 与 pnpm 的版本要求见上方徽章。下面以 `web` profile 为例，换个 profile 名字即可。
 
 ```bash
 # A — npm（推荐，自动装最新）

@@ -4,7 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/@wenaixi%2Fdsh-superpower?label=npm)](https://www.npmjs.com/package/@wenaixi/dsh-superpower)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-[![DSH](https://img.shields.io/badge/DSH-Plugin-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
+[![DSH](https://img.shields.io/badge/DSH-v0.2.1--rc.2-7c3aed)](https://github.com/deepseek-ai/deepseek-harness)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-5FA04E)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D11-F69220)](https://pnpm.io)
 
@@ -14,7 +14,7 @@ A DSH port of [obra/superpowers](https://github.com/obra/superpowers). 15 skills
 
 ## Install
 
-Needs the dsh runtime (`npm i -g @deepseek-ai/dsh`); Node and pnpm floors are in the badges above. Examples use the `web` profile; substitute your own profile name.
+Needs the dsh runtime (adapted to latest `v0.2.1-rc.2` / `>=0.2.0-rc.2` via `npm i -g @deepseek-ai/dsh`); Node and pnpm floors are in the badges above. Examples use the `web` profile; substitute your own profile name.
 
 ```bash
 # A - npm (recommended, always latest)

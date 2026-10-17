@@ -6,17 +6,18 @@
 
 ### 变更 (Breaking Changes)
 
-- **彻底拔除旧版历史兼容字段**：坚决贯彻“适配最新 DSH，不兼容旧版”原则，彻底从 `Config` Schema、接口定义与运行时引擎中拔除已废弃的历史双轨表 `modelDisabled` 与 `userDisabled`，配置结构收敛为纯粹的单一 `disabled` 字典与三态 `language`。
-- **重构客户端控制器与极致压减 RPC Payload**：
+- **全面适配最新 DSH v0.2.1-rc.2 所有细节**：
+  - **启用官方最新 `engines.dsh` 插件版本门禁机制**：响应官方 0.2.1 引入的“第三方插件版本兼容性优先按 engines.dsh 判断”的新规范，在 `package.json` 中显式声明 `"dsh": ">=0.2.0-rc.2 <0.3.0-0"`，以一等公民身份宣告对最新 DSH 0.2.1 体系的原生支持，彻底拒绝旧版本；
+  - **底层核心依赖全面对齐 0.2.1-rc.2**：依赖基准升级对齐最新发布的 `@deepseek-ai/cordis@4.0.5`、`@deepseek-ai/schemastery@3.18.5` 与 `@deepseek-ai/dsh-skill@0.2.1-rc.2`；
+  - **最新技能契约深度对齐**：`SkillDocument` 与 `SkillCatalog` 完备对齐最新 `SkillCandidate` 与 `SkillDefinition` 规范，提供 `resourceBase: { kind: 'directory', path: dir }` 相对资源基准、`source: 'bundled'` 来源标记、`whenToUse` 路由引导与 `invocation` 控制策略；全链路透传 `AbortSignal`，各级异常捕获块优先识别并 rethrow `AbortError`，零脏错误污染。
+- **彻底拔除旧版历史兼容包袱（坚决不兼容旧版）**：
+  - 彻底从 `Config` Schema、接口定义与运行时引擎中拔除已废弃的历史双轨表 `modelDisabled` 与 `userDisabled`，配置结构收敛为纯粹的单一 `disabled` 字典与三态 `language`；
   - 彻底移除 `SwitchPanelModel` 中的 `LEGACY_FIELDS`、`legacyActive` 与单开关操作时的 `legacyCarry` 继承逻辑；
   - 彻底移除每次写入尾部追加旧表 `unset` 的冗余操作，**单开关切换（toggle）RPC payload 从 3 条压缩至纯粹的 1 条操作**，操作负载直降 66%；
   - **批量控制（enableAll / disableAll / resetAll）RPC payload 压缩至纯粹的 15 条原子操作**（即全部 15 个技能名），彻底杜绝宿主版本 `revision` 乐观锁冲突与状态撕裂。
-- **最新 DSH 0.2.0-rc.2 技能契约深度对齐**：
-  - `SkillDocument` 与 `SkillCatalog` 完备对齐最新 `SkillCandidate` 与 `SkillDefinition` 规范，提供 `resourceBase: { kind: 'directory', path: dir }` 相对资源基准、`source: 'bundled'` 来源标记、`whenToUse` 路由引导与 `invocation` 控制策略；
-  - 协作式取消全链路透传（`AbortSignal`），各级异常捕获块优先识别并 rethrow `AbortError`，零脏错误污染。
 - **全仓门禁与端到端测试套件现代化重构**：
   - `scripts/client.test.mjs`：全面重构单测用例，严格断言单开关纯净 1 条 op、批量纯净 15 条 ops，断言即使配置中存在历史旧表也坚决不予读取、不予继承；
-  - `scripts/check-skill-switches.mjs`：在真实 Cordis 4.0.4 + `SkillRegistry` 上完成场景 3 和场景 4 重构实测，铁证单一 `disabled` 字典为全系统唯一权威真源，历史旧表完全被忽略；
+  - `scripts/check-skill-switches.mjs`：在真实 Cordis + `SkillRegistry` 上完成场景 3 和场景 4 重构实测，铁证单一 `disabled` 字典为全系统唯一权威真源，历史旧表完全被忽略；
   - `scripts/config-resilience.test.mjs`：TC-R05 与 TC-R07 重构为纯净自愈断言，验证面对极端损坏输入宿主 0 崩溃，且自愈 ops 绝不触碰历史废弃字段；
   - `scripts/lib/contract.mjs`：新增静态门禁守卫，全仓铁腕扫描并拦截客户端中对旧字段和 `LEGACY_FIELDS` 的任何死灰复燃；
   - **隔离实例真机回读验证**：在专属测试 Profile（`isolated-sp-test`）中通过 Windows 目录联接（`mklink /J`）直通工作区源码根目录，物理规避 pnpm 快照陷阱，并通过 `dsh --dump-config` 真实回读组合树真值，确保绝对零影响日常生产实例。
