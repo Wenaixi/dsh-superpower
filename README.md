@@ -32,6 +32,8 @@ dsh --profile web  # skills are available immediately
 
 Pin a version by appending `@<version>` or `#v<version>` (the version currently published; check `npm view @wenaixi/dsh-superpower version`).
 
+> **Note on package name**: the npm package name is `@wenaixi/dsh-superpower` (scoped). The old unscoped name `dsh-superpower` is a legacy package frozen at v6.3.0-dsh.6 and is incompatible with DSH >= 0.2.0. Always use the full scoped name `@wenaixi/dsh-superpower` when installing.
+
 
 Local development or offline install:
 

@@ -32,6 +32,8 @@ dsh --profile web  # 进会话，技能自动可用
 
 要锁版本就在包名后加 `@<version>` 或 `#v<version>`（具体版本以 `npm view @wenaixi/dsh-superpower version` 当前发布为准）。
 
+> **包名说明**：npm 包名为 `@wenaixi/dsh-superpower`（带 scope）。旧的无 scope 包名 `dsh-superpower` 是历史遗留包，版本停留在 v6.3.0-dsh.6，与 DSH >= 0.2.0 不兼容。安装时请务必使用完整的 scope 包名 `@wenaixi/dsh-superpower`。
+
 
 本地开发或离线安装：
 
