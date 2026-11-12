@@ -1,460 +1,351 @@
-# 更新日志
+# Changelog
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+本项目所有值得记录的变更都记录在这个文件中。
+
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [Unreleased]
 
 ## [8.0.0] - 2026-10-17
 
-### 变更 (Breaking Changes)
+### Changed
 
-- **全面适配最新 DSH v0.2.1-rc.2 所有细节**：
-  - **启用官方最新 `engines.dsh` 插件版本门禁机制**：响应官方 0.2.1 引入的“第三方插件版本兼容性优先按 engines.dsh 判断”的新规范，在 `package.json` 中显式声明 `"dsh": ">=0.2.0-rc.2 <0.3.0-0"`，以一等公民身份宣告对最新 DSH 0.2.1 体系的原生支持，彻底拒绝旧版本；
-  - **底层核心依赖全面对齐 0.2.1-rc.2**：依赖基准升级对齐最新发布的 `@deepseek-ai/cordis@4.0.5`、`@deepseek-ai/schemastery@3.18.5` 与 `@deepseek-ai/dsh-skill@0.2.1-rc.2`；
-  - **最新技能契约深度对齐**：`SkillDocument` 与 `SkillCatalog` 完备对齐最新 `SkillCandidate` 与 `SkillDefinition` 规范，提供 `resourceBase: { kind: 'directory', path: dir }` 相对资源基准、`source: 'bundled'` 来源标记、`whenToUse` 路由引导与 `invocation` 控制策略；全链路透传 `AbortSignal`，各级异常捕获块优先识别并 rethrow `AbortError`，零脏错误污染。
-- **彻底拔除旧版历史兼容包袱（坚决不兼容旧版）**：
-  - 彻底从 `Config` Schema、接口定义与运行时引擎中拔除已废弃的历史双轨表 `modelDisabled` 与 `userDisabled`，配置结构收敛为纯粹的单一 `disabled` 字典与三态 `language`；
-  - 彻底移除 `SwitchPanelModel` 中的 `LEGACY_FIELDS`、`legacyActive` 与单开关操作时的 `legacyCarry` 继承逻辑；
-  - 彻底移除每次写入尾部追加旧表 `unset` 的冗余操作，**单开关切换（toggle）RPC payload 从 3 条压缩至纯粹的 1 条操作**，操作负载直降 66%；
-  - **批量控制（enableAll / disableAll / resetAll）RPC payload 压缩至纯粹的 15 条原子操作**（即全部 15 个技能名），彻底杜绝宿主版本 `revision` 乐观锁冲突与状态撕裂。
-- **全仓门禁与端到端测试套件现代化重构**：
-  - `scripts/client.test.mjs`：全面重构单测用例，严格断言单开关纯净 1 条 op、批量纯净 15 条 ops，断言即使配置中存在历史旧表也坚决不予读取、不予继承；
-  - `scripts/check-skill-switches.mjs`：在真实 Cordis + `SkillRegistry` 上完成场景 3 和场景 4 重构实测，铁证单一 `disabled` 字典为全系统唯一权威真源，历史旧表完全被忽略；
-  - `scripts/config-resilience.test.mjs`：TC-R05 与 TC-R07 重构为纯净自愈断言，验证面对极端损坏输入宿主 0 崩溃，且自愈 ops 绝不触碰历史废弃字段；
-  - `scripts/lib/contract.mjs`：新增静态门禁守卫，全仓铁腕扫描并拦截客户端中对旧字段和 `LEGACY_FIELDS` 的任何死灰复燃；
-  - **隔离实例真机回读验证**：在专属测试 Profile（`isolated-sp-test`）中通过 Windows 目录联接（`mklink /J`）直通工作区源码根目录，物理规避 pnpm 快照陷阱，并通过 `dsh --dump-config` 真实回读组合树真值，确保绝对零影响日常生产实例。
+- 全面适配 DSH v0.2.1-rc.2：在 `package.json` 声明 `engines.dsh: >=0.2.0-rc.2 <0.3.0-0`，服从官方「第三方插件版本兼容性优先按 engines.dsh 判断」的新规范，拒绝旧版本。
+- 核心依赖对齐 0.2.1-rc.2：`@deepseek-ai/cordis` 升至 4.0.5、`@deepseek-ai/schemastery` 升至 3.18.5、`@deepseek-ai/dsh-skill` 升至 0.2.1-rc.2。
+- 技能契约对齐最新 `SkillCandidate` 与 `SkillDefinition` 规范：`SkillDocument` 与 `SkillCatalog` 提供 `resourceBase` 相对资源基准、`source: 'bundled'` 来源标记、`whenToUse` 路由引导与 `invocation` 控制策略；全链路透传 `AbortSignal`，异常捕获块优先识别并重抛 `AbortError`。
+- 单开关切换操作从 3 条压缩为 1 条，批量控制压缩为纯 15 条原子操作，杜绝宿主 `revision` 乐观锁冲突与状态撕裂。
+
+### Removed
+
+- 移除废弃的历史双轨表 `modelDisabled` 与 `userDisabled`，配置结构收敛为单一 `disabled` 字典与三态 `language`。
+- 移除 `SwitchPanelModel` 中的 `LEGACY_FIELDS`、`legacyActive` 与单开关操作时的 `legacyCarry` 继承逻辑。
+- 移除每次写入尾部追加旧表 `unset` 的冗余操作。
+- 配置中存在历史旧表时不再读取、不再继承。
 
 ## [7.7.2] - 2026-10-11
 
-### 修复
+### Fixed
 
-- **修复客户端 useSyncExternalStore 引用不稳定导致界面卡死崩溃**：为前端控制器 `SwitchPanelModel` 引入事件驱动快照缓存机制（`_cachedSnapshot`），未发生状态跃迁时 `getSnapshot()` 返回严格恒等的对象引用，消除 React 18 判定外部存储变动而陷入的无限递归重渲染死循环；在 `updateScope(nextScope)` 中补齐 `this.scope !== nextScope` 恒等守卫，严禁在 render 周期内无条件调用 `_notify()` 向 React 订阅者派发同步更新信号；并在组件顶层添加表单属性解构防空保护。
-- **修复 Schemastery 跨端 Schema.transform 序列化硬伤导致配置通道不可用**：在 `src/superpowers.ts` 中将 `disabled` 与 `language` 声明由 `Schema.transform(...)` 还原为跨端原生的 `Schema.any().default(...).volatile()`；彻底消灭由于 `schema.toJSON()` 丢失函数回调导致浏览器客户端 `settingsSchema.rehydrate` 执行 `validate` 时抛出 `TypeError: callback is not a function` 的硬伤，使 `ConfigFormController.prototype.decode(view)` 顺利解析通过并置为 `ready`，彻底恢复技能开关面板的正常挂载展示。
-- **完善客户端状态机回归测试**：在 `scripts/client.test.mjs` 中新增测试用例 `TC-10`，严格断言 `getSnapshot()` 的引用恒等性与 `updateScope` 相同引用下的零无谓广播，确保 React 18 契约长效稳固。
+- 修复客户端 `useSyncExternalStore` 引用不稳定导致的界面卡死：前端控制器 `SwitchPanelModel` 引入事件驱动快照缓存，未发生状态跃迁时 `getSnapshot()` 返回严格恒等的对象引用，消除 React 18 判定外部存储变动而陷入的无限递归重渲染死循环；`updateScope` 补齐恒等守卫，禁止在 render 周期内无条件派发同步更新；组件顶层添加表单属性解构防空保护。
+- 修复 Schemastery 跨端 `Schema.transform` 序列化硬伤导致配置通道不可用：`disabled` 与 `language` 还原为跨端原生的 `Schema.any().default(...).volatile()` 声明，解决 `schema.toJSON()` 丢失函数回调导致浏览器客户端校验抛出 `TypeError: callback is not a function` 的问题，配置表单恢复挂载。
 
 ## [7.7.1] - 2026-10-10
 
-### 修复
+### Fixed
 
-- **修复取消信号误吞与脏状态漏洞**：`src/catalog.ts` 的 `#scanInternal` 循环与 `getDefinition` 补齐 `signal?.aborted || (err as DOMException)?.name === 'AbortError'` 守卫并立即 rethrow，彻底杜绝取消信号被误当成「文档解析失败」记入 `loadErrors` 脏状态或静默返回 `undefined`；并在 `SkillCatalog.selfTest()` 中新增 2 组边界自检断言，自检总数扩充至 28 项。
-- **客户端构建先验后写原子时序**：重构 `scripts/build-client.mjs` 为「先执行 `checkSkillCatalogDrift` 校验清单漂移，零漂移后才写入磁盘产物，最后以 `assertClientManifest` 核验落地」的原子时序，消除二次重复校验，坚决杜绝因源码清单漂移导致磁盘产物被提前脏覆盖污染。
-- **解耦无用符号导入并开启严格类型检查**：解耦 `src/superpowers.ts` 中未直接消费的 import，向外重导出纯粹委托给 `export ... from`；在 `tsconfig.json` 中强制开启 `noUnusedLocals: true` 与 `noUnusedParameters: true`，消除死代码。
+- 修复取消信号被误吞的脏状态漏洞：`src/catalog.ts` 的目录扫描循环与 `getDefinition` 补齐中止守卫并立即重抛，取消信号不再被当成「文档解析失败」记入错误列表或静默返回 `undefined`。
+- 客户端构建改为先验后写：先校验技能清单漂移，零漂移才写入磁盘产物，再核验落地，杜绝源码清单漂移导致磁盘产物被提前脏覆盖。
+- 解耦未直接消费的 import，重导出委托给 `export ... from`；`tsconfig.json` 开启 `noUnusedLocals` 与 `noUnusedParameters`，消除死代码。
 
 ## [7.7.0] - 2026-10-08
 
-### 变更
+### Changed
 
-- **客户端重构深模块 SwitchPanelModel**：将原本散落的 8 参 `submit` 函数、单/批原子 ops 构造、旧表 `legacyCarry` 继承、`disposed` 守卫与错误堆栈输出彻底封闭在深模块类 `SwitchPanelModel` 门后；React 组件仅通过 1 行代码接入 `React.useSyncExternalStore`，蜕变为纯渲染器，从根源杜绝并发渲染状态撕裂。
-- **批量操作单次原子批处理**：将「全部开启」、「全部关闭」、「恢复默认」由原先的 15 次并发 `form.mutate` 重构为单次原子批处理 `form.mutate(allOps)`，RPC payload 从 45 条压减至 17 条操作，彻底杜绝宿主版本 `revision` 乐观锁冲突与状态撕裂（State Tearing）。
-- **语言切换升级为三段式选择器（中文 / English / 跟随宿主自动）**：参考 `dsh-ponytail` 的语言切换与宿主语言识别实现，将面板顶部的单语言按钮升级为 `SegmentedControl` 三段式控件。未配置时高亮「跟随宿主（自动）」并显示当前跟随的宿主界面语言；显式选择中文或 English 时锁定，选择「跟随宿主（自动）」时写 `unset` 自动清除锁定、恢复跟随宿主。
-- **强化斜杠「/」唤出与模型可见作用域说明**：在选择器正上方新增独立标题「技能介绍语言（用户『/』唤出菜单及模型可见）」，下方详细说明明确指出仅切换输入「/」唤出时展示的技能介绍（用户与模型可见），技能正文保持英文原版不变。
-- **彻底移除面板中的元信息行**：删除面板中的 `spSwMeta` 行（提供方/优先级/来源/面板版本），使配置面板视觉更清爽紧凑，消除冗余信息。
-- **统一项目与 GitHub 仓库标准中英双语简介**：`package.json` 与 GitHub 线上仓库统一为 `DeepSeek Harness plugin: 15 obra/superpowers engineering skills, bilingual descriptions, per-skill toggles | DeepSeek Harness 插件：15 个 obra/superpowers 工程纪律技能，技能描述中英双语自由切换，每一个技能本身自由开关`；`locale/zh.json` 与 `locale/en.json` 保持严格的中英文分立呈现。
-- **SkillCatalog 语言切换零重复 I/O 优化**：在仅切换语言时复用已解析的内存 `entriesByName` 生成新快照，消除重复的磁盘 Markdown I/O。
+- 客户端重构为深模块 `SwitchPanelModel`：将分散的 8 参 `submit` 函数、单批原子 ops 构造、旧表继承、`disposed` 守卫与错误堆栈输出收进深模块类，React 组件经 `React.useSyncExternalStore` 一行接入，蜕变为纯渲染器。
+- 批量操作改为单次原子批处理：「全部开启」「全部关闭」「恢复默认」从 15 次并发写入重构为单次原子批处理。
+- 语言切换升级为三段式选择器：中文、英文、跟随宿主自动；未配置时高亮跟随宿主并显示当前跟随的宿主界面语言，显式选择时锁定，选择跟随宿主时写 `unset` 清除锁定。
+- 强化斜杠唤出与模型可见作用域说明：选择器上方新增独立标题说明仅切换「/」唤出时展示的技能介绍，技能正文保持英文原版不变。
+- 移除面板中的元信息行 `spSwMeta`，配置面板更清爽。
+- `package.json` 与 GitHub 仓库统一标准中英双语简介；`locale/zh.json` 与 `locale/en.json` 严格分立呈现。
+- SkillCatalog 语言切换复用已解析的内存条目生成新快照，消除重复的磁盘 Markdown I/O。
+- git 忽略补齐：新增编辑器残留、本地私有配置、Playwright 产物、`reports/` 以及 `undefined/`、`.local/` 兜底防复发。
 
-### 修复
+### Fixed
 
-- **根除 Windows 沙箱管道 EPERM 崩溃**：`scripts/lib/contract.mjs` 改用 Node 原生 `node:vm` 模块（`new vm.Script(source)`）纯内存编译解析替代跨进程 `spawnSync('node --check')`，0 管道触碰，耗时仅 1.17ms，彻底免疫沙箱命名管道权限拦截。
-- **修复冷读取语言丢失 Bug**：`src/catalog.ts` 的 `getDefinition` 自愈冷重读时补齐透传归一化 `language` 参数，使冷读与热读双语表现 100% 同构。
-- **修复宿主语言缺省态缓存穿透漏洞**：`src/superpowers.ts` 引入 `hostLanguageResolved` 布尔标志位，彻底消除 `undefined` 缺省态下每轮重复全量反射扫描 `settings.describe()` 的高危性能损耗。
-- **修复取消信号吞没缺陷**：`src/catalog.ts` 的 `isDirModified` 优先 rethrow `AbortError`，保障协作式取消信号畅通穿透。
-- **消灭客户端静默失败**：在 `submit` 错误处理分支补齐 `console.error('[dsh-superpower] form.mutate failed:', error)` 原生堆栈输出，并在静态门禁中建立硬性守护断言。
-- **客户端 HMR 样式热更新覆盖**：样式单例注入优化为“存在则更新 `textContent`，不存在才 `appendChild`”，兼顾 DOM 单例回收与开发期样式毫秒级热覆盖。
-- **修复浏览器端未配置态语言语义折叠 bug**：`readLanguage()` 缺项时保留 `undefined`，消除此前将缺项折叠为 `'zh'` 导致面板无法表达跟随宿主且与 Host 侧三态撕裂的问题。
-- **宿主语言变更实时生效**：Host 侧新增监听 `app-boot/config-reload` 事件，在宿主应用配置补丁（如界面语言修改）后即时让目录与 `hostLanguageCache` 失效并重扫，解决未配置态下宿主切语言后模型侧描述不刷新的问题。
-- **修复客户端历史禁言表原子迁移缺陷**：`src/client.js` 补齐对 `modelDisabled`/`userDisabled` 历史旧表的读取并集回退；在单技能开关操作时原子性地将历史禁用项迁移写入新表 `disabled`，彻底杜绝单次开关导致历史禁用项被误清空抹除的隐患。
-- **SkillCatalog 增加并发重入屏障**：引入 `scanPromise` 合并并发重入扫描，杜绝并发查询时 Map 被反复清空导致的假重名与技能丢失。
-- **补全 npm 发布白名单遗漏**：`package.json` 的 `"files"` 数组补全 `"README.zh.md"`，彻底根除发布后线上点击中文说明 404 死链。
-- **文档事实错误**：README 删除不存在的 `dsh-tools.en.md` 引用、明确语言切换只改技能描述（技能名与正文均不随语言变化）、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉 `- - - - -` 畸形列表项、6/7 号撞号、安装产物文件数与包体积更新为 7.7.0 实测口径；CONTRIBUTING.md 修掉「正文全中文」旧口径、pnpm 版本表与 CI 固定 9 的矛盾、`bash -c "$env:..."` 的坏命令；计划文档复选框回填为已完成。
-- **契约模块注释孤儿块**：`scripts/lib/contract.mjs` 删除三段 7.3.0 重构残留的孤儿注释；去掉误留的重复 `checkBilingualPairing` 实现。
+- 修复 Windows 沙箱管道 EPERM 崩溃：契约检查改用 Node 原生 `node:vm` 纯内存编译解析，替代跨进程 `spawnSync`，不再触碰命名管道，免疫沙箱权限拦截。
+- 修复冷读取语言丢失：`getDefinition` 自愈冷重读时透传归一化 `language` 参数，冷读与热读双语表现一致。
+- 修复宿主语言缺省态缓存穿透：引入 `hostLanguageResolved` 布尔标志，消除 `undefined` 缺省态下每轮重复全量反射扫描 `settings.describe()` 的性能损耗。
+- 修复取消信号吞没：`isDirModified` 优先重抛 `AbortError`。
+- 消灭客户端静默失败：`submit` 错误处理分支补齐原生堆栈输出与控制台标记。
+- 客户端 HMR 样式热更新覆盖：样式单例注入改为存在则更新 `textContent`、不存在才 `appendChild`。
+- 修复浏览器端未配置态语言语义折叠：`readLanguage()` 缺项时保留 `undefined`，此前折叠为 `'zh'` 导致面板无法表达跟随宿主且与宿主侧三态撕裂。
+- 宿主语言变更实时生效：Host 侧监听 `app-boot/config-reload` 事件，配置补丁应用后即时让目录与语言缓存失效并重扫。
+- 修复客户端历史禁言表原子迁移：单技能开关操作时原子性将历史禁用项迁移写入新表 `disabled`，避免单次开关把历史禁用项误清空。
+- SkillCatalog 增加并发重入屏障：合并并发重入扫描，杜绝并发查询时目录被反复清空导致的假重名与技能丢失。
+- 补全 npm 发布白名单：`files` 数组补入 `README.zh.md`，修复发布后中文说明 404。
+- 文档事实错误修正：README 删除不存在的 `dsh-tools.en.md` 引用、明确语言切换只改技能描述、两份 README 的版本沿革合并为一处指向 CHANGELOG 的入口；CONTEXT.md 修掉畸形列表、撞号与包体积旧口径；CONTRIBUTING.md 修掉过时口径与坏命令。
 
-### 测试
+### Removed
 
-- **新增极速纯 Node 脱机状态机单测**：新增 `scripts/client.test.mjs`，依托 `node:test` + `node:vm` 纯内存沙箱，零 DOM 依赖、零浏览器进程，50ms 内完成全量状态机 8 大核心边界契约覆盖。
-- **入库会话更新与 Prompt Cache 保全实证探针**：`scripts/verify-session-catalog-update.mjs` 纳入版本管理，实机验证已存在会话条目更新机制与历史上下文缓存保全。
+- 移除 `docs/` 历史计划目录。
+- 删除根目录 12 个历史 `*.tgz`、`undefined/temp/`、`.verify-shots/`、`.cache-repos/` 与已完工的 `.superpowers/` 账本，累计释放超过 56 MB。
+- 移除 `SkillCatalog` 中从未被读取的死属性 `entriesByDir`、空展开、孤立未引用的 `optionalString` 函数与冗余的 `VolatileRef` 接口。
+- 契约模块删除重构残留的孤儿注释与误留的重复校验实现。
 
-### 清理
+### Changed
 
-- **移除 docs/ 历史计划目录**：彻底删除已归档的历史计划目录 `docs/`，保持工作区轻量纯净。
-- **深度清理临时文件**：删除根目录 12 个历史 `*.tgz`、`undefined/temp/`、`.verify-shots/`、`.cache-repos/` 与已完工的 `.superpowers/` SDD 账本，累计释放超过 56 MB 空间。
-- **git 忽略补齐**：新增编辑器残留、本地私有配置、Playwright 产物、`reports/` 以及 `undefined/`、`.local/` 兜底防复发。
-- **清理无用死代码**：彻底移除 `SkillCatalog` 中从未被读取的死属性 `entriesByDir`、L339 空展开、`src/document.ts` 孤立未引用的 `optionalString` 函数以及 `src/superpowers.ts` 冗余的 `VolatileRef` 接口。
-
-### 致谢
-
-- **致谢对齐**：中英文 README 保留上游开源项目 `obra/superpowers` 的链接引用，去除个人作者与协议声明；并正式追加对 `dsh-plugin-dev` 权威技能库的致谢。
-
-### 文档
-
-- **dsh-tools.md 工具映射全面重写**：按本机 DSH 0.2.0-rc.2 桌面版源码（desktop-runtime.json、dsh/package.json、全部 tool 包 lib/*.js）与运行时实测真值重写 skills/using-superpowers/references/dsh-tools.md。修正 5 处事实错误：
-  - fs 观察策略——write 覆盖已存在文件、edit 必须先前置 read（FS_NOT_OBSERVED / FS_STALE_VERSION），「先读再写」是宿主强制而非习惯；
-  - 不存在合并的 web 工具，web_search / web_fetch 是两个独立工具（dsh-tool-web）；
-  - 不存在常驻 workflow 工具，需装配 workflowEngine（dsh-workflow-ptc）才注册；
-  - ralph 默认禁用；
-  - cordis 工具为只读检查（cordis_inspect_list / cordis_inspect_query），非动态安装入口。
-- 新增内容：41 个桌面实测工具的完整目录（含归属包、版本、仓库相对路径、装配条件）、PTC/native 呈现模式、后台作业与 run_in_background / promoteOnTimeout、timed/阻塞 ask_user_question、agent-team 与 subagent-control 同名工具互斥替换、装配三层模型（bundle → preset → profile patch）。
-- 同步 skills/using-superpowers/SKILL.md 的 Platform Adaptation 段：Task/Subagent -> subagent/subagent_fork，去掉对 workflow 的默认存在承诺。
+- README 保留上游开源项目链接引用，去除个人作者与协议声明，并追加对 `dsh-plugin-dev` 权威技能库的致谢。
+- `dsh-tools.md` 工具映射按 DSH 0.2.0-rc.2 桌面版源码与运行时实测重写，修正文件观察策略、web 工具独立存在、workflow 工具需装配、ralph 默认禁用、cordis 工具只读检查等事实错误，并新增 41 个实测工具的完整目录、PTC/native 呈现模式、后台作业、装配三层模型。
+- `using-superpowers` 的 Platform Adaptation 段同步：Task/Subagent 改为 subagent/subagent_fork，去掉对 workflow 的默认存在承诺。
 
 ## [7.5.8] - 2026-10-06
 
-### 修复
+### Fixed
 
-- **消灭语言切换静默失败（Silent Failure）**：在顶部语言栏（`spSwLangBar`）增加对 `failures['language']`（`spSwLangFailure`）的显式渲染与控制台告警。当底层 `form.mutate` 因任何原因失败、拒绝或超时时，红字实时告警，绝不静默吞掉报错。
-- **防止热更新表单失效假死**：在 `submit` 回调中输出明确的控制台调试日志，并在静态契约中永久断言 `spSwLangFailure` 渲染的存在性。
+- 消灭语言切换静默失败：顶部语言栏增加对语言切换失败状态的显式渲染与控制台告警，底层写入失败、被拒或超时时红字实时告警，不再静默吞掉报错。
+- 修复热更新表单失效假死：`submit` 回调输出明确控制台日志。
 
 ## [7.5.7] - 2026-10-06
 
-### 修复
+### Fixed
 
-- **修复 7.5.6 面板版本号显示错误**：面板 meta 显示 `7.5.4`（版本号在回退 7.5.5 时被误回退）。版本升 7.5.7。
-- **语言按钮增加可见说明**：按钮旁新增一行说明文字「仅切换技能描述（用户与模型可见），技能正文保持英文原版」，不只依赖 tooltip。
-- **contract 4.6 断言修正**：放行 `spSwLangBar/Btn/Note` 前缀类（原正则 `spSwLang[^B]` 误伤 `.spSwLangNote`）。
+- 修复 7.5.6 面板版本号显示错误：面板 meta 显示的版本号与包版本不一致，版本升至 7.5.7。
+- 语言按钮增加可见说明文字，「仅切换技能描述，技能正文保持英文原版」，不只依赖 tooltip。
 
 ## [7.5.6] - 2026-10-06
 
-### 变更
+### Changed
 
-- **回退 7.5.5 的面板文案随语言切换**：语言按钮只控制技能描述（用户与模型看到的 `Superpower Skill:` 后面的文本）与按钮自身的显示语言；面板其余 UI（标题、批量按钮、搜索框、提示语、meta 标签）恢复跟随宿主界面语言。语言按钮 tooltip 明确说明「只影响描述，正文恒为英文原版」。
+- 回退 7.5.5 的面板文案随语言切换：语言按钮只控制技能描述与按钮自身的显示语言，面板其余 UI 恢复跟随宿主界面语言。
 
 ## [7.5.5] - 2026-10-06
 
-### 修复
+### Fixed
 
-- **面板 UI 文案随语言按钮切换**：面板内所有文案（标题「技能开关」、按钮「全部开启/全部关闭/恢复默认」、搜索框、提示语、meta 标签）从「跟随宿主界面语言」改为「跟随语言按钮的生效语言」。此前点击语言按钮只切换技能描述，面板自身的 UI 文案不变，看上去像「UI 没反应」。
+- 面板 UI 文案未随语言按钮生效：此前点击语言按钮只切换技能描述，面板自身的 UI 文案不变，看上去像没反应；改为面板内所有文案跟随语言按钮的生效语言。
 
 ## [7.5.4] - 2026-10-06
 
-### 变更
+### Changed
 
-- 版本：7.5.3 发布时 npm 出现 staged-publish 冲突（两次并发发布同一版本导致元数据未落库），改用 7.5.4 重发。代码内容与 7.5.3 相同。
+- 7.5.3 发布时 npm 出现 staged-publish 冲突，两次并发发布同一版本导致元数据未落库，改用 7.5.4 重发，代码内容与 7.5.3 相同。
 
 ## [7.5.3] - 2026-10-06
 
-### 修复
+### Fixed
 
-- **语言按钮显示逻辑**：按钮文案改用生效语言（`language` 缺失时取宿主语言）而非原始偏好值。此前 `language` 未落盘（用户未在面板调过）时按钮错误显示「中文」（实为目标语言的误算），点击后按钮永远显示「中文」，看起来像「点 English 无效」。修复后：宿主中文 → 按钮显示 English → 点击切英文 → 按钮变中文 → 再点切回中文。
+- 修复语言按钮显示逻辑：按钮文案改用生效语言，而非原始偏好值。此前 `language` 未落盘时按钮错误显示「中文」，点击后永远显示「中文」，看起来像「点 English 无效」。
 
 ## [7.5.2] - 2026-10-06
 
-### 变更
+### Changed
 
-- **语言切换单按钮化**：面板每行由「中文 / English」双按钮改为单个按钮，显示目标语言（中文态显示 English，点击切英文；英文态显示中文，点击切中文）。
-- **描述默认跟随宿主语言**：`language` 字段缺失（面板未调过）时，技能描述语言跟随 DSH 宿主界面语言（设置里选的语言），宿主切语言描述跟着变；面板调过后固定为该语言，不再跟随宿主。
-- **语言按钮上移面板顶部**：每行按钮改为面板顶部（说明文案之下）全局一个，一次切换全部 15 个技能的描述语言。
-- 版本：7.5.1 -> 7.5.2。
+- 语言切换单按钮化：面板每行由「中文 / English」双按钮改为单个按钮，显示目标语言。
+- 描述默认跟随宿主语言：`language` 字段缺失时技能描述语言跟随 DSH 宿主界面语言，宿主切语言描述跟着变；面板调过后固定为该语言。
+- 语言按钮上移面板顶部，一次切换全部 15 个技能的描述语言。
 
 ## [7.5.1] - 2026-10-06
 
-### 变更
+### Changed
 
-- **技能正文统一为上游英文原版**：每个技能单份 `SKILL.md`（DSH 专属化：去违禁符号、改写非 DSH 平台引用、补 DSH 专属小节），frontmatter 同时声明英文 `description` 与中文 `description_zh`；删除全部 52 个 `SKILL.en.md` 与辅助 `.en.md`，文档链接回改为 `.md`。
-- **语言偏好只切换描述**：`language` 偏好决定 `ctx.skills.list()/get()` 返回 `description` 还是 `description_zh`，正文恒为英文；面板「中文 / English」按钮与门禁断言同步更新。
-- **真机验收**：隔离实例（sp-verify-751）跑通 UI 全流程与模型感知四相位，修复浏览器脚本的卡片定位、版本断言与语言切换步。
-- 版本：7.5.0 -> 7.5.1。
+- 技能正文统一为上游英文原版：每个技能单份 `SKILL.md`，frontmatter 同时声明英文 `description` 与中文 `description_zh`；删除全部 52 个 `SKILL.en.md` 与辅助 `.en.md`，文档链接改回 `.md`。
+- 语言偏好只切换描述：`language` 偏好决定 `ctx.skills.list()` 与 `get()` 返回英文还是中文描述，正文恒为英文；面板「中文 / English」按钮同步更新。
 
 ## [7.5.0] - 2026-10-06
 
-### 新增
+### Added
 
-- **每个技能新增英文正文**：`skills/<name>/SKILL.en.md` 以 obra/superpowers v6.4.2 英文原版为底稿，做 DSH 专属化清理（去违禁符号、改写非 DSH 平台引用、补 DSH 专属小节），与中文 `SKILL.md` 并存；辅助 md 按「文件.en.md」后缀配对。
-- **面板语言切换**：每行新增「中文 / English」按钮（全局单一偏好 `language` volatile 字段），切换即改该技能的显示语言与模型加载正文语言；英文描述一律以 `Superpower Skill: ` 开头。
-- **README 双语**：README.md 改为默认英文，正文来自上游英文技能名/描述；中文版移入 README.zh.md，两份文档顶部互跳。
+- 每个技能新增英文正文：`skills/<name>/SKILL.en.md` 以 obra/superpowers v6.4.2 英文原版为底稿做 DSH 专属化清理，与中文 `SKILL.md` 并存。
+- 面板语言切换：每行新增「中文 / English」按钮，全局单一偏好 `language` volatile 字段，切换即改该技能的显示语言与模型加载正文语言；英文描述一律以 `Superpower Skill:` 开头。
+- README 双语：README.md 改为默认英文，中文版移入 README.zh.md，两份文档顶部互跳。
 
-### 变更
+### Changed
 
-- **模型侧随语言偏好供电**：`language` 偏好同时决定 `ctx.skills.list()` 的 description（模型目录）与 `ctx.skills.get()` 的 content（模型加载正文）；`loader/volatile-update` 事件热刷新现有闭环直接复用。
-- **门禁扩展**：contract.mjs 新增中英配对契约（每个技能必须有 SKILL.en.md、英文描述带前缀且不含中文）与 README 语言面断言；client-manifest 比对扩展为中文描述与英文描述双字段；check-skill-switches.mjs 新增语言偏好场景（默认中文、language=en 时正文与描述为英文且不影响开关）；verify-switch-ui.py 新增语言切换步（点 English、断言描述变英文、回读落盘、点中文恢复）。
-- **英文正文沿上游原貌**：脚本调用保留上游无 `bash` 前缀的形态与上游语义化示例（visual-companion.en.md 等）属英文版原貌，配对文件加入契约豁免清单。
-- **版本**：7.4.1 -> 7.5.0。
+- 模型侧随语言偏好供电：`language` 偏好同时决定技能目录的 description 与模型加载正文的 content，`loader/volatile-update` 事件热刷新。
 
 ## [7.4.1] - 2026-10-06
 
-### 修复
+### Fixed
 
-- **面板的每一次开关操作都报「保存失败」，配置零写入（真机实测发现）**：`dsh-settings` 的写入闸门逐条校验 `op.path` 是否落在某个 volatile 节点下，命中不了就抛 `Config field "modelDisabled" is not volatile` 并让整批 `mutate` 失败。7.4.0 把两个旧字段去掉 `.volatile()` 本意是「不再可写」，实际效果是它们变成非 volatile 节点，于是「主写入 `disabled` + 两条 `unset`」这一批里只要有 `unset` 指向旧字段就整批被拒。两个旧字段恢复 `.volatile()`：它们仍不会被面板写入（面板只发 `disabled` 与 `unset`），但能被 `unset` 合法清掉。
-
-### 新增
-
-- **面板 meta 区补「面板版本」标注**：浏览器侧读不到 `package.json`，界面却是判断「装的是哪一版、是不是这一版界面」的唯一现场。写死常量并在页头显示，版本与界面对不上时能一眼看出，不必翻产物。
+- 修复面板每次开关操作都报「保存失败」、配置零写入的问题：`dsh-settings` 的写入闸门逐条校验操作路径是否落在 volatile 节点下，7.4.0 把两个旧字段去掉 `.volatile()` 后它们变成非 volatile 节点，整批写入里只要有一条 `unset` 指向旧字段就被整批拒绝；恢复两个旧字段的 `.volatile()` 声明后，`unset` 可以合法清掉旧字段。
+- 面板 meta 区补「面板版本」标注：浏览器侧读不到 `package.json`，界面是判断安装版本的唯一现场，写死常量并在页头显示。
 
 ## [7.4.0] - 2026-10-05
 
-### 移除
+### Removed
 
-- **brainstorming 随包可视化服务（端口、会话密钥、WebSocket 重连四套生命周期）**：`skills/brainstorming/scripts/` 整目录删除，含 `server.cjs`、`start-server.sh`、`stop-server.sh`、`helper.js`、`frame-template.html`。宿主 `documentPreviews` 已内置 `html`/`htm` 预览并渲染为隔离 iframe，插件无再自建端口。**能力降级**：预览中的点击不再回传给 agent，选择结果必须回到终端回复里；`visual-companion.md` 与 `SKILL.md` 均显式写入这一约束。
+- 移除 brainstorming 随包可视化服务：`skills/brainstorming/scripts/` 整目录删除，含服务端、启动与辅助脚本与模板。宿主 `documentPreviews` 已内置 html 与 htm 预览并渲染为隔离 iframe，插件无需自建端口；预览中的点击不再回传给 agent，选择结果必须回到终端回复里，`visual-companion.md` 与 `SKILL.md` 均显式写明这一约束。
+- 配置字段 `modelDisabled` 与 `userDisabled` 废弃：两者去掉 `volatile()` 后不再可写，面板只写 `disabled`；schema 声明保留，否则 profile 里的旧键会被直接丢弃；`readSwitches` 在 `disabled` 为空时取两旧表的并集，保证升级前的开关在用户第一次操作前继续生效。手动改过 `cordis.patch.yml` 的用户需要把值并入 `disabled`。
 
-### 变更
+### Changed
 
-- **每个技能从两个开关合并为一个**：原先「模型可调用 / 用户可调用」两个语义重叠的开关合并为单个开关，关闭即 `modelInvocable` 与 `userInvocable` 同时为 `false`。面板行布局由双列网格改为标签在左、单开关在右；词典的 `modelInvocable`/`userInvocable` 与两条 hint 合并为 `invocable`/`invocableHint`，批量按钮提示里的「两侧」措辞一并收敛。
-- **开关状态收敛到单张禁言表**：新增 `disabled` volatile 字典作为唯一写入目标，`switchOps()` 把主写入与两条清理旧表的 `unset` 合进同一次 `mutate`——共享一个 revision 栅栏与一次持久化决策，不存在半迁移态。用户在面板做任何一次操作即完成收敛，之后 profile 只剩 `disabled` 一个字段。
-- **端到端实测改为单字段语义**：`check-skill-switches.mjs` 重写为五场景（默认全开、新表两侧同关且不误伤他人、旧表并集生效、新表非空时旧表失效、热失效后目录立即刷新）；两个浏览器脚本的探针由双列 `modelOn`/`userOn` 改为单列 `on`，并新增「旧的两张分侧表已被清空」断言。
-- **门禁覆盖两条新契约**：`checkCompanionScripts` 收缩为 `checkBundledShellScripts`（随包 JS 服务脚本已删除，只留 shell 脚本的 Shebang 与 CRLF 自检）；client-artifact 新增单开关断言；新增 `checkNoSelfHostedService` 断言技能正文不得出现 `start-server.sh` 等随包服务痕迹。三条均做过破坏实测。
-- **修复客户端构建死锁**：`build-client.mjs` 原先在复制产物之前调用 `assertClientManifest`，而后者把「`src` 与 `lib` 内容一致」也作为失败条件，产物一旦落后于源就拒绝执行，于是永远无法重建。改为先复制再校验，并从 `client-manifest.mjs` 拆出 `checkSkillCatalogDrift` 专管清单漂移。
+- 每个技能从两个开关合并为一个：原先「模型可调用 / 用户可调用」两个语义重叠的开关合并为单个开关，关闭即两侧同时为 false；面板行布局改为标签在左、单开关在右；词条与提示合并。
+- 开关状态收敛到单张禁言表：新增 `disabled` volatile 字典作为唯一写入目标，主写入与两条清理旧表的 `unset` 合进同一次 `mutate`，共享一个 revision 栅栏与一次持久化决策，不存在半迁移态。
+- 修复客户端构建死锁：构建脚本原先在复制产物之前校验且把「src 与 lib 内容一致」也作为失败条件，产物一旦落后于源就永远无法重建；改为先复制再校验。
 
-### 破坏性变更
-
-- **配置字段 `modelDisabled` 与 `userDisabled` 废弃**：两者去掉 `volatile()` 后不再可写，面板只写 `disabled`。schema 声明刻意保留，否则 profile 里的旧键会被直接丢弃、用户历史开关一次性消失；`readSwitches` 在 `disabled` 为空时取两旧表的并集，保证升级前的开关在用户第一次操作前继续生效。手动改过 `cordis.patch.yml` 的用户需要把值并入 `disabled`。
-
-### 修复
-
-- **单开关面板的样式注入与词典遗漏已由门禁钉死**：新增断言拒绝 `spSwToggles` 双列类名残留、拒绝绕过 `LEGACY_FIELDS` 直接引用旧字段，并要求 `invocable`/`invocableHint` 在 zh/en 双语同时声明。破坏实测时该断言确实变红。
 ## [7.3.0] - 2026-10-04
 
-### 修复
+### Fixed
 
-- **技能快照对「内容编辑」失明（长驻实例返回过期目录）**：`SkillCatalog` 的快照复用判据原来只有「技能根目录自身 mtime」一个键。编辑任意 `SKILL.md` 正文、目录结构不变时目录 mtime 不变，长驻进程（Web GUI 中的 provider 实例）静默提供过期目录与内容；「先建目录、稍后才写 SKILL.md」的增量新建场景同样完全不可见。现升级为三键聚合指纹——根目录 mtime + 根级技能目录名集合 + 各 `SKILL.md` 的 mtime——任一键变化即重扫，稳定场景仍是 1 次 stat + 1 次 readdir，不读文件内容。`selfTest()` 新增 4 条可失败用例（正文编辑重扫 / 增量新建可见 / 删除目录 / ok 计入缺失），边界自检 11/11 → 15/15，每条都做过破坏实测。
-- **裸调用守卫分支一对 kebab 技能名全部逃逸**：契约自检补钉时揪出守卫正则分支一字符类写成 `[w-]+`，只能匹配字母 w 与连字符，真实 kebab 技能名（每段可含数字与多连字符）一个都匹配不到，带技能名前缀的裸脚本调用全部漏网。两处正则（自检样本与消费方）统一为 `[a-z0-9-]+`，自检补齐分支一两种形态、豁免集与消费方同源、tick-path 全前缀与 tick-bare 全扩展名。
-- **客户端清单比对漏检「两侧同序全错」**：`client-manifest` 原按索引比对 `declared[i] vs disk[i]`，隐含两侧顺序一致假设；顺序差异被误报成内容差异，而两侧同时换序且内容全等时 0 报错。改为按技能名建 Map 比对，只报真实内容差异。
-- **手写括号配平器零守卫陷阱**：`extractCatalogLiteral` 的配平扫描器单引号分支写成空串，字符串内方括号参与配平，纯靠「描述恰好无方括号」幸存。移除手写配平，改朴素边界 + `new Function` 求值双保险，求值失败即报错。
-- **`verifyIntegrity().ok` 漏判缺失技能**：聚合 `ok` 原来只查重复、解析错误与名称漂移，目录在而 `SKILL.md` 缺失不计入失败，与门禁判定口径不一致。现补齐，并附一条可失败自检。
+- 修复技能快照对内容编辑失明导致长驻实例返回过期目录：快照复用判据从单一目录 mtime 升级为三键聚合指纹，目录 mtime、根级技能目录名集合、各 `SKILL.md` 的 mtime，任一变化即重扫；稳定场景仍只做一次 stat 与一次 readdir，不读文件内容。
+- 修复裸调用守卫正则分支只匹配字母与连字符、真实 kebab 技能名全部逃逸的问题，两处正则统一为完整 kebab 形态。
+- 修复客户端清单比对按索引比对隐含顺序一致假设的问题，改为按技能名建 Map 比对，只报真实内容差异。
+- 修复手写括号配平器字符串分支错误导致配平失效的问题，改朴素边界加求值双保险。
+- 修复聚合完整性校验漏判缺失技能：目录在而 `SKILL.md` 缺失时此前计入成功，现计入失败。
 
-### 变更
+### Changed
 
-- **技能总数魔法数收敛**：`15` 散落在 `verify.mjs` 与 `check-skill-switches.mjs` 四处，现导出为 `EXPECTED_SKILL_COUNT` 常量（`catalog.ts` 经 `superpowers.ts` 再导出），新增/删除技能只改一处。
-- **`required` 存在性清单清理**：删除恒真项（`package.json` 自身）与 5 个技能路径（第 1 段 `missingSkillMd` 检查已覆盖），17 项收敛到 11 项。
-- **frontmatter 边界契约注释钉死**：多 YAML 文档（frontmatter 内列 0 `---`）与 CRLF 单字符剥除的边界显式写入注释。
-- **review-sync 返回契约统一**：移除 `typeof res === 'number'` 历史兼容分支，deep/tokens 统一返回 `{ ok }`，总线只判 ok 定退出码。
+- 技能总数魔法数收敛：`15` 导出为 `EXPECTED_SKILL_COUNT` 常量，新增或删除技能只改一处。
+- `required` 存在性清单清理：删除恒真项与已被覆盖的技能路径，17 项收敛到 11 项。
+- frontmatter 边界契约注释钉死：多 YAML 文档与 CRLF 单字符剥除的边界显式写入注释。
+- review-sync 返回契约统一：移除数值型历史兼容分支，统一返回 `{ ok }`，总线只判 ok 定退出码。
+
 ## [7.2.1] - 2026-10-04
 
-### 修复
+### Fixed
 
-- **面板底部三个标注切语言不变（meta 区 i18n 补全）**：「技能开关」面板页头的 `provider` / `rank` / `source` 三个标签是硬编码英文，宿主界面语言切到中文时这三处仍是英文。现并入 `zh` / `en` 词典，改经官方 locale 注册表的 `t()` 席位取词，随界面语言整体切换。
+- 面板底部三个标注切语言不变：`provider`、`rank`、`source` 三个标签此前硬编码英文，宿主界面语言切到中文时仍是英文；并入中英词典，经官方 locale 注册表取词，随界面语言整体切换。
 
-### 变更
+### Changed
 
-- **固化面板语言边界**：技能内容（名称与描述）固定中文，不做技能级 i18n；面板 UI 文案（标题、按钮、提示、meta 标签）全部双语。`locale/{en,zh}.json`（卡片元数据）与面板词典是两个独立通道，不合并。
-- **门禁新增 UI i18n 取词断言（client-artifact 4.5 段）**：渲染路径禁止硬编码裸标签（`spSwMetaItem' }, 'xxx'` 匹配即红），三个 meta 键必须出现 `t('key')` 取词且 zh/en 双语同时声明。已用「退回硬编码」「删 en 键」两种破坏实测确认可红。
+- 固化面板语言边界：技能内容固定中文，不做技能级 i18n；面板 UI 文案全部双语。locale 文件与面板词典是两个独立通道，不合并。
 
 ## [7.2.0] - 2026-10-03
 
-### 修复
+### Added
 
-- **面板样式从未注入 DOM（真机实测发现）**：`src/client.js` 里定义了 `CSS` 常量、每个类名都写全了 `--dsw-*` 令牌，却没有任何代码把这段 CSS 塞进 `<head>`，类名等于没写，面板渲染出来是浏览器默认样式（16px 正文、无行高、无分隔线、元信息挤成一坨），而且不报任何错。现按官方契约注入 `style[data-plugin-css]` 标签，宿主卸载插件时一并回收。门禁补了三条断言：必须出现 `createElement('style')`、`head.appendChild` 与 `data-plugin-css` 标记，且禁止引用 `--dsw-static-*` 原始色板。已用「删掉注入」和「引入 static 色板」两种破坏实测，确认这三条会真的失败。
-- **三个批量按钮只作用于单侧（真机实测发现）**：「全部关闭」只写 `modelDisabled`，「恢复默认」只清 `userDisabled`，跟按钮文案承诺的「两侧」对不上。「恢复默认」这条尤其隐蔽：它清的是本来就空的一侧，用户侧残值原样留着，而残值在 UI 上跟「已开启」长得一模一样，只能翻配置文件才发现。三个按钮现统一作用于两侧。顺带修正 `submit()` 的字段参数形态——批量路径改成数组，两个单开关调用点漏改，静默变成「把字符串丢给 `for...of`」，点击无报错、UI 不动、配置零写入。
+- 技能开关面板：DSH Web GUI 插件管理页里 `@wenaixi/dsh-superpower` 卡片的详情页，本包 15 个技能各有两个开关。关掉模型侧，技能不再进入模型可用目录，`skill` 工具调用被拒；关掉用户侧，不再出现在斜杠命令补全与命令行技能清单。面板另有全部开启、全部关闭、恢复默认三个批量操作，按名称或描述过滤的搜索框，以及 `provider`、`rank`、`source` 三个只读标注供排查同名覆盖。配色、字阶、圆角全部取自 DSH 语义令牌，深浅色随 `body[data-ds-dark-theme]` 自动切换。
+- 本包升级为双面插件：新增 `src/client.js` 经构建脚本复制到 `lib/client.js`、`exports["./client"]` 与 `dsh.client` 声明；纯终端 profile 不加载浏览器半侧，宿主侧行为不变。
+- 新增图标与插件卡片元数据：`icon.png` 肌肉手臂实心剪影，浅色深色底都可读；新增 `locale/en.json` 与 `locale/zh.json` 提供卡片标题与描述的中英文本；`exports` 放行 `./package.json` 与 `./locale/*.json`，否则卡片只剩包名，宿主读取插件元数据时把错误吞进 `meta.error`，安装与启动日志都看不到。
+- 技能开关状态深模块 `src/switches.ts`：封装两个以技能名为键的禁言表的 volatile 解包与 `SkillInvocationPolicy` 覆盖。
+- 开关状态落进 profile 配置：`Config` 新增 `modelDisabled` 与 `userDisabled` 两个 volatile 字典字段，写入 profile 的 `cordis.patch.yml`；开关经官方 `ctx.configForms` 通道读写，带乐观并发栅栏；宿主收到 `loader/volatile-update` 后刷新注册表缓存并广播 `skills/change`。技能仍保留在注册表中并继续占同名裁决权。
 
-### 新增
+### Fixed
 
-- **技能开关面板**：DSH Web GUI 插件管理页里 `@wenaixi/dsh-superpower` 卡片的详情页，本包 15 个技能各有两个开关。关掉模型侧，该技能不再进入模型的可用技能目录，`skill` 工具调用也被拒；关掉用户侧，它不再出现在斜杠命令补全与命令行技能清单里。面板另有全部开启 / 全部关闭 / 恢复默认三个批量操作（都同时作用于两侧）、按名称或描述过滤的搜索框，以及 `provider` / `rank` / `source` 三个只读标注供排查同名覆盖。配色、字阶、圆角全部取自 DSH 语义令牌，行分隔用 `.item + .item { border-top: 0.5px solid var(--dsw-alias-border-l2) }` 相邻兄弟选择器，布局照官方设置表单的字段排版（12px 上下留白、标签在左开关在右），深浅色随 `body[data-ds-dark-theme]` 自动切换。
-- **本包升级为双面插件**：新增 `src/client.js`（手写 CJS factory，经 `scripts/build-client.mjs` 原样复制到 `lib/client.js`）、`exports["./client"]` 与 `dsh.client` 声明。纯终端 profile 不加载浏览器半侧，宿主侧行为不变。
-- **图标与插件卡片元数据**：新增 `icon.png`（肌肉手臂实心剪影，配色沿用 DSH 官方插件图标的 `#67C7FE → #3F77D8` 渐变，浅色深色底都可读）作为 `package.json#icon`；新增 `locale/en.json` 与 `locale/zh.json` 提供卡片标题与描述的中英文本。这两者都需要 `exports` 放行 `./package.json` 与 `./locale/*.json`——漏了会导致卡片只剩包名，而 `dsh-app-boot` 的 `readPluginMeta` 把这类错误塞进 `meta.error` 后就吞掉，安装与启动日志都看不到。README 顶部与 GitHub 头像复用同一个 `icon.png`。
-- **技能开关状态深度模块**（`src/switches.ts`）：封装两个以技能名为键的禁言表的 volatile 解包与 `SkillInvocationPolicy` 覆盖，内建 `selfTest()` 边界自检并随 `SkillCatalog.verifySpecification()` 进入质量门禁。
-- **开关状态落进 profile 配置**：`Config` 新增 `modelDisabled` 与 `userDisabled` 两个 `volatile` 字典字段，写入 profile 的 `cordis.patch.yml`。开关经官方 `ctx.configForms` 通道读写，带乐观并发栅栏；宿主收到 `loader/volatile-update` 后刷新注册表缓存并广播 `skills/change`，模型侧下一轮即可看到新目录。技能仍保留在注册表中并继续占同名裁决权，与在 `SKILL.md` 写 `disable-model-invocation` 语义完全一致。
-- **端到端实测脚本**（`scripts/check-skill-switches.mjs`）：在真实 `SkillRegistry` 上验证默认全开、禁言表生效且不误伤他人、运行中改开关后目录立即刷新三组断言，并接入 `pnpm verify`。
-- **客户端静态清单漂移校验器**（`scripts/lib/client-manifest.mjs`）：构建时逐项比对 `src/client.js` 内联的技能清单与 `skills/` 目录的真实编目，名称、数量、顺序或描述任一不一致即构建失败，守住「`skills/` 是唯一事实来源」。
-- **门禁扩充**：客户端产物检查（`node --check`、官方 CJS factory 形态、顶层无 ESM 语法、样式真注入且不引用 static 色板）、「客户端 `SETTINGS_NAMESPACE` 与 `cordis.patch.yml` 条目 id 逐字一致」、以及图标与卡片元数据契约（icon 必须包内相对路径、格式合法、上限 256 KiB、`files` 已放行，`exports` 已放行 `./package.json` 与 `./locale/*.json`，两个 locale 文件都有 `meta.title` 与 `meta.description`）。这三类都是无报错静默失效，只能静态断言；每条都用破坏实测验证过会失败。
-- **浏览器端验证脚本**（`scripts/browser/`）：`verify-switch-ui.py` 在真机 Web UI 中点开插件卡片、逐个拨开关、点批量按钮与搜索过滤，并回读 `cordis.patch.yml` 确认落盘；`verify-model-perception.py` 做四阶段闭环，用宿主真实 `SkillRegistry` 复核两侧可见性并逐行比对 UI 显示与宿主目录。地址与路径均由命令行传入，不硬编码本机环境。
+- 修复面板样式从未注入 DOM 的问题：`src/client.js` 中定义了 CSS 常量与类名，却没有任何代码把样式塞进页面，面板渲染成浏览器默认样式且不报错；现按官方契约注入 `style[data-plugin-css]` 标签，宿主卸载插件时一并回收。
+- 修复三个批量按钮只作用于单侧的问题：「全部关闭」只写模型侧、「恢复默认」只清用户侧，与按钮文案承诺的「两侧」不符；「恢复默认」清的是本来就空的一侧，用户侧残值原样留着且 UI 上无法区分，只能翻配置文件发现；三个按钮统一作用于两侧。顺带修复 `submit()` 字段参数形态不一致导致批量路径静默失效的问题。
 
-### 变更
+### Changed
 
-- `@deepseek-ai/schemastery` 的 peer 与 dev 约束提升至 `^3.18.4`：3.18.1 的类型声明不含 `.volatile()`，是本版开关字段的类型基础。
-- 新增开发依赖 `@deepseek-ai/cosmokit`（`~1.8.5`），供端到端实测脚本按宿主同构方式构造与更新 volatile 引用。
-- README 重写：去掉自述性说明与重复表述，命令块保持原样可复制，新增「卡片标题描述图标为空」这一常见故障的排查条目。
+- `@deepseek-ai/schemastery` 的 peer 与 dev 约束提升至 `^3.18.4`，该版本的类型声明包含 `.volatile()`。
+- 新增开发依赖 `@deepseek-ai/cosmokit`，供端到端实录脚本按宿主同构方式构造与更新 volatile 引用。
+- README 重写：去掉自述性说明与重复表述，命令块保持原样可复制，新增「卡片标题描述图标为空」的排查条目。
 
 ## [7.1.1] - 2026-10-02
 
-### 修复
+### Fixed
 
-- **`scripts/check-same-name-priority-fs.mjs` 在 pnpm isolated 布局下无法定位官方 provider（实测脚本失效）**：脚本原先只在 `~/.dsh/profiles/{web,default}/node_modules` 下查找 `@deepseek-ai/dsh-skill-filesystem`。DSH 官方推荐 `nodeLinker: isolated`，该包并非 profile 的直接依赖，只存在于 dsh 安装本体的依赖树中，故查找必然落空并抛「未在本机 DSH profiles 下找到」。本版将候选路径扩展为三类并补上兜底扫描：profile 入口（符号链接）→ pnpm store 内 `.pnpm/@deepseek-ai+dsh-skill-filesystem@*` 真实目录（通配扫描，peer 后缀形态）→ 全局 dsh 本体（`AppData/Roaming/npm/node_modules/@deepseek-ai/dsh`）。查找失败时的错误信息改为列出全部已尝试路径，并指引改用等价验证脚本 `check-same-name-priority.mjs`（自研桩对照）。修复后官方 filesystem 同层实测由「抛错无法运行」转为 4/4 PASS，「本插件同名技能优先级最高」这一承诺恢复为可运行证据。
+- 修复同名优先级实测脚本在 pnpm isolated 布局下无法定位官方 provider：脚本原先只在 profile 的 `node_modules` 下查找官方文件系统技能包，而该包只存在于 dsh 安装本体的依赖树中；改为三级候选路径加兜底扫描，查找失败时列出全部已尝试路径，并指引改用自研桩对照脚本。
 
 ## [7.1.0] - 2026-10-02
 
-### 新增
+### Added
 
-- **提炼 `SkillCatalog` 深度模块**（`src/catalog.ts`）：封装技能目录扫描、mtime 变更探测、不可变快照复用（0 额外 I/O）、热重读自愈回写与名称漂移校验；对外只暴露 `listCandidates` / `getDefinition` / `verifySpecification()` 三个接口。
-- **提炼 `SkillDocument` 深度模块**（`src/document.ts`）：封装 BOM 消除、CRLF 归一化、YAML frontmatter 解析、调用策略校验与 `toCandidate` / `toDefinition` 契约转换，内建 `selfTest()` 边界自检。
-- **提炼 `SkillPriorityHarness` 测试基座**（`scripts/lib/harness-common.mjs`）：统一编排真实 Cordis 上下文隔离、正反顺序注册与胜出判定，两个同名裁决实测脚本借此精简超 40% 样板代码。
-- **收敛上游同步复核为统一命令行总线**（`scripts/review-sync.mjs`）：`review-sync-deep.mjs` / `-tokens.mjs` / `-fences.mjs` 三个碎片脚本转为轻量代理，`node scripts/review-sync.mjs` 一键双绿，原有调用方式保持可用。
-- **边界自检下沉至模块自身**：`SkillDocument.selfTest()` 与 `SkillCatalog.verifySpecification()` 把规范校验变成导出接口的一部分，`scripts/verify.mjs` 随之退化为纯声明式调度器，不再需要外部临时目录与脚手架。
-- **扩充伴生脚本健壮性自检**：全仓 10 个伴生脚本纳入 Shebang 与 LF 行尾的跨平台检查。
+- 提炼 `SkillCatalog` 深模块 `src/catalog.ts`：封装技能目录扫描、mtime 变更探测、不可变快照复用、热重读自愈回写与名称漂移校验，对外只暴露目录、定义与规范校验三个接口。
+- 提炼 `SkillDocument` 深模块 `src/document.ts`：封装 BOM 消除、CRLF 归一化、YAML frontmatter 解析、调用策略校验与契约转换。
+- 提炼 `SkillPriorityHarness` 测试基座，统一编排真实 Cordis 上下文隔离、正反顺序注册与胜出判定，两个同名裁决校验脚本精简超 40% 样板代码。
+- 收敛上游同步复核为统一命令行总线 `scripts/review-sync.mjs`：三个碎片脚本转为轻量代理，一键双绿。
+- 边界自检下沉至模块自身，校验脚本退化为纯声明式调度器。
+- 全仓 10 个伴生脚本纳入 Shebang 与 LF 行尾的跨平台检查。
 
-### 修复
+### Fixed
 
-- **发布流水线幂等保护**（`release.yml`）：tag 重推或 workflow 重跑时，`npm view` 命中已发布版本即跳过 publish，避免假红。同时显式指定 `--registry https://registry.npmjs.org`，修掉 runner 镜像覆盖导致 publish 静默失败的问题。
-
-### 实机验证
-
-- 在 `sp-deep-verify` profile 中完成真实解压安装验证：15 技能全部经 `SkillRegistry` 发现与注册（provider 均为 `superpowers`，rank 裁决胜出）；15 技能全部经 `ctx.skills.get()` 完整提取正文与 frontmatter；`SkillCatalog.verifySpecification()` 在安装环境 8/8 自检全绿；安装产物 88 文件全树扫描零非 DSH 平台残留。
+- 发布流水线幂等保护：tag 重推或 workflow 重跑时，命中已发布版本即跳过发布，避免假红；显式指定官方 npm registry，修掉 runner 镜像覆盖导致静默发布失败的问题。
 
 ## [7.0.1] - 2026-10-02
 
-### 修复
+### Fixed
 
-- **重新发布干净 tarball（修复 npm 7.0.0 残留非 DSH 文件）**：`v7.0.0` tag 早于平台专属化改造（`736f443`），其 npm tarball 仍携带 `using-superpowers/references/codex-tools.md` 与 `writing-skills/examples/CLAUDE_MD_TESTING.md`（安装后存在非 DSH 平台痕迹）。本版为专属化落地后的干净产物（本地深度验证：88 文件、15 技能、无平台残留），升 patch 版重发；`7.0.0` 因 npm 禁止 unpublish 保留在 registry，已通过 `npm deprecate` 标注废弃。发布后官方源 `latest` 已指向 `7.0.1`（`registry.yarnpkg.com` / fresh cache 均确认），国内镜像缓存同步延迟属正常现象。
-- **本地 DSH 实机深度验证**：新建 `sp-deep-verify` profile（bundles: dsh-base + dsh-headless + 本插件），`headless` 真实会话逐技能调用 `skill` 工具加载全部 15 个技能，frontmatter description 与 `##` 标题与仓库逐一断言一致；安装产物全树扫描无平台残留（除 README 中"已移除"声明）。
+- 重新发布干净 tarball：`v7.0.0` tag 早于平台专属化改造，其 npm 包仍携带非 DSH 平台的参考文档；本版为专属化落地后的干净产物，升 patch 重发；`7.0.0` 因 npm 禁止卸载保留在 registry，已标注废弃，官方源 `latest` 已指向 7.0.1。
 
+### Removed
 
+- 平台专属化：仅支持 DSH，移除全部非 DSH 平台的参考文档与兼容层。删除 `using-superpowers/references/` 下 7 个非 DSH 工具映射文件、`anthropic-best-practices.md` 与 `writing-skills/examples/CLAUDE_MD_TESTING.md`；技能正文的平台适配小节固化为 DSH 原生工具规范；随包脚本移除外部平台探测分支；上游同步复核同步专属化，不再因缺失报错。
+- 技能名与目录去掉 `superpower-` 前缀：14 个技能回归上游原名，`frontmatter.name`、目录名、全部正文引用同步更新；旧名 `skill("superpower-writing-plans")` 不再可用，改用 `skill("writing-plans")`。
+- 全文符号清除：全部 15 个技能正文与辅助文档中的图形状态符号替换为 ASCII 标记，文档不再包含任何 emoji；核心专业术语回英文原词，句子仍为简体中文。
 
-### 破坏性变更
+### Changed
 
-- **平台专属化：仅支持 DSH (DeepSeek Harness)**：移除全部非 DSH 平台（Claude Code、Codex、Gemini CLI、Hermes、Muse、Pi、Antigravity、Copilot CLI）的参考文档与兼容层。删除 `using-superpowers/references/` 下 7 个非 DSH 工具映射文件（`claude-code-tools.md`、`codex-tools.md`、`gemini-tools.md`、`hermes-tools.md`、`muse-tools.md`、`pi-tools.md`、`antigravity-tools.md`）、`writing-skills/anthropic-best-practices.md` 与 `writing-skills/examples/CLAUDE_MD_TESTING.md`；技能正文的平台适配小节固化为 DSH 原生工具规范；随包脚本（`brainstorming/scripts/server.cjs`、`start-server.sh`）移除 Codex/Claude Code 探测分支；契约门禁（`HOST_DOCS`、豁免清单）与上游同步复核引擎（新增 `NON_DSH_PLATFORM_REFS` 豁免集合）同步专属化，上游复核不再因缺失报错。
-- **技能名与目录去掉 `superpower-` 前缀**：14 个技能回归上游原名（`brainstorming`、`executing-plans`、`subagent-driven-development` …），`frontmatter.name`、目录名、全部正文引用同步更新。旧名 `skill("superpower-writing-plans")` 不再可用，改用 `skill("writing-plans")`。语义化版本因破坏性变更升为 `7.0.0`。
-- **同名技能优先级反转（本插件优先级最高）**：官方注册表同层重名按 `rank → 提供方顺序 → 本地顺序` 裁决，**rank 越小优先级越高**；本包 `SUPERPOWERS_RANK` 由 `550` 改为 `10`，小于 `dsh-skill-filesystem` 的项目/用户根（100~500）与官方内置 bundled（600），因此任何与本包同名的本地技能（`~/.dsh/skills`、项目 `.dsh/skills`、自定义根）或官方 bundled 技能均不会覆盖本包——本插件技能唯一生效。
-- **全文符号清除 + 核心术语回英文**：全部 15 个技能的译文正文与辅助文档中的图形状态符号（对勾、叉号、警示三角等）替换为 ASCII 标记（`[OK]`/`[FAIL]`/`[WARN]`），文档不再包含任何 emoji；核心专业术语回英文原词（`subagent`/`agent`、`reviewer`/`re-reviewer`、`ledger`、`finding`、`brief`、`workspace`/`worktree`、`harness`、`human partner`），句子仍为简体中文。
-- **frontmatter `description` 统一加前缀**：15 个 `SKILL.md` 的 `description` 开头统一为 `Superpower Skill：…`，简洁标明技能来源；技能优先级语义由 `SUPERPOWERS_RANK = 10` 保证，不写入描述文案。
-
-### 新增
-
-- **同步上游 v6.4.2 内容**（上游基准 v6.3.0 → v6.4.2）：
-  - 新增技能 `diagnosing-superpowers`（20 个文件）：会话出问题后定位根因、以 `path:line` 证据报告;含 `references/session-discovery.md` 的 DSH 会话日志定位增补。
-  - `writing-plans`：改写为记录决策而非代码转写（"What a Step Contains" 取代 "No Placeholders"）、步骤粒度改"一项可校验结果的动作"、新增 Review Focus 段与用户复核计划关卡；删除上游已废弃的 `plan-document-reviewer-prompt.md`。
-  - `executing-plans`：重建为 Native（内联）执行模式，连续执行至整仓完成再一次性全分支评审，配套新增 `scripts/task-start` / `scripts/task-done`。
-  - `brainstorming`：先澄清"为什么想要这东西"再提方案，批准绑定设计阶段。
-  - `requesting-code-review` / `code-reviewer.md`：BASE_SHA 改用 `git merge-base origin/main HEAD`，reviewer 按"合理用户预期"判断规格未提及行为，新增 Declined to judge 清单。
-  - `test-driven-development`：green 定义改为"项目自己的全套测试命令"，按名报告全部失败。
-  - `subagent-driven-development`：同名 plan 独立工作区；`review-package` 对空/非后代 `BASE..HEAD` 区间拒绝（exit 3）；控制器可嵌套一层运行。
-  - `using-superpowers`：新增 `references/muse-tools.md` 与 `references/claude-code-tools.md`，保留 DSH 专属 `dsh-tools.md`。
-- **依赖升级**：devDependencies `@deepseek-ai/dsh-skill` 升到 `0.2.0-rc.2`（与 dsh 0.2.0-rc.2 内嵌版本对齐）、`@deepseek-ai/cordis` 固定 `4.0.4`；peerDependencies 的 dsh-skill 范围改为 `>=0.1.0-rc.1 <0.3.0-0`，实测命中 0.1.0-rc.8 / 0.1.1-rc.2 / 0.1.7-rc.2 / 0.2.0-rc.x，dsh 0.2.0 系安装不再需要版本豁免。
-
-### 修复
-
-- **`scripts/verify.mjs` 期望技能数 14 → 15**，并新增"技能正文相对路径引用存在性"检查，杜绝执行时死链。
-- **新增 `scripts/check-same-name-priority.mjs` 自检**：用真实 `SkillRegistry` 验证同名优先级（仅有本包 / 叠加 rank 100/300/500/600 同名技能均不抢 / rank 0 可抢 / 逐名裁决），把"本插件优先级最高"从文档承诺变成可运行证据。
-- **新增 `scripts/check-same-name-priority-fs.mjs` 同层实测**：直接加载官方 `@deepseek-ai/dsh-skill-filesystem`，在同一个 `SkillRegistry` 内验证 rank 裁决（自定义根 rank 300 同名不抢本包 rank 10、注册顺序颠倒结果不变、无覆盖时本包全可见），8/8 PASS；测试技能写系统临时目录并整棵删除，不触碰真实用户/项目技能根。
-- **修正 `dsh.10` 条目过时陈述**：当时的 peer 范围实测仅命中 0.0.1-rc.1 与 0.1.0-rc.8 两个真实版本（CHANGELOG 原文"6 个真实版本全部命中"不准确）。
+- 同名技能优先级反转：官方注册表同层重名按 rank 从低到高裁决，本包优先级由 550 改为 10，低于官方项目与用户根和内置 bundled，任何与本包同名的本地技能或官方技能均不会覆盖本包。
+- frontmatter `description` 统一加 `Superpower Skill：` 前缀标明技能来源。
+- 同步上游 v6.4.2 内容：新增 `diagnosing-superpowers` 技能；`writing-plans` 改写为记录决策而非代码转写；`executing-plans` 重建为 Native 执行模式并配套新增脚本；`brainstorming` 先澄清需求再提方案；`requesting-code-review` 的 BASE_SHA 改用 `git merge-base`，reviewer 按「合理用户预期」判断规格未提及行为；`test-driven-development` 的 green 定义改为项目自己的全套测试命令；`subagent-driven-development` 同名 plan 独立工作区并支持控制器嵌套；`using-superpowers` 新增两个外部平台的工具映射参考。
+- 依赖升级：`@deepseek-ai/dsh-skill` 升到 0.2.0-rc.2，`@deepseek-ai/cordis` 固定 4.0.4；peer 范围改为 `>=0.1.0-rc.1 <0.3.0-0`，DSH 0.2.0 系安装不再需要版本豁免。
+- 修订历史变更记录中 peer 范围实测版本的过时陈述。
 
 ## [6.3.1] - 2026-08-23
 
-### 变更
+### Changed
 
-- **脱离上游独立演进**：本仓库从 `-dsh.N` 预发布线转为正式版本线，首个正式版 `v6.3.1`。上游基准锁定 `v6.3.0`，后续同步上游变更时以 cherry-pick 方式合入并记录。
+- 脱离上游独立演进：本仓库从 `-dsh.N` 预发布线转为正式版本线，首个正式版 v6.3.1；上游基准锁定 v6.3.0，后续同步上游变更时以 cherry-pick 方式合入并记录。
 
-### 修复
+### Fixed
 
-- **审查修正技能名引用与文档一致性**（commit `770f7aa`）：
-  - `README.md` 技能表 `superpower-requesting` 补全为 `superpower-requesting-code-review`
-  - `hermes-tools.md` / `codex-tools.md` / `dsh-tools.md` 技能名统一加 `superpower-` 前缀（`skill_view("superpower-...")`）
-  - `brainstorming` / `subagent-driven-development` 正文与流程图技能名引用带前缀
-  - `executing-plans` 声明台词中文化
-  - `task-reviewer-prompt.md` / `re-review-prompt.md` 的 model 注释中文化（与 `implementer-prompt.md` 一致）
-  - `CONTRIBUTING.md` 目录名同步策略更新为 dsh.9 后口径，移除 AI 味尾句
-  - `CHANGELOG.md` 补 `dsh.9` / `dsh.10` release 链接
-  - `release.yml` dist-tag 正则去基线硬编码（`-dsh\.[0-9]+$`）
-  - `verify.mjs` 注释同步现状
+- 修正技能名引用与文档一致性：README 技能表补全技能名；外部平台与 DSH 工具映射文件的技能名统一加 `superpower-` 前缀；正文与流程图技能名引用带前缀；声明台词与注释中文化；目录名同步策略更新为 dsh.9 后口径并移除 AI 味尾句；CHANGELOG 补 release 链接；发布流水线 dist-tag 正则去基线硬编码。
 
 ## [6.3.0-dsh.10] - 2026-08-23
 
-### 修复
+### Fixed
 
-- **`@deepseek-ai/dsh-skill` peer 范围改为显式预发布分支**：原 `^0.1.1-rc.2` 按 node-semver 规则只会放行 `0.1.1-rc.2` 一个版本，`0.1.0-rc.x` 等既有 harness 预发布构建会被静默排除，用户安装时触发 `ERESOLVE`。按 awesome-dsh-plugin 投稿规范推荐写法改为 `>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0`，覆盖 `0.0.1-rc.x` 与 `0.1.x` 全系列预发布与正式版，消除误伤。**（注：v7.0.0 已改为 `>=0.1.0-rc.1 <0.3.0-0` 覆盖 0.2.x，见 7.0.0 段。）**
+- `@deepseek-ai/dsh-skill` peer 范围改为显式预发布分支：原 `^0.1.1-rc.2` 只会放行一个版本，既有预发布构建会被静默排除，用户安装时触发解析冲突；改为覆盖全系列预发布与正式版的写法。
 
 ## [6.3.0-dsh.9] - 2026-08-23
 
-### 修复
+### Changed
 
-- **硬把 `skills/` 目录重命名为 `superpower-` 前缀**：前几版仅改了 `SKILL.md#frontmatter.name` 为 `superpower-<kebab>`，目录仍为原 `<kebab>`（依赖 Provider 的“frontmatter 优先于目录名并 warn”逻辑）。本次把 14 个目录从 `skills/<kebab>` 硬重命名为 `skills/superpower-<kebab>`，使 `entry.name === frontmatter.name` 完全一致，消除 `list()` 的 warn 与 `get()` 的 name drift 校验风险，确保 `skill("superpower-writing-plans")` 等调用在 DSH 启动快照与 HMR 缓存下均可稳定命中。同步更新 `README.md` / `scripts/verify.mjs` / `CLAUDE.md` 中残留的旧路径引用与校验逻辑，`pnpm pack` 产物同步改为 `skills/superpower-*`，`verify` 14/14 PASS。
+- 把 `skills/` 目录硬重命名为 `superpower-` 前缀：此前仅改了 frontmatter.name，目录仍为原 kebab，依赖 Provider 的「frontmatter 优先于目录名并 warn」逻辑；本次让目录名与 frontmatter.name 完全一致，消除列表警告与名称漂移校验风险，确保 `skill("superpower-writing-plans")` 等调用在启动快照与 HMR 缓存下稳定命中；同步更新残留的旧路径引用。
 
 ## [6.3.0-dsh.8] - 2026-08-23
 
-### 修复
+### Fixed
 
-- **`cordis.patch.yml` 加引号**：`name: @wenaixi/dsh-superpower` 未加引号导致 `dsh --dump-config` 报 `YAMLException: bad indentation of a mapping entry`（`@` 开头在 YAML plain scalar 中不合法）。改为 `name: "@wenaixi/dsh-superpower"`，与 `@wenaixi/dsh-ponytail` 保持一致。
+- `cordis.patch.yml` 包名加引号：未加引号时 `dsh --dump-config` 报 YAML 缩进错误，因为 `@` 开头在 YAML plain scalar 中不合法；改为加引号，与其他插件保持一致。
 
 ## [6.3.0-dsh.7] - 2026-08-23
 
-### 变更
+### Changed
 
-- **npm 包名统一到 `@wenaixi/dsh-superpower`**：与 `@wenaixi/dsh-ponytail` / `@wenaixi/cfbridge` 保持一致的 `@wenaixi` scope。变更内容：`package.json#name` 由 `dsh-superpower` 改为 `@wenaixi/dsh-superpower` 并新增 `publishConfig: { access: "public" }`；`cordis.patch.yml` 的 `name` 同步改为 `@wenaixi/dsh-superpower`；`README.md` 安装/卸载/验证/常见问题、`release.yml` 的 `npm dist-tag add`、`src/superpowers.ts` 注释、`CONTRIBUTING.md` / `CLAUDE.md` 全量替换为 scoped 名；`pnpm pack` 产物由 `dsh-superpower-*.tgz` 改为 `wenaixi-dsh-superpower-*.tgz`。GitHub 仓库名 `Wenaixi/dsh-superpower` 不变（仅 npm 名变更）。
-
-### 废弃
-
-- 旧名 `dsh-superpower`（无 scope）已废弃：发版后执行 `npm deprecate dsh-superpower@"*" "已迁移至 @wenaixi/dsh-superpower，请改用 \"dsh plugin --profile web add @wenaixi/dsh-superpower\""`，后续不再向该名发布新版本。
+- npm 包名统一为 `@wenaixi/dsh-superpower`：与同组其他插件保持一致的 scope。变更 `package.json#name`、新增 `publishConfig: { access: "public" }`，`cordis.patch.yml` 的 name 同步，README、发布流水线、源码注释与文档全量替换为 scoped 名。GitHub 仓库名不变。
+- 旧名 `dsh-superpower` 废弃：发版后执行 `npm deprecate` 标注迁移，后续不再向该名发布新版本。
 
 ## [6.3.0-dsh.6] - 2026-08-22
 
-### 修复
+### Fixed
 
-- **npm `latest` dist-tag 站位问题**：当仓库历史 `6.3.0` 基础版被 unpublish 后，npm 的"没有 latest 时回退到最高 semver 版本"默认行为会让最新发的 `-dsh.N` 抢占 `latest`。本次发版在 `release.yml` 的"发布到 npm"之后新增"为 `-dsh.N` 系列打 `dsh` dist-tag"步骤，把 dsh 系列从 latest 抽离；本地同步把 `6.3.0-dsh.5` 显式补 `latest` tag（仓库策略上 dsh.N 为事实稳定演进线，详见 `CLAUDE.md` 第 10 章）。今后发版路径固定为：`npm publish` → 命中 `-dsh.N` → `npm dist-tag add <pkg>@<ver> dsh`，CI 自动完成。
+- 修复 npm `latest` dist-tag 站位问题：当旧基础版被卸载后，npm 的「没有 latest 时回退到最高 semver 版本」默认行为会让最新发的预发布版抢占 `latest`；发布流水线在发布到 npm 之后新增「为 `-dsh.N` 系列打 `dsh` dist-tag」步骤，把 dsh 系列从 latest 抽离。
 
-### 文档
+### Changed
 
-- `CLAUDE.md` 第 10 章新增"dist-tag 策略"段，明示：
-  - 仓库策略上 `-dsh.N` 系列为事实稳定演进线
-  - 显式打 `dsh` dist-tag 与 npm 默认 latest 抢占的应对
-  - `release.yml` 对应变更说明
-- `release.yml` 在"发布到 npm"后加"为 `-dsh.N` 系列打 dsh dist-tag"步骤
+- `CLAUDE.md` 新增「dist-tag 策略」节：明确 `-dsh.N` 系列为事实稳定演进线、显式打 dsh tag 与 npm 默认 latest 抢占的应对、发布流水线对应变更说明。
 
 ## [6.3.0-dsh.5] - 2026-08-22
 
-> **BREAKING CHANGE**：本次发版将 14 个技能的 `frontmatter.name` 统一加上 `superpower-` 前缀。
-> 从 `-dsh.4` 升级后，所有调用方式都必须更新：
->
-> - 旧：`skill("brainstorming")` / `/skill brainstorming`
-> - 新：`skill("superpower-brainstorming")` / `/skill superpower-brainstorming`
->
-> 旧名不再注册，`ctx.skills.get("brainstorming")` 将返回 `undefined`。
-> 详见本节下方"变更"条目与 `CONTRIBUTING.md`"上游同步策略"。
+### Changed
 
-### 变更
+- 14 个技能统一加 `superpower-` 前缀，与上游 `obra/superpowers` 永久脱钩：`frontmatter.name` 由原 kebab 改为 `superpower-<kebab>`，目录名保持不变，Provider 不动；用户命令与模型调用均使用新名；上游同步策略写入 CONTRIBUTING 新增节。
+- 从升级后所有调用方式都必须更新，旧名不再注册，`ctx.skills.get("brainstorming")` 返回 `undefined`。
+- `dsh-tools.md` 与其余 references、README 技能清单中的示例同步改为 `superpower-<name>` 命名。
 
-- **14 个技能统一加 `superpower-` 前缀，与上游 `obra/superpowers` 永久脱钩**：
-  14 个 `SKILL.md` 的 `frontmatter.name` 由原 `<kebab>` 改为 `superpower-<kebab>`
-  （如 `brainstorming` → `superpower-brainstorming`）；目录名保持不变；
-  Provider 代码不动（沿用既有的"frontmatter 优先于目录名"约定，会输出 warn 提示）；
-  用户命令 `/skill superpower-brainstorming` 与模型调用 `skill("superpower-brainstorming")` 均能工作；
-  上游同步策略详见 `CONTRIBUTING.md` 新增的"上游同步策略"节。
+### Removed
 
-### 文档
-
-- `skills/using-superpowers/references/dsh-tools.md` 与 `SKILL.md`：把 `superpowers:<name>` 示例改为 `superpower-<name>`
-- 其它 `references/*.md` 与 14 个技能正文里引用旧名的位置同步替换（grep 全仓 `superpowers:` 残留为 0）
-- `README.md` 技能清单表与示例调用同步更新
-- `CONTRIBUTING.md` 新增"上游同步策略"节，明示脱钩代价与同步流程
-- `scripts/verify.mjs` 适配 `frontmatter.name` 与目录名可偏离的场景（用 `~` 标记）
-
-### 回滚
-
-- 移除上一版未发布时尝试的"28 条别名 candidate"方案（DSH 上游 `isSkillName = /^[a-z0-9]+(-[a-z0-9]+)*$/` 拒绝冒号，前缀方案只能走 kebab-case 短横线）
+- 移除上一版未发布时尝试的「28 条别名 candidate」方案：DSH 上游技能名规则拒绝冒号，前缀方案只能走 kebab-case 短横线。
 
 ## [6.3.0-dsh.4] - 2026-08-22
 
-### 修复
+### Fixed
 
-- **CI（Release）**：修复 `release.yml` 中 CHANGELOG 提取正则的 `\z` 非法锚点（JS 中退化为字面量 `z`，含 `z` 的末版正文被截断），改为定位标题行后手动切片到下一 `## [`，并将输出路径改为 `RUNNER_TEMP` 避免并发覆盖
-- **健壮性（`src/superpowers.ts`）**：`parseFrontmatter` 去 BOM；`list` 的 `readdir` 透传 `signal` 及时中断；`get` 增加 `locator` 守卫、`readFile` 透传 `signal`、`AbortError` 直抛、非 `ENOENT` 记 `warn`，并补全 `frontmatter`/名称漂移/`invocation` 非法等诊断；明确 `skills/change` 为 `emit` 模式无需 `next()` 的注释
+- 修复发布流水线中 CHANGELOG 提取正则的非法锚点：`\z` 在 JS 中退化为字面量，含字母 z 的末版正文被截断；改为定位标题行后手动切片到下一个版本标题，输出路径改为临时目录避免并发覆盖。
+- 健壮性修正：frontmatter 解析去 BOM；目录列表的读取透传 `AbortSignal` 及时中断；技能正文读取补定位守卫、透传信号、中止错误直抛、非缺失错误记警告，并补全 frontmatter、名称漂移、调用策略非法的诊断。
 
 ## [6.3.0-dsh.3] - 2026-08-22
 
-### 修复
+### Changed
 
-- **规范对齐（`dsh-plugin-dev`）**：`src/superpowers.ts` 复用 `dsh-skill/isSkillName` 校验，移除本地正则；`Config` 的 `providerName` 改为必填（`Schemastery` 默认值仍在 schema），拒绝保留名 `runtime` 并补 `.description`；`Config` 接口与 schema 已对齐可选/必填
-- **健壮性**：`list`/`get` 尊重 `options.signal` 并及时 `throwIfAborted()`；`list` 内对重复 `skill name` 去重并 `warn`；`stat` 失败记 `debug`、YAML 解析失败单独 `warn`；`parseSkillFile` 不再静默吞错；移除 `import.meta.url` 静默降级，改为显式失败（“失败要响亮”）
-- **生命周期**：`apply` 改用单一 `ctx.effect` 包裹 `registerProvider` + `skills/change` 监听，卸载时按序清理，HMR 无残留
-- **打包**：`package.json` 新增 `prepare` 脚本（与 `prepack` 并存），修复 `github:Wenaixi/dsh-superpower` 直装时无 `lib/` 构建的坑
-- **文档**：同步 `CLAUDE.md`（技术栈/架构/目录/配置/注意事项/决策日志）与代码修复一致；明确 `lib/` 已提交
+- 复用 `dsh-skill` 官方技能名校验，移除本地正则；`providerName` 改为必填并拒绝保留名 `runtime`。
+- `list` 与 `get` 尊重调用方的 `AbortSignal` 并及时抛出；重复技能名去重并告警；文件缺失记为调试信息、YAML 解析失败独立告警；解析函数不再静默吞错；移除 `import.meta.url` 静默降级，改为显式失败。
+- `apply` 改用单一 `ctx.effect` 包裹 Provider 注册与技能变更监听，卸载时按序清理，HMR 无残留。
+- `package.json` 新增 `prepare` 脚本，修复从 GitHub 直装时无构建产物的坑。
 
 ## [6.3.0-dsh.2] - 2026-08-22
 
-### 修复
+### Changed
 
-- **README**：所有安装示例默认主工作台由 demo 改为 web（dsh plugin --profile web add ...），并注明自动走 dsh.bundle 无需手动配置 cordis.patch.yml
+- README 安装示例默认主工作台由 demo 改为 web，并注明自动走 `dsh.bundle`、无需手动配置 `cordis.patch.yml`。
 
 ## [6.3.0-dsh.1] - 2026-08-22
 
-### 修复
+### Fixed
 
-- **npm 文档**：`README.md` 在 `6.3.0` 发布包中仍含“还没发布到 npm”等过时描述，本版已修正为 A(npm)/B(GitHub)/C(本地)/D(tarball) 四路径，并补充零白名单说明
-- **构建**：`6.3.0` 已发布到 npm 官方源；因 npm 不允许同版本覆盖，后续文档等非功能修正改用 `-dsh.N` 预发布后缀递增
+- 修正 README 中「还没发布到 npm」等过时描述，改为 A、B、C、D 四路径安装说明。
+- 因 npm 不允许同版本覆盖，后续文档等非功能修正改用 `-dsh.N` 预发布后缀递增。
 
 ## [6.3.0-dsh.0] - 2026-08-12
 
-### 同步上游 v6.3.0（初始移植版）
+### Added
 
-上游发布说明见 [obra/superpowers RELEASE-NOTES.md](https://github.com/obra/superpowers/blob/main/RELEASE-NOTES.md#v630-2026-08-12)。
-
-- **Harness 支持**：新增 Devin CLI / Hermes Agent / Grok Build CLI 安装说明
-- **Brainstorming**：仪式随任务分级（Spike / Bounded / Architectural），小任务跳过双文档仪式，但审批关卡不变
-- **Subagent-Driven Development**：控制器不再因非灾难性分歧阻塞；冲突预检写入 ledger；同构小任务批量派发；实现者/reviewer 禁止再派生子 subagent；计划携带 `Spec:` 指针
-- **Finishing a Development Branch**：`git worktree remove` 遇未提交内容时不再 `--force`，而是列出文件并询问
-- **修复**：`render-graphs.js` Windows 兼容、Copilot CLI 后台化指引
-- **其它**：上游 `v6.2.0` 及更早版本见上游 RELEASE-NOTES 全文
-
-### 本仓库 DSH 移植
-
-- 插件入口 `src/superpowers.ts`：`SkillProvider` 实现，`rank 550`，`providerName: superpowers`，`skillDir` 可配置，`ctx.effect` 清理
-- 14 个技能及 20+ 辅助文档完整中文化，`frontmatter.name` 保持英文、`description` 译为简体中文，代码/命令/路径不译
-- 新增 `skills/using-superpowers/references/dsh-tools.md`：Claude Code / Codex 工具到 DSH（`pwsh`/`bash`/`fs`/`fs-search`/`subagent`/`workflow`/`todo`/`skill`/`ask-user`）的映射表
-- `using-superpowers` 的 Platform Adaptation 新增 DSH 条目，要求优先阅读 `dsh-tools.md`
-- `package.json` 声明 `dsh.bundle.patch: ./cordis.patch.yml`，`cordis.patch.yml` 单行 `insert: [superpowers]`
-- 构建 `tsc -p tsconfig.build.json -> lib/`，`pnpm typecheck` 通过，`scripts/verify.mjs` 冒烟 14 技能全绿
-- `dsh --profile demo --dump-config` 可见 `# == dsh-superpower` 层
+- 同步上游 v6.3.0 初始移植：新增 Devin CLI、Hermes Agent、Grok Build CLI 安装说明；brainstorming 仪式随任务分级；subagent-driven-development 控制器不再因非灾难性分歧阻塞、冲突预检写入账本、同构小任务批量派发、实现者与 reviewer 禁止再派生子 subagent、计划携带规格指针；分支收尾遇未提交内容时列出文件并询问；修复上游脚本 Windows 兼容问题。
+- DSH 移植：插件入口实现 `SkillProvider`，`rank 550`，`providerName: superpowers`，技能目录可配置；14 个技能及 20 余辅助文档完整中文化，frontmatter.name 保持英文、description 译为简体中文，代码命令与路径不译。
+- 新增 `skills/using-superpowers/references/dsh-tools.md`：外部平台工具到 DSH 的映射表。
+- 声明 `dsh.bundle.patch`，`cordis.patch.yml` 单行挂载。
 
 ## 更早版本
 
