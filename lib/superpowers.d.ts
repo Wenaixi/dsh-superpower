@@ -38,6 +38,19 @@ export interface Config {
 }
 export declare const name = "superpowers";
 export declare const inject: readonly ["skills"];
+/**
+ * 从宿主 settings 服务读出界面语言偏好。
+ *
+ * settings 服务不在本插件 inject 列表：headless/CLI 组合里它永不存在，
+ * 若写进 inject 会让插件永远 PENDING、连技能都不再提供。改用 ctx.get()
+ * 的可选读取（cordis 的 get 对缺失服务返回 undefined，不抛错）。
+ *
+ * 返回 undefined 的三种情形都与「有服务但崩了」不同，因此不在这里吞日志：
+ * 服务缺失、preference 未设置、preference 值非法。
+ */
+export declare function hostLanguageFrom(ctx: {
+    get?: (name: string) => unknown;
+}): 'zh' | 'en' | undefined;
 export declare function apply(ctx: Context, config: Config): void;
 declare const _default: {
     name: string;

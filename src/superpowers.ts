@@ -136,6 +136,38 @@ function resolveDefaultSkillDir(configSkillDir?: string): string {
 // Provider 实现 — 纯调度与生命周期治理，具体编目、快照与文档解析委托给 SkillCatalog 深度模块
 // ---------------------------------------------------------------------------
 
+/**
+ * 从宿主 settings 服务读出界面语言偏好。
+ *
+ * settings 服务不在本插件 inject 列表：headless/CLI 组合里它永不存在，
+ * 若写进 inject 会让插件永远 PENDING、连技能都不再提供。改用 ctx.get()
+ * 的可选读取（cordis 的 get 对缺失服务返回 undefined，不抛错）。
+ *
+ * 返回 undefined 的三种情形都与「有服务但崩了」不同，因此不在这里吞日志：
+ * 服务缺失、preference 未设置、preference 值非法。
+ */
+export function hostLanguageFrom(ctx: { get?: (name: string) => unknown }): 'zh' | 'en' | undefined {
+  const settings = ctx.get?.('settings') as { describe?: () => unknown } | undefined
+  if (settings === undefined || typeof settings.describe !== 'function') return undefined
+
+  // describe() 属服务内部实现，可能抛错；这层 catch 只保护它，不掩盖服务缺失
+  let described: unknown
+  try {
+    described = settings.describe()
+  } catch {
+    return undefined
+  }
+
+  const forms = (
+    Array.isArray(described)
+      ? described
+      : (described as { namespaces?: unknown })?.namespaces ?? []
+  ) as { ns?: string; value?: unknown }[]
+  const entry = forms.find((d) => d !== null && typeof d === 'object' && d.ns === 'locale')
+  const preference = (entry?.value as { preference?: unknown } | undefined)?.preference
+  return preference === 'en' ? 'en' : preference === 'zh' ? 'zh' : undefined
+}
+
 class SuperpowersProvider implements SkillProvider {
   readonly name: string
   readonly catalog: SkillCatalog
@@ -163,20 +195,10 @@ class SuperpowersProvider implements SkillProvider {
    */
   hostLanguage(): 'zh' | 'en' | undefined {
     if (this.hostLanguageResolved) return this.hostLanguageCache
-    let locale: 'zh' | 'en' | undefined
-    try {
-      const described = this.ctx.get('settings')?.describe()
-      const forms = (Array.isArray(described) ? described : (described as { namespaces?: unknown })?.namespaces ?? []) as { ns?: string; value?: unknown }[]
-      const entry = forms.find((d) => d !== null && typeof d === 'object' && d.ns === 'locale')
-      const preference = (entry?.value as { preference?: unknown } | undefined)?.preference
-      locale = preference === 'en' ? 'en' : preference === 'zh' ? 'zh' : undefined
-    } catch {
-      locale = undefined
-    }
     // ponytail: 结果缓存 + volatile-update 失效；describe 每次全量扫描，缓存避免每轮 list 重扫
-    this.hostLanguageCache = locale
+    this.hostLanguageCache = hostLanguageFrom(this.ctx as unknown as { get?: (name: string) => unknown })
     this.hostLanguageResolved = true
-    return locale
+    return this.hostLanguageCache
   }
 
   /**
