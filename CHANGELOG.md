@@ -6,6 +6,16 @@
 
 ## [Unreleased]
 
+## [8.0.1] - 2026-11-14
+
+### Changed
+
+- `hostLanguage()` 抽成纯函数 `hostLanguageFrom(ctx)`。原实现用一个 `try` 包住 `ctx.get('settings')?.describe()`，把「服务不存在」（设计上的正常回退）与「describe() 自身崩溃」（真 bug）吞并成同一个 `undefined`。现在先判断服务与 `describe` 是否存在，`catch` 只保护调用本身。
+
+### Fixed
+
+- 删除构造函数里从未读写的两个字段 `_lastRawSnapshot` 与 `_lastKeyword`。
+
 ## [8.0.0] - 2026-10-17
 
 ### Changed
