@@ -29,14 +29,14 @@ fi
 
 awk -v n="$n" '
   /^```/ { infence = !infence }
-  !infence && /^#+[ \t]+Task[ \t]+[0-9]+/ {
-    intask = ($0 ~ ("^#+[ \t]+Task[ \t]+" n "([^0-9]|$)"))
+  !infence && /^#+[ \t]+(Task|任务)[ \t]{0,1}[0-9]+/ {
+    intask = ($0 ~ ("^#+[ \t]+(Task|任务)[ \t]{0,1}" n "([^0-9]|$)"))
   }
   intask { print }
 ' "$plan" > "$out"
 
 if [ ! -s "$out" ]; then
-  echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}')" >&2
+  echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}' or '任务 ${n}')" >&2
   exit 3
 fi
 
