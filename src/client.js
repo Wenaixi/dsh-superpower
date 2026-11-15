@@ -16,7 +16,9 @@
  */
 
 window.__ModuleLoader__.load({
-  id: '@wenaixi/dsh-superpower',
+  // 包名占位符，由 scripts/build-client.mjs 在构建期按 package.json 的 name 替换。
+  // 宿主校验客户端模块 id 与安装后的包名逐字一致，硬编码会导致变体包加载失败。
+  id: '@@PACKAGE_NAME@@',
   factory: (require) => {
     var module = { exports: {} };
     var exports = module.exports;
@@ -26,9 +28,10 @@ window.__ModuleLoader__.load({
     var h = React.createElement;
     var P = require('@deepseek-ai/dsh-client-ui-primitives');
 
-    // 宿主条目 id，同时也是 settings 命名空间键；与 cordis.patch.yml 的 id 逐字相同
+    // 宿主条目 id，同时也是 settings 命名空间键；与 cordis.patch.yml 的 id 逐字相同。
+    // 该命名空间是配置寻址路径，不随包名变化，否则已保存的用户配置会失联。
     var SETTINGS_NAMESPACE = 'superpowers';
-    var PACKAGE_NAME = '@wenaixi/dsh-superpower';
+    var PACKAGE_NAME = '@@PACKAGE_NAME@@';
     var NS = 'dsh-superpower';
     var DISABLED_FIELD = 'disabled';
     var LANGUAGE_FIELD = 'language';

@@ -11,10 +11,45 @@
  * 则以最小代价守住「skills/ 是唯一事实来源」这条不变式。
  */
 
+import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import vm from 'node:vm'
 import { SkillCatalog } from '../../lib/superpowers.js'
+
+/**
+ * 包名占位符：src/client.js 以它标记需要按发布包名替换的位置，build-client.mjs 负责渲染。
+ *
+ * 定义在此处而不是构建脚本里，因为校验器要先渲染再与产物比对；两处各写一份必然漂移。
+ * 占位符出现在字符串字面量中，含占位符的源仍能通过 vm.Script 语法解析。
+ */
+export const PACKAGE_NAME_PLACEHOLDER = '@@PACKAGE_NAME@@'
+
+/**
+ * 把占位符渲染为实际包名。
+ *
+ * @param {string} source - src/client.js 全文
+ * @param {string} packageName - package.json 的 name
+ * @returns {string}
+ */
+export function renderPackageName(source, packageName) {
+  return source.split(PACKAGE_NAME_PLACEHOLDER).join(packageName)
+}
+
+/**
+ * 同步读取仓库根的 package.json name；缺失时返回 undefined，由调用方决定如何处理。
+ *
+ * @param {string} rootDir - 仓库根目录
+ * @returns {string | undefined}
+ */
+function readPackageName(rootDir) {
+  try {
+    const manifest = JSON.parse(readFileSync(join(rootDir, 'package.json'), 'utf8'))
+    return typeof manifest.name === 'string' ? manifest.name : undefined
+  } catch {
+    return undefined
+  }
+}
 
 /**
  * 从 src/client.js 源码中纯内存沙箱提取 SKILL_CATALOG 数组。
@@ -116,7 +151,10 @@ export async function assertClientManifest(rootDir) {
   }
 
   const issues = []
-  if (source !== artifact) {
+  // 源里带包名占位符，产物里是渲染后的包名；比对前先按同一规则渲染源。
+  const packageName = readPackageName(rootDir)
+  const rendered = packageName === undefined ? source : renderPackageName(source, packageName)
+  if (rendered !== artifact) {
     issues.push('src/client.js 与 lib/client.js 不一致，请重新构建客户端产物')
   }
 
