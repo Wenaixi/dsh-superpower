@@ -56,9 +56,10 @@ for (const entry of [...(manifest.files ?? []), ...always]) {
 stagePath('scripts')
 stagePath('src')
 
-// 构建链依赖 node_modules（tsc 与 client-manifest 模块解析），用链接避免整树拷贝
+// 构建链依赖 node_modules（tsc 与 client-manifest 模块解析），用链接避免整树拷贝。
+// 链接类型必须按平台选择：'junction' 仅 Windows 有效，在 Linux/macOS 上会抛 EINVAL。
 const modules = join(root, 'node_modules')
-if (existsSync(modules)) symlinkSync(modules, join(staged, 'node_modules'), 'junction')
+if (existsSync(modules)) symlinkSync(modules, join(staged, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
 
 // 1) 改写 package.json 的 name
 const stagedManifestPath = join(staged, 'package.json')

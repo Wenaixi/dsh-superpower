@@ -18,7 +18,10 @@ Needs the dsh runtime (adapted to latest `v0.2.1-rc.2` / `>=0.2.0-rc.2` via `npm
 
 ```bash
 # A - npm (recommended, always latest)
-dsh plugin --profile web add @wenaixi/dsh-superpower
+dsh plugin --profile web add @wenaixi/dsh-superpower@8.1.0
+
+# A2 - the unscoped name, same version, same code
+dsh plugin --profile web add dsh-superpower@8.1.0
 
 # B - GitHub (bypasses mirror lag)
 dsh plugin --profile web add github:Wenaixi/dsh-superpower
@@ -32,7 +35,7 @@ dsh --profile web  # skills are available immediately
 
 Pin a version by appending `@<version>` or `#v<version>` (the version currently published; check `npm view @wenaixi/dsh-superpower version`).
 
-> **Note on package name**: the npm package name is `@wenaixi/dsh-superpower` (scoped). The old unscoped name `dsh-superpower` is a legacy package frozen at v6.3.0-dsh.6 and is incompatible with DSH >= 0.2.0. Always use the full scoped name `@wenaixi/dsh-superpower` when installing.
+> **Note on package name**: both `@wenaixi/dsh-superpower` and the unscoped `dsh-superpower` are published from the same source at the same version, so either name works. Install one of them, not both: they carry the same `cordis.patch.yml` entry id (`superpowers`), and a profile that mounts both would have the second layer shadow the first.
 
 
 Local development or offline install:

@@ -99,6 +99,29 @@ jobs:
         if: steps.npm_check.outputs.skip != 'true'
         run: npm publish --access public --registry https://registry.npmjs.org
 
+      # 双包名同源发布：无 scope 包名与 scoped 包名内容一致、版本同号。
+      # 两个包名的 engines.dsh 相同，服务同一批宿主；用户装哪个名字都拿到同一份代码。
+      # 幂等判据独立于主包：主包已发布而变体未发布时仍要补发。
+      - name: 发布无 scope 变体包
+        id: variant_check
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          if npm view "dsh-superpower@$VER" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "::warning::$VER 已存在于 dsh-superpower，跳过变体发布"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 构建并发布无 scope 变体
+        if: steps.variant_check.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          TGZ=$(node scripts/pack-variant.mjs dsh-superpower | tail -1)
+          echo "变体 tarball: $TGZ"
+          npm publish "$TGZ" --access public --registry https://registry.npmjs.org
+
       # 7.0.0 发布早于平台专属化改造（736f443），tarball 残留非 DSH 文件，
       # 每次正式发版时同步废弃它，确保 npm latest 指向当前干净版本。
       - name: 废弃已污染的 7.0.0
