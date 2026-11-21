@@ -18,10 +18,10 @@ Needs the dsh runtime (adapted to latest `v0.2.1-rc.2` / `>=0.2.0-rc.2` via `npm
 
 ```bash
 # A - npm (recommended, always latest)
-dsh plugin --profile web add @wenaixi/dsh-superpower@8.1.1
+dsh plugin --profile web add @wenaixi/dsh-superpower@8.1.2
 
 # A2 - the unscoped name, same version, same code
-dsh plugin --profile web add dsh-superpower@8.1.1
+dsh plugin --profile web add dsh-superpower@8.1.2
 
 # B - GitHub (bypasses mirror lag)
 dsh plugin --profile web add github:Wenaixi/dsh-superpower

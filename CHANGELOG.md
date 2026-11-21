@@ -6,6 +6,16 @@
 
 ## [Unreleased]
 
+## [8.1.2] - 2026-11-21
+
+### Fixed
+
+- **跨命名空间面板的空渲染**：设置页读取 `locale` 命名空间（由其它插件拥有）。
+  直接 `configForms.get('locale')` 在未组合 owner 的部署里会渲染出一个永远空的
+  语言选择器，用户看到「有控件但没用」。按官方契约改用
+  `configForms.whileServed([superpowers, locale])` 包裹注册，owner 缺席时整页
+  不出现痕迹。
+
 ## [8.1.1] - 2026-11-15
 
 ### Changed
