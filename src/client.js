@@ -645,18 +645,24 @@ window.__ModuleLoader__.load({
       /* 宿主语言选择器：读 locale 命名空间的 preference（volatile）。
          ConfigForm 自带 subscribe/getSnapshot，渲染器把它包成 useLocaleActive(selector) hook，
          面板侧只做 selector 映射（en -> 'en'，其余 -> 'zh'）。 */
-      var localeForm = ctx.configForms.get('locale');
-
-      ctx.slots.inject('plugins.bundle.config', () =>
-        ctx.slots.register(
-          {
-            name: 'plugins.bundle.config',
-            key: PACKAGE_NAME,
-            locale: NS,
-            inject: () => ({ hooks: { switches: form, localeActive: localeForm }, actions: { form } }),
-          },
-          SkillSwitchPanel,
-        ),
+      /* 这一页编辑的 locale 命名空间由别的插件拥有。按官方契约，跨命名空间的页面必须
+         经 whileServed 挂载：未组合 owner 的部署因此完全看不到本页，而不是渲染出一个
+         永远空的语言选择器。 */
+      ctx.effect(() =>
+        ctx.configForms.whileServed([SETTINGS_NAMESPACE, 'locale'], () => {
+          var localeForm = ctx.configForms.get('locale');
+          return ctx.slots.inject('plugins.bundle.config', () =>
+            ctx.slots.register(
+              {
+                name: 'plugins.bundle.config',
+                key: PACKAGE_NAME,
+                locale: NS,
+                inject: () => ({ hooks: { switches: form, localeActive: localeForm }, actions: { form } }),
+              },
+              SkillSwitchPanel,
+            ),
+          );
+        }),
       );
     }
 
